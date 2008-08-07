@@ -796,10 +796,11 @@ public abstract class ActiveToolComponent extends ToolComponent implements Activ
 					{
 						StringTokenizer pathTokenizer = new StringTokenizer(wr.m_path, "/");
 						// if the path has more than one segment (eg. "/name1/name2")
-						if (pathTokenizer.countTokens() > 1)
+						int numberOfPathElements = pathTokenizer.countTokens();
+						if (numberOfPathElements > 1)
 						{
 							// copy over everything but the last segment
-							for (int i = 0; i < pathTokenizer.countTokens() - 1; i++)
+							for (int i = 0; i < numberOfPathElements - 1; i++)
 							{
 								pathBuilder.append("/");
 								pathBuilder.append(pathTokenizer.nextToken());
