@@ -769,7 +769,7 @@ public abstract class ActiveToolComponent extends ToolComponent implements Activ
 				// SAK-13408 - Relative redirections are based on the request URI. This fix addresses the problem 
 				// of Websphere having a different request URI than Tomcat. Instead, the relative URL will be
 				// converted to an absolute URL.
-				if (ServerConfigurationService.getString("servlet.container").equals("websphere"))
+				if ("websphere".equals(ServerConfigurationService.getString("servlet.container")))
 				{
 			    	url = createAbsoluteURL(url);
 				}
