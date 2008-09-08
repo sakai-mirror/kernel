@@ -130,16 +130,30 @@ public class Tool implements org.sakaiproject.tool.api.Tool, Comparable
 	 */
 	public String getDescription()
 	{
-		final String localizedToolDescription = m_activeToolManager.getLocalizedToolProperty(this.getId(), "description");
+		final String centralToolDesc = m_activeToolManager.getLocalizedToolProperty(this.getId(), "description");
+		if (centralToolDesc != null)
+			return centralToolDesc;
 
-		if(localizedToolDescription == null)
+		String localizedToolDesc = null;
+		if (m_title_bundle != null)
 		{
-			return m_description;
+			//	Get the user's current locale preference.
+			ResourceLoader rl = new ResourceLoader();
+			String loc =rl.getLocale().toString();
+			//	Attempt to get the properties corresponding to that locale.
+			Properties props = (Properties) m_title_bundle.get(loc);
+			//	If a localized set doesn't exist, try for a default set.
+			if (props == null)
+				props = (Properties) m_title_bundle.get("DEFAULT");
+			//	Get the localized tool title.
+			if (props != null)
+				localizedToolDesc = (String) props.get ("description");
 		}
-		else
-		{
-			return localizedToolDescription;
-		}
+		if (localizedToolDesc != null)
+			return localizedToolDesc;
+
+		//	Use the the default tool description from tool definition file.
+		return m_description;
 	}
 
 	/**
