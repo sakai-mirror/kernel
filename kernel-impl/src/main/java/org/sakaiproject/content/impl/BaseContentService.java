@@ -170,6 +170,7 @@ public abstract class BaseContentService implements ContentHostingService, Cache
 	
 	protected static final Pattern contextPattern = Pattern.compile("\\A/(group/|user/|~)(.+?)/");
 
+	private static final String PROP_AVAIL_NOTI = "availableNotified";
 	
 	/** The initial portion of a relative access point URL. */
 	protected String m_relativeAccessPoint = null;
@@ -186,7 +187,7 @@ public abstract class BaseContentService implements ContentHostingService, Cache
 	protected long m_siteQuota = 0;
 
 	private boolean m_useSmartSort = true;
-	
+
 	static
 	{
 		ROOT_COLLECTIONS.add(COLLECTION_SITE);
@@ -674,7 +675,7 @@ public abstract class BaseContentService implements ContentHostingService, Cache
 			NotificationEdit edit = m_notificationService.addTransientNotification();
 
 			// set functions
-			edit.setFunction(EVENT_RESOURCE_ADD);
+			edit.setFunction(EVENT_RESOURCE_AVAILABLE);
 			edit.addFunction(EVENT_RESOURCE_WRITE);
 
 			// set the filter to any site related resource
@@ -2691,26 +2692,38 @@ public abstract class BaseContentService implements ContentHostingService, Cache
 		//ThreadLocalManager.set("getResources@" + containerId, null);
 
 		// track it (no notification)
-		// delete any delays for this same event then fire new event
 		String ref = edit.getReference(null);
-		EventTrackingService.cancelDelays(ref, ((BaseCollectionEdit) edit).getEvent());
 		EventTrackingService.post(EventTrackingService.newEvent(((BaseCollectionEdit) edit)
 				.getEvent(), ref, true, NotificationService.NOTI_NONE));
 
-		postAvailableEvent(edit, ref);
-
 	} // commitCollection
 
-	private void postAvailableEvent(GroupAwareEntity entity, String ref)
+	private void postAvailableEvent(GroupAwareEntity entity, String ref, int priority)
 	{
 		// cancel all scheduled available events for this entity. 
 		EventTrackingService.cancelDelays(ref, EVENT_RESOURCE_AVAILABLE);
 
 		// if resource isn't available yet, schedule an event to tell when it becomes available
-		if (entity.isAvailable())
+		if (!entity.isAvailable())
 		{
 			EventTrackingService.delay(EventTrackingService.newEvent(EVENT_RESOURCE_AVAILABLE, ref,
-					false), entity.getReleaseDate());
+					false, priority), entity.getReleaseDate());
+			entity.getProperties().addProperty(PROP_AVAIL_NOTI, Boolean.FALSE.toString());
+		}
+		else
+		{
+			// for available resources, make sure this event hasn't been fired before. this check is
+			// to ensure an available event isn't sent multiple times for the same resource.
+			String notified = entity.getProperties().getProperty(PROP_AVAIL_NOTI);
+
+			// do not post an available event for updates
+			if (!Boolean.TRUE.toString().equalsIgnoreCase(notified) && 
+			    !EVENT_RESOURCE_WRITE.equals(((BaseResourceEdit) entity).getEvent()))
+			{
+				EventTrackingService.post(EventTrackingService.newEvent(EVENT_RESOURCE_AVAILABLE,
+						ref, false));
+				entity.getProperties().addProperty(PROP_AVAIL_NOTI, Boolean.TRUE.toString());
+			}
 		}
 	}
 
@@ -4994,7 +5007,9 @@ public abstract class BaseContentService implements ContentHostingService, Cache
 				String ref = edit.getReference(null);
 				EventTrackingService.post(EventTrackingService.newEvent(EVENT_RESOURCE_ADD, ref, true,
 						NotificationService.NOTI_NONE));
-				postAvailableEvent(edit, ref);
+				
+				// TODO - we don't know whether to post a future notification or not 
+				postAvailableEvent(edit, ref, NotificationService.NOTI_NONE);
 
 				m_storage.removeResource(thisResource);
 
@@ -5540,13 +5555,23 @@ public abstract class BaseContentService implements ContentHostingService, Cache
 		//ThreadLocalManager.set("getCollections@" + containerId, null);
 		ThreadLocalManager.set("getResources@" + containerId, null);
 
-		// track it
-		// edit.getReference() returns the
+		// only send notifications if the resource is available
+		// an 'available' event w/ notification will be sent when the resource becomes available
+		
 		String ref = edit.getReference(null);
+
+		// Cancel any previously scheduled delayed available events
 		EventTrackingService.cancelDelays(ref, ((BaseResourceEdit) edit).getEvent());
+
+		// Send a notification with the initial event if this is a revise event and the resource is already available
+		int immediate_priority = (EVENT_RESOURCE_WRITE.equals(((BaseResourceEdit) edit).getEvent()) && edit.isAvailable()) ? 
+			priority : NotificationService.NOTI_NONE;
+
 		EventTrackingService.post(EventTrackingService.newEvent(((BaseResourceEdit) edit).getEvent(),
-				ref, true, priority));
-		postAvailableEvent(edit, ref);
+				ref, true, immediate_priority));
+
+		// Post an available event for now or later
+		postAvailableEvent(edit, ref, priority);
 
 	} // commitResourceEdit
 	
@@ -7915,7 +7940,7 @@ public abstract class BaseContentService implements ContentHostingService, Cache
 		String ref = edit.getReference(null);
 		EventTrackingService.post(EventTrackingService.newEvent(((BaseResourceEdit) edit).getEvent(), ref, true,
 				NotificationService.NOTI_NONE));
-		postAvailableEvent(edit, ref);
+		postAvailableEvent(edit, ref, NotificationService.NOTI_NONE);
 
 		// close the edit object
 		((BaseResourceEdit) edit).closeEdit();
