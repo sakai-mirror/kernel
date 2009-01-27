@@ -5,7 +5,7 @@
   <artifactId>kernel</artifactId>
   <packaging>pom</packaging>
   <name>Sakai Kernel</name>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>1.0.1</version>
   <organization>
     <name>Sakai Project</name>
     <url>http://sakaiproject.org/</url>
@@ -65,9 +65,9 @@
     </license>
   </licenses>
   <scm>
-    <connection>scm:svn:https://source.sakaiproject.org/svn/kernel/branches/kernel-1.0.x</connection>
-    <developerConnection>scm:svn:https://source.sakaiproject.org/svn/kernel/branches/kernel-1.0.x</developerConnection>
-    <url>https://source.sakaiproject.org/svn/kernel/branches/kernel-1.0.x</url>
+    <connection>scm:svn:https://source.sakaiproject.org/svn/kernel/tags/kernel-1.0.1</connection>
+    <developerConnection>scm:svn:https://source.sakaiproject.org/svn/kernel/tags/kernel-1.0.1</developerConnection>
+    <url>https://source.sakaiproject.org/svn/kernel/tags/kernel-1.0.1</url>
   </scm>
   <distributionManagement>
     <repository>
