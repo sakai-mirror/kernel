@@ -58,7 +58,7 @@ public class FileUploadType extends BaseResourceType
 {
 	protected String typeId = ResourceType.TYPE_UPLOAD;
 	protected String helperId = "sakai.resource.type.helper";
-	private static final String RESOURCES_ZIP_ENABLE = "resources.zip.enable"; //sakai.properties hack
+	// private static final String RESOURCES_ZIP_ENABLE = "resources.zip.enable"; //sakai.properties hack
 	
 	/** localized tool properties **/
 	private static final String DEFAULT_RESOURCECLASS = "org.sakaiproject.localization.util.TypeProperties";
@@ -90,10 +90,14 @@ public class FileUploadType extends BaseResourceType
 		actions.put(ResourceToolAction.MOVE, new FileUploadMoveAction());
 		actions.put(ResourceToolAction.DELETE, new FileUploadDeleteAction());
 		
-		// KNL-155/SAK-800 Hack; archive file handling is buggy; enable by property setting only	
+		// [WARN] Archive file handling compress/decompress feature contains bugs; exclude action item.
+		// Disable property setting masking problematic code per will of the Community.
+		// See Jira KNL-155/SAK-800 for more details.
+		/*
 		if (ServerConfigurationService.getBoolean(RESOURCES_ZIP_ENABLE,false)) {
 			actions.put(ResourceToolAction.EXPAND_ZIP_ARCHIVE, new FileUploadExpandAction());
 		}
+		*/
 		
 		// initialize actionMap with an empty List for each ActionType
 		for(ResourceToolAction.ActionType type : ResourceToolAction.ActionType.values())

@@ -40,11 +40,13 @@ import org.sakaiproject.authz.api.AuthzGroup;
 import org.sakaiproject.authz.api.GroupFullException;
 import org.sakaiproject.authz.api.Member;
 import org.sakaiproject.authz.api.Role;
+import org.sakaiproject.authz.cover.SecurityService;
 import org.sakaiproject.db.api.SqlReader;
 import org.sakaiproject.db.api.SqlService;
 import org.sakaiproject.db.api.SqlServiceDeadlockException;
 import org.sakaiproject.entity.api.Entity;
 import org.sakaiproject.javax.PagingPosition;
+import org.sakaiproject.site.cover.SiteService;
 import org.sakaiproject.time.api.Time;
 import org.sakaiproject.user.api.UserNotDefinedException;
 import org.sakaiproject.util.BaseDbFlatStorage;
@@ -728,10 +730,11 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 				size += azGroups.size();
 				for (Iterator i = azGroups.iterator(); i.hasNext();)
 				{
+					// FIXME - just use the azGroups directly rather than split them up
 					String[] refs = StringUtil.split(i.next().toString(), Entity.SEPARATOR); // splits the azGroups values so we can look for swapped state
 					for (int i2 = 0; i2 < refs.length; i2++)  // iterate through the groups to see if there is a swapped state in the variable
 					{
-						roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap/site/" + refs[i2]);
+						roleswap = SecurityService.getUserEffectiveRole("/site/" + refs[i2]);
 						if (roleswap!=null) // break from this loop if a swapped state is found
 							break;
 					}
@@ -1467,6 +1470,9 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			// does the user have any roles granted that include this lock, based on grants or anon/auth?
 			boolean auth = (userId != null) && (!userDirectoryService().getAnonymousUser().getId().equals(userId));
 
+			if (M_log.isDebugEnabled())
+				M_log.debug("isAllowed: auth=" + auth + " userId=" + userId + " lock=" + lock + " realm=" + realmId);
+
 			String statement = dbAuthzGroupSql.getCountRealmRoleFunctionSql(ANON_ROLE, AUTH_ROLE, auth);
 			Object[] fields = new Object[3];
 			fields[0] = userId;
@@ -1474,8 +1480,8 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			fields[2] = realmId;
 
 			// checks to see if the user has the roleswap variable set in the session
-			String roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap" + fields[2]);
-
+			String roleswap = SecurityService.getUserEffectiveRole(realmId);
+			
             if (roleswap != null)
             {
             	fields[0] = roleswap; // set the field to the student role for the alternate sql
@@ -1512,7 +1518,7 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 		/**
 		 * {@inheritDoc}
 		 */
-		public boolean isAllowed(String userId, String lock, Collection realms)
+		public boolean isAllowed(String userId, String lock, Collection<String> realms)
 		{
 			if (lock == null) return false;
 
@@ -1522,57 +1528,72 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			{
 				M_log.warn("isAllowed(): called with no realms: lock: " + lock + " user: " + userId);
 				if (M_log.isDebugEnabled())
-				{
-					try
-					{
-						throw new Exception();
-					}
-					catch (Exception e)
-					{
-						M_log.debug("isAllowed():", e);
-					}
-				}
+					M_log.debug("isAllowed():", new Exception());
 				return false;
 			}
+			
+			if (M_log.isDebugEnabled())
+				M_log.debug("isAllowed: auth=" + auth + " userId=" + userId + " lock=" + lock + " realms=" + realms);
 
 			String inClause = orInClause(realms.size(), "SAKAI_REALM.REALM_ID");
 
 			// any of the grant or role realms
 			String statement = dbAuthzGroupSql.getCountRealmRoleFunctionSql(ANON_ROLE, AUTH_ROLE, auth, inClause);
 			Object[] fields = new Object[2 + (2 * realms.size())];
-			Object[] fields2 = new Object[3]; // for roleswap
 			int pos = 0;
-			String siteId = "";
-			for (Iterator i = realms.iterator(); i.hasNext();)
+
+			// for roleswap
+			String userSiteRef = null;
+			String siteRef = null;
+			
+			// populate values for fields
+			for (String realmId : realms)
 			{
-				String role = (String) i.next();
-				if (role.startsWith("/site/"))
+				// These checks for roleswap assume there is at most one of each type of site in the realms collection,
+				// i.e. one ordinary site and one user site
+				
+				if (realmId.startsWith(SiteService.REFERENCE_ROOT + Entity.SEPARATOR))		// Starts with /site/ 
 				{
-					fields2[2] = role;
-					siteId = role; // set this variable for potential use later 
+					if (userId != null && userId.equals(SiteService.getSiteUserId(realmId))) {
+						userSiteRef = realmId;
+					} else {
+						siteRef = realmId; // set this variable for potential use later
+					}
 				}
-				fields[pos++] = role;
+				fields[pos++] = realmId;
 			}
 			fields[pos++] = lock;
 			fields[pos++] = userId;
-			for (Iterator i = realms.iterator(); i.hasNext();)
+			for (String realmId : realms)
 			{
-				String role = (String) i.next();
-				fields[pos++] = role;
+				fields[pos++] = realmId;
 			}
 
-			// TODO: would be better to get this initially to make the code more efficient, but the realms collection does not have a common 
-			// order for the site's id which is needed to determine if the session variable exists
-			String roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap" + fields2[2]);
+			// Would be better to get this initially to make the code more efficient, but the realms collection
+			// does not have a common order for the site's id which is needed to determine if the session variable exists
+			String roleswap = SecurityService.getUserEffectiveRole(siteRef);
+			
 			List results = null;
+			
 			if (roleswap != null)
             {
+				
+				// First check in the user's own my workspace site realm if it's in the list
+				// We don't want to change the user's role in their own site, so call the regular function.
+				// This catches permission checks for entity references such as user dropboxes.
+				
+				if (userSiteRef != null && isAllowed(userId, lock, userSiteRef))
+					return true;
+				
+				// Then check the site where there's a roleswap effective
+				
+				Object[] fields2 = new Object[3];
 				fields2[0] = roleswap;
 				fields2[1] = lock;
-				
+				fields2[2] = siteRef;
+
 				statement = dbAuthzGroupSql.getCountRoleFunctionSql();
 				
-				// check the main site id first for the permission since this  
 				results = m_sql.dbRead(statement, fields2, new SqlReader()
 				{
 					public Object readSqlResultRecord(ResultSet result)
@@ -1597,15 +1618,16 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 					rv = count > 0;
 				}
 				if (rv) // if true, go ahead and return
-					return rv;
+					return true;
 				
-				for (Iterator i = realms.iterator(); i.hasNext();)
+				// Then check the rest of the realms. For example these could be subfolders under /content/group/...
+				
+				for (String realmId : realms)
 				{
-					String site = (String) i.next();
-					if (site == siteId) // we've already checked this so no need to do it again
+					if (realmId == siteRef || realmId == userSiteRef) // we've already checked these so no need to do it again
 						continue;
 					
-					fields2[2] = site;
+					fields2[2] = realmId;
 				
 					results = m_sql.dbRead(statement, fields2, new SqlReader()
 					{
@@ -1630,30 +1652,31 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 						rv = count > 0;
 					}
 					if (rv) // if true, go ahead and return
-						return rv;
-					else if (!i.hasNext()) // if this is the last one and we still have not gotten a true result, go ahead and return the false
-						return rv;
+						return true;
 				}
+				
+				// No successful results for roleswap
+				return false;
             }
-			else
-			{
-				results = m_sql.dbRead(statement, fields, new SqlReader()
-				{
-					public Object readSqlResultRecord(ResultSet result)
-					{
-						try
-						{
-							int count = result.getInt(1);
-							return new Integer(count);
-						}
-						catch (SQLException ignore)
-						{
-							return null;
-						}
-					}
-				});
-			}
 
+			// Regular lookup (not roleswap)
+
+			results = m_sql.dbRead(statement, fields, new SqlReader()
+			{
+				public Object readSqlResultRecord(ResultSet result)
+				{
+					try
+					{
+						int count = result.getInt(1);
+						return new Integer(count);
+					}
+					catch (SQLException ignore)
+					{
+						return null;
+					}
+				}
+			});
+		
 			boolean rv = false;
 			int count = -1;
 			if (!results.isEmpty())
@@ -1663,8 +1686,6 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			}
 
 			return rv;
-
-			// return rvNew;
 		}
 
 		/**
@@ -2330,29 +2351,30 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 		{
 			if ((userId == null) || (azGroupId == null)) return null;
 
-			String sql = dbAuthzGroupSql.getSelectRealmRoleNameSql();
-			Object[] fields = new Object[2];
-			fields[0] = azGroupId;
-			fields[1] = userId;
-
-			// read the string
-			List results = m_sql.dbRead(sql, fields, null);
-
-			// prepare the return
-			String rv = null;
 			// checks to see if the user has the roleswap variable set in the session
-			String roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap" + fields[0]);
-			if (roleswap != null)
-            	rv = roleswap;
-			else if ((results != null) && (!results.isEmpty()))
-			{
-				rv = (String) results.get(0);
-				if (results.size() > 1)
+			String rv = SecurityService.getUserEffectiveRole(azGroupId);
+
+			// otherwise drop through to the usual check
+			if (rv == null) {
+				String sql = dbAuthzGroupSql.getSelectRealmRoleNameSql();
+				Object[] fields = new Object[2];
+				fields[0] = azGroupId;
+				fields[1] = userId;
+	
+				// read the string
+				List results = m_sql.dbRead(sql, fields, null);
+	
+				// prepare the return
+				if ((results != null) && (!results.isEmpty()))
 				{
-					M_log.warn("getUserRole: user: " + userId + " multiple roles");
+					rv = (String) results.get(0);
+					if (results.size() > 1)
+					{
+						M_log.warn("getUserRole: user: " + userId + " multiple roles");
+					}
 				}
 			}
-
+			
 			return rv;
 		}
 

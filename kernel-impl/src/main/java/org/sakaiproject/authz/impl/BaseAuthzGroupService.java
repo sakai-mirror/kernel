@@ -374,7 +374,9 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	public void joinGroup(String authzGroupId, String roleId, int maxSize) throws GroupNotDefinedException, AuthzPermissionException, GroupFullException
 	{
 		String user = sessionManager().getCurrentSessionUserId();
-		if (user == null) throw new AuthzPermissionException(user, SECURE_UPDATE_OWN_AUTHZ_GROUP, authzGroupId);
+		if (user == null) {
+		    throw new AuthzPermissionException(null, SECURE_UPDATE_OWN_AUTHZ_GROUP, authzGroupId);
+		}
 
 		// check security (throws if not permitted)
 		unlock(SECURE_UPDATE_OWN_AUTHZ_GROUP, authzGroupId);
@@ -416,7 +418,9 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	public void unjoinGroup(String authzGroupId) throws GroupNotDefinedException, AuthzPermissionException
 	{
 		String user = sessionManager().getCurrentSessionUserId();
-		if (user == null) throw new AuthzPermissionException(user, SECURE_UPDATE_OWN_AUTHZ_GROUP, authzGroupId);
+		if (user == null) {
+		    throw new AuthzPermissionException(null, SECURE_UPDATE_OWN_AUTHZ_GROUP, authzGroupId);
+		}
 
 		// check security (throws if not permitted)
 		unlock(SECURE_UPDATE_OWN_AUTHZ_GROUP, authzGroupId);
@@ -1290,7 +1294,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		 *        A collection of AuthzGroup ids to consult.
 		 * @return true if this user is allowed to perform the function in the named AuthzGroups, false if not.
 		 */
-		boolean isAllowed(String userId, String function, Collection realms);
+		boolean isAllowed(String userId, String function, Collection<String> realms);
 
 		/**
 		 * Get the set of user ids of users who are allowed to perform the function in the named AuthzGroups.

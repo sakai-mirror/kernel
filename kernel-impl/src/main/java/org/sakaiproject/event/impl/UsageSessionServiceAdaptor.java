@@ -39,6 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroupService;
+import org.sakaiproject.authz.cover.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.db.api.SqlReader;
 import org.sakaiproject.db.api.SqlService;
@@ -511,6 +512,8 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 	{
 		userDirectoryService().destroyAuthentication();
 
+		SecurityService.clearUserEffectiveRoles();
+		
 		// invalidate the sakai session, which makes it unavailable, unbinds all the bound objects,
 		// including the session, which will close and generate the logout event
 		Session sakaiSession = sessionManager().getCurrentSession();
@@ -578,7 +581,7 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 		List getSessions(List ids);
 
 		/**
-		 * Access a List of usage sessions by *arbitrary criteria* for te session ids.
+		 * Access a List of active usage sessions by *arbitrary criteria* for the session ids.
 		 *
 		 * @param joinTable
 		 *        the table name to (inner) join to
@@ -875,7 +878,7 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 		}
 
 		/**
-		 * Access a List of usage sessions by *arbitrary criteria* for te session ids.
+		 * Access a List of active usage sessions by *arbitrary criteria* for the session ids.
 		 *
 		 * @param joinTable
 		 *        the table name to (inner) join to
