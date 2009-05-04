@@ -72,7 +72,7 @@
   <distributionManagement>
     <snapshotRepository>
       <uniqueVersion>false</uniqueVersion>
-      <id>https://source.sakaiproject.org/maven2-snapshots</id>
+      <id>sakai-maven-snapshots</id>
       <name>Sakai Snapshot repository</name>
       <url>http://source.sakaiproject.org/maven2-snapshots</url>
       <layout>default</layout>
