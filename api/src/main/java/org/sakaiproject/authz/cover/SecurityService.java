@@ -28,7 +28,6 @@ import org.sakaiproject.component.cover.ComponentManager;
  * SecurityService is a static Cover for the {@link org.sakaiproject.authz.api.SecurityService SecurityService}; see that interface for usage details.
  * </p>
  * 
- * @author University of Michigan, Sakai Software Development Team
  * @version $Revision$
  */
 public class SecurityService
@@ -144,5 +143,37 @@ public class SecurityService
 		if (service == null) return;
 
 		service.clearAdvisors();
+	}
+	
+	
+	public static boolean setUserEffectiveRole(java.lang.String param0, java.lang.String param1)
+	{
+		org.sakaiproject.authz.api.SecurityService service = getInstance();
+		if (service == null) return false;
+
+		return service.setUserEffectiveRole(param0, param1);
+	}
+	
+	public static String getUserEffectiveRole(java.lang.String param0) {
+		org.sakaiproject.authz.api.SecurityService service = getInstance();
+		if (service == null) return null;
+
+		return service.getUserEffectiveRole(param0);
+	}
+	
+	public static void clearUserEffectiveRole(java.lang.String param0)
+	{
+		org.sakaiproject.authz.api.SecurityService service = getInstance();
+		if (service == null) return;
+
+		service.clearUserEffectiveRole(param0);
+	}
+	
+	public static void clearUserEffectiveRoles()
+	{
+		org.sakaiproject.authz.api.SecurityService service = getInstance();
+		if (service == null) return;
+
+		service.clearUserEffectiveRoles();
 	}
 }

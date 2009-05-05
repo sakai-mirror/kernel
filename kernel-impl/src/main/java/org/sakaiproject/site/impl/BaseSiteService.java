@@ -284,13 +284,13 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 	 */
 	protected void regenerateAllSiteIds()
 	{
-		List sites = m_storage.getAll();
-		for (Iterator iSites = sites.iterator(); iSites.hasNext();)
+		List<Site> sites = m_storage.getAll();
+		for (Iterator<Site> iSites = sites.iterator(); iSites.hasNext();)
 		{
 			Site site = (Site) iSites.next();
-			Site edit = m_storage.get(site.getId());
 			if (site != null)
 			{
+				Site edit = m_storage.get(site.getId());
 				edit.regenerateIds();
 				m_storage.save(edit);
 
@@ -298,7 +298,7 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 			}
 			else
 			{
-				M_log.warn("regenerateAllSiteIds: site: " + site.getId() + " could not be edited.");
+				M_log.warn("regenerateAllSiteIds: null site in list");
 			}
 		}
 	}
@@ -740,7 +740,7 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 		}
 		else
 		{
-			String roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap/site/" + id);
+			String roleswap = securityService().getUserEffectiveRole(rv.getReference());
 			if (roleswap!=null) // if in a swapped mode, treat it as a normal site else do the normal unpublished check
 				unlock(SITE_VISIT, rv.getReference());
 			else
@@ -1418,7 +1418,9 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 	public void join(String id) throws IdUnusedException, PermissionException
 	{
 		String user = sessionManager().getCurrentSessionUserId();
-		if (user == null) throw new PermissionException(user, AuthzGroupService.SECURE_UPDATE_OWN_AUTHZ_GROUP, siteReference(id));
+		if (user == null) {
+		    throw new PermissionException(null, AuthzGroupService.SECURE_UPDATE_OWN_AUTHZ_GROUP, siteReference(id));
+		}
 
 		// get the site
 		Site site = getDefinedSite(id);
@@ -2678,24 +2680,27 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 				{
 					msg.append(this + "cannot find site: " + siteId);
 				}
+				else
+				{		
+					site.setEvent(SECURE_ADD_SITE);
 
-				site.setEvent(SECURE_ADD_SITE);
 
-				if (creatorId != null)
-				{
-					el.setAttribute("created-id", creatorId);
-				}
+					if (creatorId != null)
+					{
+						el.setAttribute("created-id", creatorId);
+					}
 
-				// assign source site's attributes to the target site
-				((BaseSite) site).set(new BaseSite(this,el), false);
+					// assign source site's attributes to the target site
+					((BaseSite) site).set(new BaseSite(this,el), false);
 
-				try
-				{
-					save(site);
-				}
-				catch (Throwable t)
-				{
-					M_log.warn(".merge: " + t);
+					try
+					{
+						save(site);
+					}
+					catch (Throwable t)
+					{
+						M_log.warn(".merge: " + t);
+					}
 				}
 			}
 			catch (PermissionException ignore)

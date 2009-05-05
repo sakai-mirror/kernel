@@ -445,4 +445,9 @@ public class MockContentEntity implements ContentEntity, GroupAwareEdit
 		return this.isActiveEdit;
 	}
 
+	public void setConditionallyReleased(boolean isConditionallyReleased) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

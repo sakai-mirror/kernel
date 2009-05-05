@@ -72,26 +72,29 @@ public class JCRSecurityServiceAdapterImpl implements JCRSecurityServiceAdapter
 			if (functionManager == null)
 			{
 				log.error("functionManager has not been set");
+				error = true;
 			}
+			else
+			{
 
-			List<String> l = functionManager.getRegisteredFunctions("jcr."); //$NON-NLS-1$
-			if (!l.contains(JCR_ADD))
-			{
-				functionManager.registerFunction(JCR_ADD);
+				List<String> l = functionManager.getRegisteredFunctions("jcr."); //$NON-NLS-1$
+				if (!l.contains(JCR_ADD))
+				{
+					functionManager.registerFunction(JCR_ADD);
+				}
+				if (!l.contains(JCR_GET))
+				{
+					functionManager.registerFunction(JCR_GET);
+				}
+				if (!l.contains(JCR_REMOVE))
+				{
+					functionManager.registerFunction(JCR_REMOVE);
+				}
+				if (!l.contains(JCR_UPDATE))
+				{
+					functionManager.registerFunction(JCR_UPDATE);
+				}
 			}
-			if (!l.contains(JCR_GET))
-			{
-				functionManager.registerFunction(JCR_GET);
-			}
-			if (!l.contains(JCR_REMOVE))
-			{
-				functionManager.registerFunction(JCR_REMOVE);
-			}
-			if (!l.contains(JCR_UPDATE))
-			{
-				functionManager.registerFunction(JCR_UPDATE);
-			}
-
 		}
 		catch (Throwable t)
 		{

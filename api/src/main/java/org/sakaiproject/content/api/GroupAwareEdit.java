@@ -84,6 +84,12 @@ public interface GroupAwareEdit extends GroupAwareEntity, Edit
 	 * are removed.
 	 */
 	public void setHidden();
+	
+	/**
+	 * Determines whether the availability of this entity is determined by
+	 * an optional condition such as "Quiz 1 grade is less than 80"
+	 */
+	public void setConditionallyReleased(boolean isConditionallyReleased);
 
 	/**
 	 * Set all of the attributes that determine availability.  If hidden is true, releaseDate  
