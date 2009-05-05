@@ -28,7 +28,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -428,7 +427,7 @@ public class BasicEmailService implements EmailService
 				if (contentTypeHeader != null && charset != null)
 					contentTypeHeader = contentTypeHeader.replaceAll(charset, CharacterSet.ISO_8859_1);
 				else if (contentTypeHeader != null)
-					contentTypeHeader += "; charset=" + CharacterSet.ISO_8859_1;
+					contentTypeHeader += "; " + CharacterSet.ISO_8859_1;
 				charset = CharacterSet.ISO_8859_1;
 			}
 			else if (canUseCharset(content, CharacterSet.WINDOWS_1252))
@@ -436,7 +435,7 @@ public class BasicEmailService implements EmailService
 				if (contentTypeHeader != null && charset != null)
 					contentTypeHeader = contentTypeHeader.replaceAll(charset, CharacterSet.WINDOWS_1252);
 				else if (contentTypeHeader != null)
-					contentTypeHeader += "; charset=" + CharacterSet.WINDOWS_1252;
+					contentTypeHeader += "; " + CharacterSet.WINDOWS_1252;
 				charset = CharacterSet.ISO_8859_1;
 			}
 			else
@@ -475,14 +474,6 @@ public class BasicEmailService implements EmailService
 				msg.addHeaderLine(EmailHeaders.CONTENT_TRANSFER_ENCODING + ": quoted-printable");
 			}
 
-			if (M_log.isDebugEnabled()) {
-				M_log.debug("HeaderLines received were: ");
-				Enumeration allHeaders = msg.getAllHeaderLines();
-				while(allHeaders.hasMoreElements()) {
-					M_log.debug((String)allHeaders.nextElement());
-				}
-			}
-			
 			sendMessageAndLog(from, to, subject, headerTo, start, msg);
 		}
 		catch (MessagingException e)
