@@ -16,7 +16,7 @@ import org.sakaiproject.event.api.NotificationAction;
  * be invoked to perform some action.
  *
  */
-public interface Rule extends Predicate, NotificationAction  {
+public interface Rule extends Predicate, NotificationAction {
 
 	/**
 	 * A Rule may have an AND relationship among its Predicates, or it may have an OR.

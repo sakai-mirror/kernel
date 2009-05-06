@@ -59,21 +59,6 @@ public class ContentHostingService
 
 	private static org.sakaiproject.content.api.ContentHostingService m_instance = null;
 	
-	public static java.lang.String PROP_CONDITIONAL_RELEASE = org.sakaiproject.content.api.ContentHostingService.PROP_CONDITIONAL_RELEASE;
-	
-	public static java.lang.String PROP_CONDITIONAL_NOTIFICATION_ID = org.sakaiproject.content.api.ContentHostingService.PROP_CONDITIONAL_NOTIFICATION_ID;
-	
-	/** Property for storing the submittedFunctionName for conditional release on this entity */
-	public static final String PROP_SUBMITTED_FUNCTION_NAME = org.sakaiproject.content.api.ContentHostingService.PROP_SUBMITTED_FUNCTION_NAME;
-
-	/** Property for storing the submittedResourceFilter for conditional release on this entity */
-	public static final String PROP_SUBMITTED_RESOURCE_FILTER = org.sakaiproject.content.api.ContentHostingService.PROP_SUBMITTED_RESOURCE_FILTER;
-
-	/** Property for storing the selectedConditionKey for conditional release on this entity */	
-	public static final String PROP_SELECTED_CONDITION_KEY = org.sakaiproject.content.api.ContentHostingService.PROP_SELECTED_CONDITION_KEY;
-	
-	public static final String PROP_CONDITIONAL_RELEASE_ARGUMENT = org.sakaiproject.content.api.ContentHostingService.PROP_CONDITIONAL_RELEASE_ARGUMENT;
-	
 	public static final String CONDITIONAL_ACCESS_LIST = org.sakaiproject.content.api.ContentHostingService.CONDITIONAL_ACCESS_LIST;
 
 	public static java.lang.String APPLICATION_ID = org.sakaiproject.content.api.ContentHostingService.APPLICATION_ID;
