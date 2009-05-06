@@ -1,7 +1,10 @@
 package org.sakaiproject.conditions.api;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.sakaiproject.conditions.api.Rule.Conjunction;
 
 public interface ConditionService {
 	
@@ -38,6 +41,12 @@ public interface ConditionService {
 	public String getClassNameForEvent(String eventName);
 
 	public Map<String, String> getEntitiesForServiceAndContext(String serviceName, String contextId);
+
+	public Condition makeBooleanExpression(String eventDataClass,
+			String missingTermQuery, String operatorValue, Object argument);
+
+	public Rule makeRule(String resourceId, List<Condition> predicates,
+			Conjunction or);
 
 
 }

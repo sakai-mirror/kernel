@@ -12,6 +12,10 @@
 	   <bean id="datetimeJob"
 	   		class="org.sakaiproject.conditions.impl.job.DatetimeEventJob">
 	   	</bean>
+	   	
+	   	<bean id="org.sakaiproject.conditions.impl.ResourceReleaseRule"
+	   		class="org.sakaiproject.conditions.impl.ResourceReleaseRule">
+	   	</bean>
 
 	   <!-- this is the helper that will register the above bean with the job scheduler -->
 	   <bean id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.DatetimeEventJob"

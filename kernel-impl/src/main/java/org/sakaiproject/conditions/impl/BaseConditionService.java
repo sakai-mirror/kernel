@@ -1,6 +1,7 @@
 package org.sakaiproject.conditions.impl;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
@@ -13,6 +14,7 @@ import org.sakaiproject.conditions.api.ConditionProvider;
 import org.sakaiproject.conditions.api.ConditionService;
 import org.sakaiproject.conditions.api.ConditionTemplateSet;
 import org.sakaiproject.conditions.api.Rule;
+import org.sakaiproject.conditions.api.Rule.Conjunction;
 
 
 public class BaseConditionService implements ConditionService, Observer {
@@ -23,10 +25,7 @@ public class BaseConditionService implements ConditionService, Observer {
 	private Map<String, String> eventLookup = new HashMap<String, String>();
 	private Map<String, ConditionProvider> registeredProviders = new HashMap<String, ConditionProvider>();
 	
-	public void init() {
-		eventLookup.put("gradebook.updateItemScore", "org.sakaiproject.conditions.impl.AssignmentGrading");
-		eventLookup.put("gradebook.updateAssignment", "org.sakaiproject.conditions.impl.AssignmentUpdate");
-	}
+	public void init() { }
 
 	public String addRule(String eventType, Rule rule) {
 		return "foo";
@@ -39,8 +38,7 @@ public class BaseConditionService implements ConditionService, Observer {
 	}
 
 	public Set<String> getRegisteredServiceNames() {
-		// TODO Auto-generated method stub
-		return null;
+		return registeredProviders.keySet();
 	}
 
 	public void registerConditionTemplates(
@@ -68,7 +66,17 @@ public class BaseConditionService implements ConditionService, Observer {
 	}
 
 	public void registerConditionProvider(ConditionProvider provider) {
+		this.eventLookup.putAll(provider.getEventToDomainClassMapping());
 		this.registeredProviders.put(provider.getId(), provider);
+	}
+	
+	public Condition makeBooleanExpression(String eventDataClass, String missingTermQuery, String operatorValue, Object argument) {
+		return new BooleanExpression(eventDataClass, missingTermQuery, operatorValue, argument);
+	}
+
+	public Rule makeRule(String resourceId, List<Condition> predicates,
+			Conjunction or) {
+		return new ResourceReleaseRule(resourceId, predicates, Rule.Conjunction.OR);
 	}
 
 }

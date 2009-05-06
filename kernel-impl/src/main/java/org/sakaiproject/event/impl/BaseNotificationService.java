@@ -1044,7 +1044,8 @@ public abstract class BaseNotificationService implements NotificationService, Ob
 						// create the class
 						try
 						{
-							m_action = (NotificationAction) Class.forName(className).newInstance();
+							Class<?> actionClass = ComponentManager.get(className).getClass();
+							m_action = (NotificationAction) actionClass.newInstance();
 
 							// let it pick up it's settings
 							m_action.set(element);

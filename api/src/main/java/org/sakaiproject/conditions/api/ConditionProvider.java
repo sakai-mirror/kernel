@@ -7,5 +7,6 @@ public interface ConditionProvider {
 	String getId();
 	
 	Map<String, String> getEntitiesForContext(String contextId);
-
+	
+	Map<String, String> getEventToDomainClassMapping();
 }
