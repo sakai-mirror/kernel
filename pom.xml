@@ -286,7 +286,7 @@
             <uniqueVersion>false</uniqueVersion>
             <id>sakai-maven-snapshots</id>
             <name>Sakai Snapshot repository</name>
-            <url>http://source.sakaiproject.org/maven2-snapshots</url>
+            <url>davs:http://source.sakaiproject.org/maven2-snapshots</url>
             <layout>default</layout>
         </snapshotRepository>
         <repository>
