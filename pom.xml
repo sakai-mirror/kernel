@@ -290,11 +290,11 @@
             <layout>default</layout>
         </snapshotRepository>
         <repository>
-            <uniqueVersion>false</uniqueVersion>
-            <id>local</id>
-            <name>Local Test</name>
-            <url>file:///tmp/maven2</url>
-            <layout>default</layout>
+           <uniqueVersion>false</uniqueVersion>
+           <id>sakai-maven2</id>
+           <name>Sakai maven2 repository</name>
+           <url>dav:https://source.sakaiproject.org/maven2/org/sakaiproject/kernel/</url>
+           <layout>default</layout>
         </repository>
         <site>
             <id>local</id>
