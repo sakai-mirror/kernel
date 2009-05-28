@@ -1531,11 +1531,12 @@ public abstract class BaseContentService implements ContentHostingService, Cache
 			String userId = SessionManager.getCurrentSessionUserId();
 			
 			// if we are in a roleswapped state, we want to ignore the creator check since it would not necessarily reflect an alternate role
+			// FIXME - unsafe check (vulnerable to collision of siteids that are the same as path elements in a resource)
 			String[] refs = StringUtil.split(id, Entity.SEPARATOR);
 			String roleswap = null;
 			for (int i = 0; i < refs.length; i++)
 			{
-				roleswap = (String)SessionManager.getCurrentSession().getAttribute("roleswap/site/" + refs[i]);
+				roleswap = SecurityService.getUserEffectiveRole("/site/" + refs[i]);
 				if (roleswap!=null)
 					break;
 			}
