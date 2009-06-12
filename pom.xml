@@ -272,13 +272,13 @@
     </contributors>
     <scm>
         <connection>
-            scm:svn:https://source.sakaiproject.org/svn/kernel/branches/kernel-1.0.x
+            scm:svn:https://source.sakaiproject.org/svn/kernel/branches/uct_1.0.10
         </connection>
         <developerConnection>
-            scm:svn:https://source.sakaiproject.org/svn/kernel/branches/kernel-1.0.x
+            scm:svn:https://source.sakaiproject.org/svn/kernel/branches/uct_1.0.10
         </developerConnection>
         <url>
-            https://source.sakaiproject.org/svn/kernel/branches/kernel-1.0.x
+            https://source.sakaiproject.org/svn/kernel/branches/uct_1.0.10
         </url>
     </scm>
     <distributionManagement>
