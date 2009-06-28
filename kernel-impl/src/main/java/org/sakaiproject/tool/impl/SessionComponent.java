@@ -21,6 +21,12 @@
 
 package org.sakaiproject.tool.impl;
 
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
+import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -35,6 +41,8 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
 import javax.servlet.http.HttpSessionContext;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -74,6 +82,9 @@ public abstract class SessionComponent implements SessionManager
 	/** Key in the ThreadLocalManager for access to the current servlet context (from tool-util/servlet/RequestFilter). */
 	protected final static String CURRENT_SERVLET_CONTEXT = "org.sakaiproject.util.RequestFilter.servlet_context";
 
+	/** Salt for predictable session IDs */
+	protected byte[] salt = null; 
+	
 	/**********************************************************************************************************************************************************************************************************************************************************
 	 * Dependencies
 	 *********************************************************************************************************************************************************************************************************************************************************/
@@ -149,6 +160,18 @@ public abstract class SessionComponent implements SessionManager
 			m_maintenance = new Maintenance();
 			m_maintenance.start();
 		}
+                
+        // Salt generation 64 bits long
+
+		salt = new byte[8];
+		SecureRandom random;
+		try {
+			random = SecureRandom.getInstance("SHA1PRNG");
+	        random.nextBytes(salt);
+		} catch (NoSuchAlgorithmException e) {
+			M_log.warn("Random number generator not available - using time randomness");
+			salt = String.valueOf(System.currentTimeMillis()).getBytes();
+		}
 
 		M_log.info("init(): interval: " + m_defaultInactiveInterval + " refresh: " + m_checkEvery);
 	}
@@ -180,7 +203,32 @@ public abstract class SessionComponent implements SessionManager
 
 		return s;
 	}
-
+	
+	public String makeSessionId(HttpServletRequest req, Principal principal)
+	{
+		MessageDigest sha;
+		String sessionId;
+		
+		try {
+			sha = MessageDigest.getInstance("SHA-1");
+			
+			sha.reset();
+			sha.update(principal.getName().getBytes("UTF-8"));
+			sha.update((byte) 0x0a);
+			sha.update(req.getHeader("user-agent").getBytes("UTF-8"));
+			sha.update(salt);			 
+			
+			sessionId = byteArrayToHexStr(sha.digest());			 
+		} catch (NoSuchAlgorithmException e) {
+			// Fallback to new uuid rather than a non-hashed id
+			sessionId = idManager().createUuid();
+		} catch (UnsupportedEncodingException e) {
+			sessionId = idManager().createUuid();
+		}
+		
+		return sessionId;
+	}
+	
 	/**
 	 * @inheritDoc
 	 */
@@ -1278,4 +1326,19 @@ public abstract class SessionComponent implements SessionManager
 			}
 		}
 	}
+
+	private static String byteArrayToHexStr(byte[] data)
+	{
+         char[] chars = new char[data.length * 2];
+         for (int i = 0; i < data.length; i++)
+         {
+             byte current = data[i];
+             int hi = (current & 0xF0) >> 4;
+             int lo = current & 0x0F;
+             chars[2*i] =  (char) (hi < 10 ? ('0' + hi) : ('A' + hi - 10));
+             chars[2*i+1] =  (char) (lo < 10 ? ('0' + lo) : ('A' + lo - 10));
+         }
+         return new String(chars);
+	}
+
 }
