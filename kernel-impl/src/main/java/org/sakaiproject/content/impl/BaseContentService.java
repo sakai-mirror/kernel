@@ -2545,6 +2545,7 @@ public abstract class BaseContentService implements ContentHostingService, Cache
 		// clear thread-local cache SAK-12126
 		ThreadLocalManager.set("members@" + edit.getId(), null);
 		ThreadLocalManager.set("getResources@" + edit.getId(), null);
+		ThreadLocalManager.set("getCollections@" + edit.getId(), null);
 		
 		// check for members
 		List members = edit.getMemberResources();
@@ -2621,6 +2622,7 @@ public abstract class BaseContentService implements ContentHostingService, Cache
 		// clear thread-local cache SAK-12126
 		ThreadLocalManager.set("members@" + id, null);
 		ThreadLocalManager.set("getResources@" + id, null);
+		ThreadLocalManager.set("getCollections@" + edit.getId(), null);
 		
 		// clear of all members (recursive)
 		// Note: may fail if something's in use or not permitted. May result in a partial clear.
