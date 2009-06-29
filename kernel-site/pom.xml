@@ -4,22 +4,22 @@
   <parent>
     <artifactId>kernel</artifactId>
     <groupId>org.sakaiproject</groupId>
-    <version>1.0.10-SNAPSHOT</version>
+    <version>1.0.10</version>
     <relativePath>..</relativePath>
   </parent>
   <name>Sakai Kernel Site Skin</name>
   <groupId>org.sakaiproject.kernel</groupId>
   <artifactId>kernel-site</artifactId>
-  <version>1.0.10-SNAPSHOT</version>
+  <version>1.0.10</version>
   <organization>
     <name>The Sakai Foundation</name>
     <url>http://www.sakaiproject.org/</url>
   </organization>
   <inceptionYear>2008</inceptionYear>
   <scm>
-    <connection>scm:svn:https://source.sakaiproject.org/svn/kernel/branches/uct_1.0.10/kernel-site</connection>
-    <developerConnection>scm:svn:https://source.sakaiproject.org/svn/kernel/branches/uct_1.0.10/kernel-site</developerConnection>
-    <url>https://source.sakaiproject.org/svn/kernel/branches/uct_1.0.10/kernel-site</url>
+    <connection>scm:svn:https://source.sakaiproject.org/svn/kernel/tags/kernel-1.0.10</connection>
+    <developerConnection>scm:svn:https://source.sakaiproject.org/svn/kernel/tags/kernel-1.0.10</developerConnection>
+    <url>https://source.sakaiproject.org/svn/kernel/tags/kernel-1.0.10</url>
   </scm>
 
   <packaging>jar</packaging>
