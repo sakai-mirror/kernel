@@ -799,7 +799,6 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>dashboard-maven-plugin</artifactId>
             </plugin>
-            <!--
             <plugin>
                 <artifactId>maven-changelog-plugin</artifactId>
                 <configuration>
@@ -808,8 +807,7 @@
                     <headingDateFormat>yyyy-MM-dd</headingDateFormat>
                     <aggregate>true</aggregate>
                 </configuration>
-            </plugin>
-            -->   
+            </plugin> 
         </plugins>
     </reporting>
     <build>
