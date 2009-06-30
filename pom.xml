@@ -12,7 +12,7 @@
     </organization>
     <issueManagement>
         <system>jira</system>
-        <url>http://bugs.sakaiproject.org/jira/browse/KNL</url>
+        <url>http://jira.sakaiproject.org/browse/KNL</url>
     </issueManagement>
     <ciManagement>
         <system>continuum</system>
