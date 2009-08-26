@@ -37,6 +37,7 @@ import org.sakaiproject.id.cover.IdManager;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SitePage;
 import org.sakaiproject.site.api.ToolConfiguration;
+import org.sakaiproject.tool.cover.ActiveToolManager;
 import org.sakaiproject.site.cover.SiteService;
 import org.sakaiproject.tool.api.Tool;
 import org.sakaiproject.util.BaseResourceProperties;
@@ -92,7 +93,7 @@ public class BaseSitePage implements SitePage, Identifiable
 
 	/** The site skin, in case I have no m_site. */
 	protected String m_skin = null;
-
+   
 	private BaseSiteService siteService;
 
 	/**
@@ -337,13 +338,47 @@ public class BaseSitePage implements SitePage, Identifiable
 			}
 		}
 	}
-
+	
 	/**
 	 * @inheritDoc
 	 */
 	public String getTitle()
 	{
-		return m_title;
+		// check for special home page tool id
+		if (	getProperties().get(IS_HOME_PAGE) != null )
+		{
+			 String title = ActiveToolManager.getLocalizedToolProperty(HOME_TOOL_ID, "title");
+			 if ( title != null )
+				 return title;
+			 else
+				 return m_title;
+		}
+			
+		// if	 more than one tool on this page, just return the default page title
+		else if ( getTools().size() != 1 )
+		{
+			return m_title;
+		}
+			
+		// Get the toolId of the first tool associated with this page
+		String toolId = ((BaseToolConfiguration) (getTools().get(0))).getToolId();
+		
+		// Custom page/tool titles are not localized (e.g. News, Web Content)
+		if ( getTitleCustom() )
+			return m_title;
+			
+		// otherwise, return attempt to return a localized title
+		else {
+            Tool localTool = ActiveToolManager.getTool(toolId);
+            if (localTool != null) {
+            	return ActiveToolManager.getTool(toolId).getTitle();
+            }
+        }
+
+        //If all this fails, return something
+        if (M_log.isDebugEnabled()) M_log.debug("Returning default m_title:" + m_title + " for toolId:" + toolId);
+
+        return m_title;
 	}
 
 	/**
@@ -484,6 +519,44 @@ public class BaseSitePage implements SitePage, Identifiable
 		m_title = StringUtil.trimToNull(title);
 	}
 
+	/**
+	 * @inheritDoc
+	 */
+	public void setTitleCustom(boolean custom)
+	{
+		getProperties().addProperty(PAGE_CUSTOM_TITLE_PROP, String.valueOf(custom));
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public boolean getTitleCustom()
+	{
+		String custom = (String)getProperties().get(PAGE_CUSTOM_TITLE_PROP);
+		if ( custom == null )
+			return getTitleCustomLegacy();
+		else
+			return Boolean.parseBoolean(custom);
+	}
+
+	/** Checks if this page's tool is a legacy iframe, news or linktool
+	 ** that should assumed to have a custom page title 
+	 ** (assumptions can be disabled with legacyPageTitleCustom = false).
+	 **/	 
+	private boolean getTitleCustomLegacy()
+	{
+		if ( ! ServerConfigurationService.getBoolean("legacyPageTitleCustom", true) )
+			return false;
+      
+		// Get the toolId of the first tool associated with this page
+		String toolId = ((BaseToolConfiguration) (getTools().get(0))).getToolId();
+      
+		if ( "sakai.iframe".equals(toolId) || "sakai.news".equals(toolId) || "sakai.rutgers.linktool".equals(toolId) )
+			return true;
+		else
+			return false;
+	}
+   
 	/**
 	 * @inheritDoc
 	 */

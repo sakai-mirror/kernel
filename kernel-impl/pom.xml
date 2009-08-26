@@ -32,14 +32,13 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
-          <testFailureIgnore>true</testFailureIgnore> <!--  Until the tests are made to work. -->
+          <testFailureIgnore>false</testFailureIgnore> 
 <!--
 						<includes>
 						<include>**/AllTests*</include>
 						</includes>
 					-->
           <forkMode>pertest</forkMode>
-          <argLine>-Xmx256m -enableassertions ${maven.test.jvmargs}</argLine>
           <systemProperties>
             <property>
               <name>derby.system.durability</name>
@@ -169,8 +168,9 @@
       <artifactId>hibernate</artifactId>
     </dependency>
     <dependency>
-      <groupId>dumbster</groupId>
-      <artifactId>dumbster</artifactId>
+      <groupId>org.subethamail</groupId>
+      <artifactId>subethasmtp</artifactId>
+      <version>2.1.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>

@@ -3,7 +3,7 @@
  * $Id$
  ***********************************************************************************
  *
- * Copyright (c) 2003, 2004, 2005, 2006, 2008 Sakai Foundation
+ * Copyright (c) 2005, 2006, 2008 Sakai Foundation
  *
  * Licensed under the Educational Community License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,35 +19,24 @@
  *
  **********************************************************************************/
 
-package org.sakaiproject.util;
-
-import java.util.Enumeration;
-import java.util.Iterator;
+package org.sakaiproject.authz.api;
 
 /**
  * <p>
- * IteratorEnumeration is an enumeration over an iterator.
+ * RoleNotDefinedException is thrown whenever something tries to use an Authz Role that does not exist in a particular Authz Group.
  * </p>
- * @deprecated use Commoms-Collection IteratorEnumeration
  */
-
-public class IteratorEnumeration implements Enumeration
+public class RoleNotDefinedException extends Exception
 {
-	/** The iterator over which this enumerates. */
-	protected Iterator m_iterator = null;
+	private String m_id = null;
 
-	public IteratorEnumeration(Iterator i)
+	public RoleNotDefinedException(String id)
 	{
-		m_iterator = i;
+		m_id = id;
 	}
 
-	public boolean hasMoreElements()
+	public String toString()
 	{
-		return m_iterator.hasNext();
-	}
-
-	public Object nextElement()
-	{
-		return m_iterator.next();
+		return super.toString() + " id=" + m_id;
 	}
 }

@@ -337,7 +337,6 @@ public class BaseDbSingleStorage implements DbSingleStorage
 	 */
 	public int countAllResources()
 	{
-		List all = new Vector();
 
 		// read all count
 		String sql = singleStorageSql.getNumRowsSql(m_resourceTableName);
@@ -349,7 +348,7 @@ public class BaseDbSingleStorage implements DbSingleStorage
 				try
 				{
 					int count = result.getInt(1);
-					return new Integer(count);
+					return Integer.valueOf(count);
 				}
 				catch (SQLException ignore)
 				{
@@ -368,8 +367,6 @@ public class BaseDbSingleStorage implements DbSingleStorage
 	 */
 	public int countSelectedResourcesWhere(String sqlWhere)
 	{
-		List all = new Vector();
-
 		// read all where count
 		String sql = singleStorageSql.getNumRowsSql(m_resourceTableName, sqlWhere);
 		List results = m_sql.dbRead(sql, null, new SqlReader()
@@ -379,7 +376,7 @@ public class BaseDbSingleStorage implements DbSingleStorage
 				try
 				{
 					int count = result.getInt(1);
-					return new Integer(count);
+					return Integer.valueOf(count);
 				}
 				catch (SQLException ignore)
 				{

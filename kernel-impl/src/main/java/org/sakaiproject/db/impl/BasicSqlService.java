@@ -106,7 +106,7 @@ public abstract class BasicSqlService implements SqlService
 			LOG.debug("setCommitAfterRead(String " + value + ")");
 		}
 
-		m_commitAfterRead = new Boolean(value).booleanValue();
+		m_commitAfterRead = Boolean.valueOf(value).booleanValue();
 	}
 
 	/** Database vendor used; possible values are oracle, mysql, hsqldb (default). */
@@ -152,7 +152,7 @@ public abstract class BasicSqlService implements SqlService
 			LOG.debug("setShowSql(String " + value + ")");
 		}
 
-		m_showSql = new Boolean(value).booleanValue();
+		m_showSql = Boolean.valueOf(value).booleanValue();
 	}
 
 	/** Configuration: number of on-deadlock retries for save. */
@@ -185,7 +185,7 @@ public abstract class BasicSqlService implements SqlService
 			LOG.debug("setAutoDdl(String " + value + ")");
 		}
 
-		m_autoDdl = new Boolean(value).booleanValue();
+		m_autoDdl = Boolean.valueOf(value).booleanValue();
 	}
 
 	/** contains a map of the database dependent handlers. */
@@ -924,7 +924,7 @@ public abstract class BasicSqlService implements SqlService
 
 		if (LOG.isDebugEnabled())
 		{
-			LOG.debug("dbWriteBinary(String " + sql + ", Object[] " + Arrays.toString(fields) + ", byte[] " + var + ", int " + offset + ", int " + len + ")");
+			LOG.debug("dbWriteBinary(String " + sql + ", Object[] " + Arrays.toString(fields) + ", byte[] " + Arrays.toString(var) + ", int " + offset + ", int " + len + ")");
 		}
 
 		// for DEBUG
@@ -1411,7 +1411,7 @@ public abstract class BasicSqlService implements SqlService
 			{
 				if (keys.next())
 				{
-					rv = new Long(keys.getLong(1));
+					rv = Long.valueOf(keys.getLong(1));
 				}
 			}
 
@@ -1512,7 +1512,7 @@ public abstract class BasicSqlService implements SqlService
 
 		if (LOG.isDebugEnabled())
 		{
-			LOG.debug("dbReadBlobAndUpdate(String " + sql + ", byte[] " + content + ")");
+			LOG.debug("dbReadBlobAndUpdate(String " + sql + ", byte[] " + Arrays.toString(content) + ")");
 		}
 
 		if (!sqlServiceSql.canReadAndUpdateBlob())
@@ -2238,7 +2238,7 @@ public abstract class BasicSqlService implements SqlService
 		{
 			if (SWC_LOG.isDebugEnabled())
 			{
-				SWC_LOG.debug("read(byte " + b + ")");
+				SWC_LOG.debug("read(byte " + Arrays.toString(b) + ")");
 			}
 
 			return m_stream.read(b);
@@ -2248,7 +2248,7 @@ public abstract class BasicSqlService implements SqlService
 		{
 			if (SWC_LOG.isDebugEnabled())
 			{
-				SWC_LOG.debug("read(byte " + b + ", int " + off + ", int " + len + ")");
+				SWC_LOG.debug("read(byte " + Arrays.toString(b) + ", int " + off + ", int " + len + ")");
 			}
 
 			return m_stream.read(b, off, len);

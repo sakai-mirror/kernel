@@ -1225,7 +1225,7 @@ public class Blob implements Cloneable, Serializable {
 
 		// Special case
 		if ((pos == 0) && (len == 0)) {
-			return new String();
+			return "";
 		}
 
 		// Is the data within bounds?
@@ -1347,7 +1347,7 @@ public class Blob implements Cloneable, Serializable {
 				}
 
 				// All done
-				return new Byte(ret);
+				return Byte.valueOf(ret);
 			} // end nextElement()
 
 		}; // end Enumeration
@@ -1416,7 +1416,13 @@ public class Blob implements Cloneable, Serializable {
 
 	} // end equals()
 
-
+	/**
+	 * Objects that are equal must have the same hashcode
+	 */
+	public synchronized int hashCode() {
+		return toString().hashCode();
+	}
+	
 	/**
 	* Searches for a byte and returns an index to the first one found.
 	* @param b The byte to search for.
@@ -1767,8 +1773,8 @@ public class Blob implements Cloneable, Serializable {
 	*
 	*/
 	public synchronized String toString() {
-		return new String("Blob[length=" + size +
-		                  ";checksum=" + toHex(checksum()) + "]");
+		return "Blob[length=" + size +
+		                  ";checksum=" + toHex(checksum()) + "]";
 	}
 
 
@@ -2041,7 +2047,7 @@ public class Blob implements Cloneable, Serializable {
 	* trying to write the linked list.  Damn!
 	*
 	*/
-	protected void writeObject(ObjectOutputStream out) throws IOException {
+	private void writeObject(ObjectOutputStream out) throws IOException {
 		out.defaultWriteObject();
 
 		byte a[] = getBytes();
@@ -2052,7 +2058,7 @@ public class Blob implements Cloneable, Serializable {
 	* A specialized object read routine.
 	*
 	*/
-	protected void readObject(ObjectInputStream in) throws IOException,
+	private void readObject(ObjectInputStream in) throws IOException,
 	                                                     ClassNotFoundException {
 		in.defaultReadObject();
 

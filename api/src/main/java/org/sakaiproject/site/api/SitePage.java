@@ -43,6 +43,15 @@ public interface SitePage extends Edit, Serializable
 
 	public static final String PAGE_CATEGORY_PROP = "sitePage.pageCategory";
 
+	/** flag custom page title (excluded from localization) */
+	public static final String PAGE_CUSTOM_TITLE_PROP = "sitePage.customTitle";
+   
+	/** boolean page property for site home page **/
+	public static final String IS_HOME_PAGE = "is_home_page";
+
+	/** Special page tool id for home page **/
+	public static final String HOME_TOOL_ID	= "sakai.home";
+
 	/** @return The human readable Title of this SitePage. */
 	public String getTitle();
 
@@ -105,6 +114,21 @@ public interface SitePage extends Edit, Serializable
 	 *        The new title.
 	 */
 	public void setTitle(String title);
+
+	/**
+	 * Set/Reset boolean flag indicating a custom page title
+	 * 
+	 * @param custom
+	 *        True if custom page title, otherwise false
+	 */
+	public void setTitleCustom(boolean custom);
+
+	/**
+	 * Get boolean flag indicating a custom page title
+	 * 
+	 * @return True if custom page title, otherwise false
+	 */
+	public boolean getTitleCustom();
 
 	/**
 	 * Replace page title with its localized value and localize page's tools
