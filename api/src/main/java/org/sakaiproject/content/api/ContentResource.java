@@ -23,10 +23,7 @@ package org.sakaiproject.content.api;
 
 import java.io.InputStream;
 
-import org.sakaiproject.content.api.ContentEntity;
-import org.sakaiproject.content.api.GroupAwareEntity;
 import org.sakaiproject.exception.ServerOverloadException;
-import org.sakaiproject.time.api.Time;
 
 /**
 * <p>ContentResource is the core interface for a Resource object in the GenericContentHostingService.</p>
@@ -38,7 +35,7 @@ public interface ContentResource
 	* Access the content byte length.
 	* @return The content byte length.
 	*/
-	public int getContentLength();
+	public long getContentLength();
 
 	/**
 	* Access the resource MIME type.

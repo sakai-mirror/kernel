@@ -591,10 +591,10 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			if (criteria != null)
 			{
 				criteria = "%" + criteria + "%";
-				String where = "( UPPER(REALM_ID) like UPPER(?) or UPPER(PROVIDER_ID) like UPPER(?) )";
+				String where = "( UPPER(REALM_ID) like ? or UPPER(PROVIDER_ID) like ? )";
 				Object[] fields = new Object[2];
-				fields[0] = criteria;
-				fields[1] = criteria;
+				fields[0] = criteria.toUpperCase();
+				fields[1] = criteria.toUpperCase();
 
 				// paging
 				if (page != null)
@@ -659,10 +659,10 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			if (criteria != null)
 			{
 				criteria = "%" + criteria + "%";
-				String where = "( UPPER(REALM_ID) like UPPER(?) or UPPER(PROVIDER_ID) like UPPER(?) )";
+				String where = "( UPPER(REALM_ID) like ? or UPPER(PROVIDER_ID) like ? )";
 				Object[] fields = new Object[2];
-				fields[0] = criteria;
-				fields[1] = criteria;
+				fields[0] = criteria.toUpperCase();
+				fields[1] = criteria.toUpperCase();
 
 				rv = countSelectedResources(where, fields);
 			}
@@ -1601,7 +1601,7 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 						try
 						{
 							int count = result.getInt(1);
-							return new Integer(count);
+							return Integer.valueOf(count);
 						}
 						catch (SQLException ignore)
 						{
@@ -1636,7 +1636,7 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 							try
 							{
 								int count = result.getInt(1);
-								return new Integer(count);
+								return Integer.valueOf(count);
 							}
 							catch (SQLException ignore)
 							{
@@ -1668,7 +1668,7 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 					try
 					{
 						int count = result.getInt(1);
-						return new Integer(count);
+						return Integer.valueOf(count);
 					}
 					catch (SQLException ignore)
 					{

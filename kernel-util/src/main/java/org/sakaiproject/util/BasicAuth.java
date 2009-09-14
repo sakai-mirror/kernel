@@ -33,27 +33,27 @@ import org.sakaiproject.user.api.Authentication;
 import org.sakaiproject.user.api.AuthenticationException;
 import org.sakaiproject.user.api.Evidence;
 import org.sakaiproject.user.cover.AuthenticationManager;
-import org.sakaiproject.util.commonscodec.CommonsCodecBase64;
+import org.apache.commons.codec.binary.Base64;
 import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.event.cover.UsageSessionService;
 
 
 /**
- * This is implemented in a filter, since most httpclients (ie non browser
- * clients) dont know what to do with a redirect.
+ * This is implemented in a filter, since most httpclients (i.e. non browser
+ * clients) don't know what to do with a redirect.
  * 
  * There are 2 mechanisms for selecting basic authentication. 1. The client is
  * not a browser as reported by the BasicAuthFilter.isBrowser method. 2. The
  * user requested basic auth in the URL and the
  * BasicAuthFilter.requestedBasicAuth confirms this.
  * 
- * in sakai.properties if allowbasicauth.login = true, then this feature is
+ * in sakai.properties if allow.basic.auth.login = true, then this feature is
  * enabled in BasicAuthFilter, the determination of non browser clients is
  * driven by matching user agent headers against a sequence of regex patterns.
  * These are defined in BasicAuthFilter with the form if the pattern matches a
  * browser 1pattern or if it does not match 0pattern
  * 
- * Addtional patterns may be added to sakai.properties as a multiple string
+ * Additional patterns may be added to sakai.properties as a multiple string
  * property against login.browser.user.agent
  * 
  * The list is matched in order, the first match found being definitive. If no
@@ -104,8 +104,8 @@ public class BasicAuth {
 	 * 
 	 */
 	public void init() {
-		ArrayList pat = new ArrayList();
-		ArrayList mat = new ArrayList();
+		ArrayList<Pattern> pat = new ArrayList<Pattern>();
+		ArrayList<String> mat = new ArrayList<String>();
 		String[] morepatterns = null;
 		try {
 			morepatterns = ServerConfigurationService.getStrings("login.browser.user.agent");
@@ -214,7 +214,7 @@ public class BasicAuth {
 					auth = auth.trim();
 					if (auth.startsWith("Basic ")) {
 						auth = auth.substring(6).trim();
-						auth = new String(CommonsCodecBase64.decodeBase64(auth.getBytes("UTF-8")));
+						auth = new String(Base64.decodeBase64(auth.getBytes("UTF-8")));
 						int colon = auth.indexOf(":");
 						if (colon != -1) {
 							String eid = auth.substring(0, colon);

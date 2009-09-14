@@ -16,46 +16,30 @@
  **********************************************************************************/
 package org.sakaiproject.email.api;
 
-import java.io.File;
-
-/**
- * Holds an attachment for an email message. The attachment will be included with the message.
- *
- * TODO: Make available for attachments to be stored in CHS.
- *
- * @author <a href="mailto:carl.hall@et.gatech.edu">Carl Hall</a>
- */
-public class Attachment
+public class NoRecipientsException extends Exception
 {
 	/**
-	 * files to associated to this attachment
+	 * Default serial version ID.
 	 */
-	private final File file;
-	private final String filename;
+	private static final long serialVersionUID = 1L;
 
-	public Attachment(File file, String filename)
+	public NoRecipientsException()
 	{
-		this.file = file;
-		this.filename = filename;
 	}
 
-	/**
-	 * Get the file associated to this attachment
-	 *
-	 * @return
-	 */
-	public File getFile()
+	public NoRecipientsException(String message)
 	{
-		return file;
+		super(message);
 	}
 
-	/**
-	 * Get the name of the attached file.
-	 *
-	 * @return
-	 */
-	public String getFilename()
+	public NoRecipientsException(Throwable cause)
 	{
-		return filename;
+		super(cause);
 	}
+
+	public NoRecipientsException(String message, Throwable cause)
+	{
+		super(message, cause);
+	}
+
 }

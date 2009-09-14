@@ -22,14 +22,12 @@
 package org.sakaiproject.site.impl;
 
 import java.io.PrintWriter;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Observer;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Stack;
@@ -82,11 +80,11 @@ import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.user.api.UserNotDefinedException;
+import org.sakaiproject.util.Resource;
+import org.sakaiproject.util.ResourceLoader;
 import org.sakaiproject.util.StorageUser;
 import org.sakaiproject.util.StringUtil;
 import org.sakaiproject.util.Validator;
-import org.sakaiproject.util.Resource;
-import org.sakaiproject.util.ResourceLoader;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -318,7 +316,7 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 	 */
 	public void setRegenerateIds(String value)
 	{
-		m_regenerateIds = new Boolean(value).booleanValue();
+		m_regenerateIds = Boolean.valueOf(value).booleanValue();
 	}
 
 	/** The # seconds to cache the site queries. 0 disables the cache. */
@@ -2300,6 +2298,14 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 		 *        The site for which properties are desired.
 		 */
 		public void readSiteProperties(Site site, ResourcePropertiesEdit props);
+
+		/**
+		 * Read properties for all pages in the site
+		 * 
+		 * @param site
+		 *        The site to read properties for.
+		 */
+		public void readSitePageProperties(Site site);
 
 		/**
 		 * Read site properties and all page and tool properties for the site from storage.

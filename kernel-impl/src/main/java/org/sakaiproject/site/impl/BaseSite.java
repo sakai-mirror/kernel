@@ -895,6 +895,14 @@ public class BaseSite implements Site
 		// first, pages
 		getPages();
 
+		// KNL-259 - Avoiding single-page fetch of properties by way of BaseToolConfiguration constructor
+		siteService.m_storage.readSitePageProperties(this);
+		for (Iterator i = getPages().iterator(); i.hasNext();)
+		{
+			BaseSitePage page = (BaseSitePage) i.next();
+			((BaseResourcePropertiesEdit) page.m_properties).setLazy(false);
+		}
+
 		// next, tools from all pages, all at once
 		siteService.m_storage.readSiteTools(this);
 
@@ -1185,7 +1193,7 @@ public class BaseSite implements Site
 		if (m_description != null)
 			Xml.encodeAttribute(site, "description-enc", m_description);
 
-		site.setAttribute("joinable", new Boolean(m_joinable).toString());
+		site.setAttribute("joinable", Boolean.valueOf(m_joinable).toString());
 		if (m_joinerRole != null) site.setAttribute("joiner-role", m_joinerRole);
 		site.setAttribute("published", Boolean.valueOf(m_published).toString());
 		if (m_icon != null) site.setAttribute("icon", m_icon);

@@ -24,6 +24,7 @@ package org.sakaiproject.content.impl;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Iterator;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -117,7 +118,15 @@ public class DropboxNotification extends EmailNotification
 		rv.add(getFrom(event));
 
 		// to
-		//rv.add(getTo(event));
+		List toList = getRecipients(event);
+		Iterator itr = toList.iterator();
+		StringBuilder recips = new StringBuilder();
+		while (itr.hasNext())
+		{
+			User usr = (User) itr.next();
+			recips.append(usr.getEmail() + ", ");
+		}
+		rv.add("To: " + recips.toString());
 
 		return rv;
 	}
@@ -296,7 +305,7 @@ public class DropboxNotification extends EmailNotification
 		{
 			portalUrl = "<a href=\"" + portalUrl + "\">" + portalName + "</a>";
 		}
-		if (ContentHostingService.EVENT_RESOURCE_ADD.equals(function))
+		if (ContentHostingService.EVENT_RESOURCE_AVAILABLE.equals(function))
 		{
 			buf.append(rb.getFormattedMessage("db.text.new", new String[]{dropboxTitle, siteTitle, portalName, portalUrl}));
 		}
@@ -410,7 +419,7 @@ public class DropboxNotification extends EmailNotification
 		
 		String[] args = {siteTitle, dropboxTitle, resourceName};
 		
-		return rb.getFormattedMessage((ContentHostingService.EVENT_RESOURCE_ADD.equals(function) ? "db.subj.new" : "db.subj.upd"), args);
+		return rb.getFormattedMessage((ContentHostingService.EVENT_RESOURCE_AVAILABLE.equals(function) ? "db.subj.new" : "db.subj.upd"), args);
 		
 	}
 	

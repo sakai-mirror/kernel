@@ -100,7 +100,7 @@ public abstract class DbSiteService extends BaseSiteService
 	 */
 	public void setExternalLocks(String value)
 	{
-		m_useExternalLocks = new Boolean(value).booleanValue();
+		m_useExternalLocks = Boolean.valueOf(value).booleanValue();
 	}
 
 	/** Configuration: to run the ddl on init or not. */
@@ -114,7 +114,7 @@ public abstract class DbSiteService extends BaseSiteService
 	 */
 	public void setAutoDdl(String value)
 	{
-		m_autoDdl = new Boolean(value).booleanValue();
+		m_autoDdl = Boolean.valueOf(value).booleanValue();
 	}
 
 	/** contains a map of database handlers. */
@@ -318,7 +318,7 @@ public abstract class DbSiteService extends BaseSiteService
 				fields[2] = page.getTitle();
 				fields[3] = Integer.toString(page.getLayout());
 				fields[4] = ((((BaseSitePage) page).m_popup) ? "1" : "0");
-				fields[5] = new Integer(pageOrder++);
+				fields[5] = Integer.valueOf(pageOrder++);
 				m_sql.dbWrite(statement, fields);
 
 				// write the page's properties
@@ -339,7 +339,7 @@ public abstract class DbSiteService extends BaseSiteService
 					fields[1] = page.getId();
 					fields[2] = caseId(edit.getId());
 					fields[3] = tool.getToolId();
-					fields[4] = new Integer(toolOrder++);
+					fields[4] = Integer.valueOf(toolOrder++);
 					fields[5] = tool.getTitle();
 					fields[6] = tool.getLayoutHints();
 					m_sql.dbWrite(statement, fields);
@@ -428,7 +428,7 @@ public abstract class DbSiteService extends BaseSiteService
 			fields[1] = tool.getPageId();
 			fields[2] = caseId(tool.getSiteId());
 			fields[3] = tool.getToolId();
-			fields[4] = new Integer(tool.getPageOrder());
+			fields[4] = Integer.valueOf(tool.getPageOrder());
 			fields[5] = tool.getTitle();
 			fields[6] = tool.getLayoutHints();
 			m_sql.dbWrite(statement, fields);
@@ -1402,7 +1402,7 @@ public abstract class DbSiteService extends BaseSiteService
 				fields = new Object[3];
 				fields[0] = caseId(siteId);
 
-				fields[2] = new Integer(-1);
+				fields[2] = Integer.valueOf(-1);
 				for (Iterator i = updInserts.iterator(); i.hasNext();)
 				{
 					String userId = (String) i.next();
@@ -1410,7 +1410,7 @@ public abstract class DbSiteService extends BaseSiteService
 					m_sql.dbWrite(statement, fields);
 				}
 
-				fields[2] = new Integer(0);
+				fields[2] = Integer.valueOf(0);
 				for (Iterator i = unpInserts.iterator(); i.hasNext();)
 				{
 					String userId = (String) i.next();
@@ -1418,7 +1418,7 @@ public abstract class DbSiteService extends BaseSiteService
 					m_sql.dbWrite(statement, fields);
 				}
 
-				fields[2] = new Integer(1);
+				fields[2] = Integer.valueOf(1);
 				for (Iterator i = visitInserts.iterator(); i.hasNext();)
 				{
 					String userId = (String) i.next();
@@ -1579,7 +1579,7 @@ public abstract class DbSiteService extends BaseSiteService
 				fields = new Object[3];
 				fields[1] = userId;
 
-				fields[2] = new Integer(-1);
+				fields[2] = Integer.valueOf(-1);
 				for (Iterator i = updInserts.iterator(); i.hasNext();)
 				{
 					String siteId = (String) i.next();
@@ -1587,7 +1587,7 @@ public abstract class DbSiteService extends BaseSiteService
 					m_sql.dbWrite(statement, fields);
 				}
 
-				fields[2] = new Integer(0);
+				fields[2] = Integer.valueOf(0);
 				for (Iterator i = unpInserts.iterator(); i.hasNext();)
 				{
 					String siteId = (String) i.next();
@@ -1595,7 +1595,7 @@ public abstract class DbSiteService extends BaseSiteService
 					m_sql.dbWrite(statement, fields);
 				}
 
-				fields[2] = new Integer(1);
+				fields[2] = Integer.valueOf(1);
 				for (Iterator i = visitInserts.iterator(); i.hasNext();)
 				{
 					String siteId = (String) i.next();
@@ -1629,11 +1629,29 @@ public abstract class DbSiteService extends BaseSiteService
 			((BaseResourcePropertiesEdit) ((BaseSite) site).m_properties).setLazy(false);
 
 			// read and unlazy the page properties for the entire site
-			readSitePageProperties((BaseSite) site);
+
+			// KNL-259 - Avoiding single-page fetch of properties by way of BaseToolConfiguration constructor
+			// rerun everything if anything is still lazy, but avoid call otherwise
+			// See also: SAK-10151 and BaseToolConfiguration.setPageCategory()
+			boolean loadPageProps = false;
 			for (Iterator i = site.getPages().iterator(); i.hasNext();)
 			{
 				BaseSitePage page = (BaseSitePage) i.next();
-				((BaseResourcePropertiesEdit) page.m_properties).setLazy(false);
+				if (((BaseResourcePropertiesEdit) page.m_properties).isLazy())
+				{
+					loadPageProps = true;
+					break;
+				}
+			}
+
+			if (loadPageProps)
+			{
+				readSitePageProperties((BaseSite) site);
+				for (Iterator i = site.getPages().iterator(); i.hasNext();)
+				{
+					BaseSitePage page = (BaseSitePage) i.next();
+					((BaseResourcePropertiesEdit) page.m_properties).setLazy(false);
+				}
 			}
 
 			// read and unlazy the tool properties for the entire site
@@ -1663,7 +1681,7 @@ public abstract class DbSiteService extends BaseSiteService
 		 * @param site
 		 *        The site to read properties for.
 		 */
-		protected void readSitePageProperties(final BaseSite site)
+		public void readSitePageProperties(final Site site)
 		{
 			// get the properties from the db for all pages in the site
 			String sql = siteServiceSql.getPagePropertiesSql();
@@ -2032,7 +2050,7 @@ public abstract class DbSiteService extends BaseSiteService
 				rv[5] = "";
 				rv[6] = "";
 				rv[7] = "";
-				rv[8] = new Integer(0);
+				rv[8] = Integer.valueOf(0);
 				rv[9] = "0";
 				rv[10] = "0";
 				rv[11] = "";
@@ -2054,7 +2072,7 @@ public abstract class DbSiteService extends BaseSiteService
 				rv[5] = StringUtil.trimToZero(((BaseSite) edit).m_icon);
 				rv[6] = StringUtil.trimToZero(((BaseSite) edit).m_info);
 				rv[7] = StringUtil.trimToZero(((BaseSite) edit).m_skin);
-				rv[8] = new Integer((((BaseSite) edit).m_published) ? 1 : 0);
+				rv[8] = Integer.valueOf((((BaseSite) edit).m_published) ? 1 : 0);
 				rv[9] = ((((BaseSite) edit).m_joinable) ? "1" : "0");
 				rv[10] = ((((BaseSite) edit).m_pubView) ? "1" : "0");
 				rv[11] = StringUtil.trimToZero(((BaseSite) edit).m_joinerRole);

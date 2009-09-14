@@ -43,6 +43,15 @@ public interface SitePage extends Edit, Serializable
 
 	public static final String PAGE_CATEGORY_PROP = "sitePage.pageCategory";
 
+	/** flag custom page title (excluded from localization) */
+	public static final String PAGE_CUSTOM_TITLE_PROP = "sitePage.customTitle";
+   
+	/** boolean page property for site home page **/
+	public static final String IS_HOME_PAGE = "is_home_page";
+
+	/** Special page tool id for home page **/
+	public static final String HOME_TOOL_ID	= "sakai.home";
+
 	/** @return The human readable Title of this SitePage. */
 	public String getTitle();
 
@@ -53,13 +62,13 @@ public interface SitePage extends Edit, Serializable
 	public String getLayoutTitle();
 
 	/** @return The List (ToolConfiguration) of tools on this page. */
-	public List getTools();
+	public List<ToolConfiguration> getTools();
 
 	/**
 	 * @return The List (ToolConfiguration) of tools on this column (0 based) of
 	 *         this page.
 	 */
-	public List getTools(int col);
+	public List<ToolConfiguration> getTools(int col);
 
 	/**
 	 * Get all the tools placed in the site on this page that are of any of
@@ -71,7 +80,7 @@ public interface SitePage extends Edit, Serializable
 	 * @return A Collection (ToolConfiguration) of all the tools placed in the
 	 *         site on this page that are of this tool id (may be empty).
 	 */
-	Collection getTools(String[] toolIds);
+	Collection<ToolConfiguration> getTools(String[] toolIds);
 
 	/** @return the skin to use for this page. */
 	public String getSkin();
@@ -105,6 +114,21 @@ public interface SitePage extends Edit, Serializable
 	 *        The new title.
 	 */
 	public void setTitle(String title);
+
+	/**
+	 * Set/Reset boolean flag indicating a custom page title
+	 * 
+	 * @param custom
+	 *        True if custom page title, otherwise false
+	 */
+	public void setTitleCustom(boolean custom);
+
+	/**
+	 * Get boolean flag indicating a custom page title
+	 * 
+	 * @return True if custom page title, otherwise false
+	 */
+	public boolean getTitleCustom();
 
 	/**
 	 * Replace page title with its localized value and localize page's tools

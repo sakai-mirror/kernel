@@ -19,30 +19,24 @@
  *
  **********************************************************************************/
 
-package org.sakaiproject.memory.api;
-
-import java.util.Collection;
+package org.sakaiproject.authz.api;
 
 /**
  * <p>
- * MultiRefCache is a cache that holds objects and a set of references that the cached entry are dependent on - if any change, the entry is invalidated.
+ * RoleNotDefinedException is thrown whenever something tries to use an Authz Role that does not exist in a particular Authz Group.
  * </p>
  */
-public interface MultiRefCache extends Cache
+public class RoleNotDefinedException extends Exception
 {
-	/**
-	 * Cache an object
-	 * 
-	 * @param key
-	 *        The key with which to find the object.
-	 * @param payload
-	 *        The object to cache.
-	 * @param duration
-	 *        The time to cache the object (seconds).
-	 * @param ref
-	 *        One entity reference that, if changed, will invalidate this entry.
-	 * @param azgIds
-	 *        AuthzGroup ids that, if the changed, will invalidate this entry.
-	 */
-	void put(Object key, Object payload, int duration, String ref, Collection<String> azgIds);
+	private String m_id = null;
+
+	public RoleNotDefinedException(String id)
+	{
+		m_id = id;
+	}
+
+	public String toString()
+	{
+		return super.toString() + " id=" + m_id;
+	}
 }

@@ -22,11 +22,8 @@
 package org.sakaiproject.content.api;
 
 import java.io.InputStream;
-import java.io.OutputStream;
 
-import org.sakaiproject.content.api.GroupAwareEdit;
 import org.sakaiproject.entity.api.Edit;
-import org.sakaiproject.time.api.Time;
 
 /**
 * <p>ContentResource is an editable ContentResource.</p>
@@ -38,7 +35,7 @@ public interface ContentResourceEdit
 	* Set the content byte length.
 	* @param length The content byte length.
 	*/
-	public void setContentLength(int length);
+	public void setContentLength(long length);
 
 	/**
 	* Set the resource MIME type.

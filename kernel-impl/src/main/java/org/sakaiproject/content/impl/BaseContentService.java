@@ -21,6 +21,7 @@
 
 package org.sakaiproject.content.impl;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -38,7 +39,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.Stack;
+import java.util.StringTokenizer;
 import java.util.TreeSet;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,6 +50,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -174,6 +178,9 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	protected static final Pattern contextPattern = Pattern.compile("\\A/(group/|user/|~)(.+?)/");
 
 	private static final String PROP_AVAIL_NOTI = "availableNotified";
+
+	/** MIME multipart separation string */
+    protected static final String MIME_SEPARATOR = "SAKAI_MIME_BOUNDARY";
 
 	/** The initial portion of a relative access point URL. */
 	protected String m_relativeAccessPoint = null;
@@ -354,7 +361,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	{
 		try
 		{
-			m_caching = new Boolean(value).booleanValue();
+			m_caching = Boolean.valueOf(value).booleanValue();
 		}
 		catch (Throwable t)
 		{
@@ -377,7 +384,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	{
 		try
 		{
-			m_siteAttachments = new Boolean(value).booleanValue();
+			m_siteAttachments = Boolean.valueOf(value).booleanValue();
 		}
 		catch (Throwable t)
 		{
@@ -453,7 +460,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	{
 		try
 		{
-			m_shortRefs = new Boolean(value).booleanValue();
+			m_shortRefs = Boolean.valueOf(value).booleanValue();
 		}
 		catch (Throwable t)
 		{
@@ -481,7 +488,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	{
 		try
 		{
-			m_siteAlias = new Boolean(value).booleanValue();
+			m_siteAlias = Boolean.valueOf(value).booleanValue();
 		}
 		catch (Throwable t)
 		{
@@ -696,7 +703,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 			NotificationEdit dbNoti = m_notificationService.addTransientNotification();
 
 			// set functions
-			dbNoti.setFunction(EVENT_RESOURCE_ADD);
+			dbNoti.setFunction(EVENT_RESOURCE_AVAILABLE);
 			dbNoti.addFunction(EVENT_RESOURCE_WRITE);
 
 			// set the filter to any site related resource
@@ -1128,7 +1135,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 					Object[] rv = new Object[5];
 					rv[0] = StringUtil.referencePath(((ContentResource) r).getId());
 					rv[1] = ((BasicGroupAwareEdit) r).getContext();
-					rv[2] = new Integer(((ContentResource) r).getContentLength());
+					rv[2] = Long.valueOf(((ContentResource) r).getContentLength());
 					rv[3] = ((BasicGroupAwareEdit) r).getResourceType();
 					rv[4] = StringUtil.trimToZero(((BaseResourceEdit) r).m_filePath);
 					return rv;
@@ -1140,7 +1147,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 					Object[] rv = new Object[4];
 					rv[0] = StringUtil.referencePath(((ContentResource) r).getId());
 					rv[1] = ((BasicGroupAwareEdit) r).getContext();
-					rv[2] = new Integer(((ContentResource) r).getContentLength());
+					rv[2] = Long.valueOf(((ContentResource) r).getContentLength());
 					rv[3] = ((BasicGroupAwareEdit) r).getResourceType();
 					return rv;
 				}
@@ -2547,6 +2554,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		// clear thread-local cache SAK-12126
 		ThreadLocalManager.set("members@" + edit.getId(), null);
 		ThreadLocalManager.set("getResources@" + edit.getId(), null);
+		ThreadLocalManager.set("getCollections@" + edit.getId(), null);
 
 		// check for members
 		List members = edit.getMemberResources();
@@ -2623,6 +2631,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		// clear thread-local cache SAK-12126
 		ThreadLocalManager.set("members@" + id, null);
 		ThreadLocalManager.set("getResources@" + id, null);
+		ThreadLocalManager.set("getCollections@" + edit.getId(), null);
 
 		// clear of all members (recursive)
 		// Note: may fail if something's in use or not permitted. May result in a partial clear.
@@ -4431,16 +4440,9 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		String id = edit.getId();
 		String content_type = edit.getContentType();
 		byte[] content = null;
-		try
-		{
-			content = edit.getContent();
-		}
-		catch (ServerOverloadException e)
-		{
-			String this_method = this + ".addResourceToDeleteTable()";
-			M_log.warn("\n\n" + this_method + "\n" + this_method + ": Unable to access file in server filesystem\n" + this_method
-					+ ": May be orphaned file: " + id + "\n" + this_method + "\n\n");
-		}
+
+		// KNL-245 do not read the resource body, as this is not subsequently written out
+		
 		ResourceProperties properties = edit.getProperties();
 
 		ContentResource newResource = addDeleteResource(id, content_type, content, properties, uuid, userId,
@@ -6170,10 +6172,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		return true;
 	}
 
-	/** stream content requests if true, read all into memory and send if false. */
-	protected static final boolean STREAM_CONTENT = true;
-
-	/** The chunk size used when streaming (100k). */
+	/** The chunk size used when streaming (100K). */
 	protected static final int STREAM_BUFFER_SIZE = 102400;
 
 	/**
@@ -6189,9 +6188,9 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	 * @throws CopyrightException
 	 */
 	protected void handleAccessResource(HttpServletRequest req, HttpServletResponse res, Reference ref,
-			Collection copyrightAcceptedRefs) throws EntityPermissionException, EntityNotDefinedException,
+			Collection<String> copyrightAcceptedRefs) throws EntityPermissionException, EntityNotDefinedException,
 			EntityAccessOverloadException, EntityCopyrightException
-			{
+	{
 		// we only access resources, not collections
 		if (ref.getId().endsWith(Entity.SEPARATOR)) throw new EntityNotDefinedException(ref.getReference());
 
@@ -6213,7 +6212,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 			throw new EntityPermissionException(e.getUser(), e.getLock(), e.getResource());
 		}
 		catch (TypeException e)
-		{
+		{	
 			throw new EntityNotDefinedException(ref.getReference());
 		}
 
@@ -6225,8 +6224,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 
 		try
 		{
-			// changed to int from long because res.setContentLength won't take long param -- JE
-			int len = resource.getContentLength();
+			long len = resource.getContentLength();
 			String contentType = resource.getContentType();
 
 			// for url content type, encode a redirect to the body URL
@@ -6280,12 +6278,14 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 					contentType = contentType + "; charset=" + encoding;
 				}
 
-				// stream the content using a small buffer to keep memory managed
-				if (STREAM_CONTENT)
-				{
+		        ArrayList<Range> ranges = parseRange(req, res, len);
+
+		        if (req.getHeader("Range") == null || (ranges == null) || (ranges.isEmpty())) {
+		        	
+					// stream the content using a small buffer to keep memory managed
 					InputStream content = null;
 					OutputStream out = null;
-
+	
 					try
 					{
 						content = resource.streamContent();
@@ -6293,31 +6293,30 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 						{
 							throw new IdUnusedException(ref.getReference());
 						}
-
+	
 						res.setContentType(contentType);
 						res.addHeader("Content-Disposition", disposition);
-						res.addHeader("Accept-Ranges", "none");
-						res.setContentLength(len);
+						res.addHeader("Accept-Ranges", "bytes");
+						// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4187336
+ 						if (len <= Integer.MAX_VALUE){
+ 							res.setContentLength((int)len);
+ 						} else {
+ 							res.addHeader("Content-Length", Long.toString(len));
+ 						}
 
 						// set the buffer of the response to match what we are reading from the request
 						if (len < STREAM_BUFFER_SIZE)
 						{
-							res.setBufferSize(len);
+							res.setBufferSize((int)len);
 						}
 						else
 						{
 							res.setBufferSize(STREAM_BUFFER_SIZE);
 						}
-
+	
 						out = res.getOutputStream();
-
-						// chunk
-						byte[] chunk = new byte[STREAM_BUFFER_SIZE];
-						int lenRead;
-						while ((lenRead = content.read(chunk)) != -1)
-						{
-							out.write(chunk, 0, lenRead);
-						}
+	
+						copyRange(content, out, 0, len-1);
 					}
 					catch (ServerOverloadException e)
 					{
@@ -6333,7 +6332,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 						{
 							content.close();
 						}
-
+	
 						if (out != null)
 						{
 							try
@@ -6345,59 +6344,153 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 							}
 						}
 					}
-				}
+					
+					// Track event - only for full reads
+					EventTrackingService.post(EventTrackingService.newEvent(EVENT_RESOURCE_READ, resource.getReference(null), false));
 
-				// read the entire content into memory and send it from there
-				else
-				{
-					byte[] content = resource.getContent();
-					if (content == null)
-					{
-						throw new IdUnusedException(ref.getReference());
-					}
+		        } 
+		        else 
+		        {
+		        	// Output partial content. Adapted from Apache Tomcat 5.5.27 DefaultServlet.java
+		        	
+		        	res.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
 
-					res.setContentType(contentType);
-					res.addHeader("Content-Disposition", disposition);
-					res.setContentLength(len);
+		            if (ranges.size() == 1) {
 
-					// Increase the buffer size for more speed. - don't - we don't want a 20 meg buffer size,right? -ggolden
-					// res.setBufferSize(len);
+		            	// Single response
+		            	
+		                Range range = (Range) ranges.get(0);
+		                res.addHeader("Content-Range", "bytes "
+		                                   + range.start
+		                                   + "-" + range.end + "/"
+		                                   + range.length);
+		                long length = range.end - range.start + 1;
+		                if (length < Integer.MAX_VALUE) {
+		                    res.setContentLength((int) length);
+		                } else {
+		                    // Set the content-length as String to be able to use a long
+		                    res.setHeader("content-length", "" + length);
+		                }
 
-					OutputStream out = null;
-					try
-					{
-						out = res.getOutputStream();
-						out.write(content);
-						out.flush();
-						out.close();
-					}
-					catch (Throwable ignore)
-					{
-					}
-					finally
-					{
-						if (out != null)
+						res.addHeader("Content-Disposition", disposition);
+
+		                if (contentType != null) {
+		                    res.setContentType(contentType);
+		                }
+
+						// stream the content using a small buffer to keep memory managed
+						InputStream content = null;
+						OutputStream out = null;
+		
+						try
 						{
-							try
+							content = resource.streamContent();
+							if (content == null)
 							{
-								out.close();
+								throw new IdUnusedException(ref.getReference());
 							}
-							catch (Throwable ignore)
+				
+							// set the buffer of the response to match what we are reading from the request
+							if (len < STREAM_BUFFER_SIZE)
 							{
+								res.setBufferSize((int)len);
+							}
+							else
+							{
+								res.setBufferSize(STREAM_BUFFER_SIZE);
+							}
+		
+							out = res.getOutputStream();
+
+							copyRange(content, out, range.start, range.end);
+
+						}
+						catch (ServerOverloadException e)
+						{
+							throw e;
+						}
+						catch (Throwable ignore)
+						{
+						}
+						finally
+						{
+							// be a good little program and close the stream - freeing up valuable system resources
+							if (content != null)
+							{
+								content.close();
+							}
+		
+							if (out != null)
+							{
+								try
+								{
+									out.close();
+								}
+								catch (IOException ignore)
+								{
+									// ignore
+								}
 							}
 						}
-					}
-				}
-			}
+		              
+		            } else {
 
-			// track event
-			EventTrackingService.post(EventTrackingService.newEvent(EVENT_RESOURCE_READ, resource.getReference(null), false));
+		            	// Multipart response
+
+		            	res.setContentType("multipart/byteranges; boundary=" + MIME_SEPARATOR);
+
+						// stream the content using a small buffer to keep memory managed
+						OutputStream out = null;
+		
+						try
+						{
+							// set the buffer of the response to match what we are reading from the request
+							if (len < STREAM_BUFFER_SIZE)
+							{
+								res.setBufferSize((int)len);
+							}
+							else
+							{
+								res.setBufferSize(STREAM_BUFFER_SIZE);
+							}
+		
+							out = res.getOutputStream();
+
+			            	copyRanges(resource, out, ranges.iterator(), contentType);
+
+						}
+						catch (Throwable ignore)
+						{
+							M_log.error("Swallowing exception", ignore);
+						}
+						finally
+						{
+							// be a good little program and close the stream - freeing up valuable system resources
+							if (out != null)
+							{
+								try
+								{
+									out.close();
+								}
+								catch (IOException ignore)
+								{
+									// ignore
+								}
+							}
+						}
+		              
+		            } // output multiple ranges
+
+		        } // output partial content 
+
+			} // output resource
+
 		}
 		catch (Throwable t)
 		{
 			throw new EntityNotDefinedException(ref.getReference());
 		}
-			}
+	}
 
 	/**
 	 * Process the access request for a collection, producing the "apache" style HTML file directory listing (complete with index.html redirect if found).
@@ -7799,19 +7892,6 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	protected String archiveResource(ContentResource resource, Document doc, Stack stack, String storagePath,
 			String siteCollectionId)
 	{
-		byte[] content = null;
-		try
-		{
-			// TODO use stream instead of byte array
-			// get the content bytes
-			content = resource.getContent();
-		}
-		catch (ServerOverloadException e)
-		{
-			M_log.warn("archiveResource(): while reading body for: " + resource.getId() + " : " + e);
-			// return "failed to archive resource: " + resource.getId() + " body temporarily unavailable due to server error\n"
-		}
-
 		// form the xml
 		Element el = resource.toXml(doc, stack);
 
@@ -7820,17 +7900,48 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 
 		// write the content to a file
 		String fileName = IdManager.createUuid();
-		Blob b = new Blob();
-		b.append(content);
+		InputStream stream = null;
+		FileOutputStream out = null;
 		try
 		{
-			FileOutputStream out = new FileOutputStream(storagePath + fileName);
-			b.write(out);
-			out.close();
+			stream = resource.streamContent();
+			out = new FileOutputStream(storagePath + fileName);
+			byte[] chunk = new byte[STREAM_BUFFER_SIZE];
+			int lenRead;
+			while ((lenRead = stream.read(chunk)) != -1)
+			{
+				out.write(chunk, 0, lenRead);
+			}
 		}
 		catch (Exception e)
 		{
 			M_log.warn("archiveResource(): while writing body for: " + resource.getId() + " : " + e);
+		}
+		finally
+		{
+			if (stream != null)
+			{
+				try
+				{
+					stream.close();
+				}
+				catch (IOException e)
+				{
+					M_log.warn("IOException ", e);
+				}
+			}
+
+			if (out != null)
+			{
+				try
+				{
+					out.close();
+				}
+				catch (IOException e)
+				{
+					M_log.warn("IOException ", e);
+				}
+			}
 		}
 
 		// store the file name in the xml
@@ -8642,11 +8753,12 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		List globalList = new ArrayList();
 
 		Map othersites = getCollectionMap();
-		Iterator siteIt = othersites.keySet().iterator();
+		Iterator siteIt = othersites.entrySet().iterator();
 		while (siteIt.hasNext())
 		{
-			String collId = (String) siteIt.next();
-			String displayName = (String) othersites.get(collId);
+			Entry entry = (Entry) siteIt.next();
+			String collId = (String) entry.getKey();
+			String displayName = (String) entry.getValue();
 			List artifacts = getFlatResources(collId);
 			globalList.addAll(filterArtifacts(artifacts, type, primaryMimeType, subMimeType, true));
 		}
@@ -8673,8 +8785,6 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	 */
 	public void eliminateDuplicates(Collection resourceIds)
 	{
-		Collection dups = new ArrayList();
-
 		// eliminate exact duplicates
 		Set others = new TreeSet(resourceIds);
 
@@ -10654,12 +10764,13 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 			{
 				ResourcePropertiesEdit myProps = getPropertiesEdit();
 				myProps.addProperty(ResourceProperties.PROP_HAS_CUSTOM_SORT, Boolean.TRUE.toString());
-				Iterator nameIt = priorities.keySet().iterator();
+				Iterator nameIt = priorities.entrySet().iterator();
 				while(nameIt.hasNext())
 				{
-					String name = (String) nameIt.next();
-					Integer priority = (Integer) priorities.get(name);
-
+					Entry entry = (Entry) nameIt.next();
+					String name = (String) entry.getKey();
+					Integer priority = (Integer) entry.getValue();
+					
 					try
 					{
 						if(name.endsWith(Entity.SEPARATOR))
@@ -10734,7 +10845,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 			if(countObj == null)
 			{
 				count = m_storage.getMemberCount(this.m_id);
-				ThreadLocalManager.set("getMemberCount@" + this.m_id, new Integer(count));
+				ThreadLocalManager.set("getMemberCount@" + this.m_id, Integer.valueOf(count));
 			}
 			else
 			{
@@ -10922,7 +11033,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		protected byte[] m_body = null;
 
 		/** The content length of the body, consult only if the body is missing (null) */
-		protected int m_contentLength = 0;
+		protected long m_contentLength = 0;
 
 		/** When true, someone changed the body content with setContent() */
 		protected boolean m_bodyUpdated = false;
@@ -11057,7 +11168,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 			m_properties = new BaseResourcePropertiesEdit();
 		}
 		/**
-		 * Construct from information in XML in a DOM element.
+		 * Construct from information in XML in a DOM element. Limited to body size of <= 2G.
 		 * 
 		 * @param el
 		 *        The XML DOM element.
@@ -11072,7 +11183,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 			m_contentLength = 0;
 			try
 			{
-				m_contentLength = Integer.parseInt(el.getAttribute("content-length"));
+				m_contentLength = Long.parseLong(el.getAttribute("content-length"));
 			}
 			catch (Exception ignore)
 			{
@@ -11085,20 +11196,24 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 			}
 			setResourceType(typeId);
 
-			String enc = StringUtil.trimToNull(el.getAttribute("body"));
-			if (enc != null)
+			if (m_contentLength <= Integer.MAX_VALUE)
 			{
-				byte[] decoded = null;
-				try
+				String enc = StringUtil.trimToNull(el.getAttribute("body"));
+				if (enc != null)
 				{
-					decoded = Base64.decodeBase64(enc.getBytes("UTF-8"));
+					byte[] decoded = null;
+					try
+					{
+						decoded = Base64.decodeBase64(enc.getBytes("UTF-8"));
+					}
+					catch (UnsupportedEncodingException e)
+					{
+						M_log.error(e);
+					}
+					
+					m_body = new byte[(int) m_contentLength];
+					System.arraycopy(decoded, 0, m_body, 0, (int) m_contentLength);
 				}
-				catch (UnsupportedEncodingException e)
-				{
-					M_log.error(e);
-				}
-				m_body = new byte[m_contentLength];
-				System.arraycopy(decoded, 0, m_body, 0, m_contentLength);
 			}
 
 			m_filePath = StringUtil.trimToNull(el.getAttribute("filePath"));
@@ -11207,7 +11322,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 							m_contentLength = 0;
 							try
 							{
-								m_contentLength = Integer.parseInt(attributes
+								m_contentLength = Long.parseLong(attributes
 										.getValue("content-length"));
 							}
 							catch (Exception ignore)
@@ -11222,21 +11337,24 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 							}
 							setResourceType(typeId);
 
-							String enc = StringUtil.trimToNull(attributes
-									.getValue("body"));
-							if (enc != null)
+							if (m_contentLength <= Integer.MAX_VALUE)
 							{
-								byte[] decoded = null;
-								try
+								String enc = StringUtil.trimToNull(attributes
+										.getValue("body"));
+								if (enc != null)
 								{
-									decoded = Base64.decodeBase64(enc.getBytes("UTF-8"));
+									byte[] decoded = null;
+									try
+									{
+										decoded = Base64.decodeBase64(enc.getBytes("UTF-8"));
+									}
+									catch (UnsupportedEncodingException e)
+									{
+										M_log.error(e);
+									}
+									m_body = new byte[(int) m_contentLength];
+									System.arraycopy(decoded, 0, m_body, 0, (int) m_contentLength);
 								}
-								catch (UnsupportedEncodingException e)
-								{
-									M_log.error(e);
-								}
-								m_body = new byte[m_contentLength];
-								System.arraycopy(decoded, 0, m_body, 0, m_contentLength);
 							}
 
 							m_filePath = StringUtil.trimToNull(attributes
@@ -11415,7 +11533,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		 * 
 		 * @return The content byte length.
 		 */
-		public int getContentLength()
+		public long getContentLength()
 		{
 			// Use the CHH delegate, if there is one.
 			if (chh_vce != null) return ((ContentResource)chh_vce).getContentLength();
@@ -11442,11 +11560,14 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		} // getContentType
 
 		/**
-		 * Access the content bytes of the resource.
+		 * Access the content bytes of the resource. As this reads the entire content into memory, only use this method
+		 * when the resource is known to be relatively small. For larger files and all files that exceed 2G in size, use
+		 * streamContent() instead.
 		 * 
 		 * @return An array containing the bytes of the resource's content.
 		 * @exception ServerOverloadException
-		 *            if server is configured to store resource body in filesystem and error occurs trying to read from filesystem.
+		 *            if server is configured to store resource body in filesystem and error occurs trying to read from filesystem,
+		 *            or the file is too large to read into a byte array (exceeds 2G in size).
 		 */
 		public byte[] getContent() throws ServerOverloadException
 		{
@@ -11521,7 +11642,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		 * @param length
 		 *        The content byte length.
 		 */
-		public void setContentLength(int length)
+		public void setContentLength(long length)
 		{
 			m_contentLength = length;
 
@@ -11612,9 +11733,9 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 			resource.setAttribute("resource-type", m_resourceType);
 
 			// body may not be loaded; if not use m_contentLength
-			int contentLength = m_contentLength;
+			long contentLength = m_contentLength;
 			if (m_body != null) contentLength = m_body.length;
-			resource.setAttribute("content-length", Integer.toString(contentLength));
+			resource.setAttribute("content-length", Long.toString(contentLength));
 
 			if (m_filePath != null) resource.setAttribute("filePath", m_filePath);
 
@@ -11969,10 +12090,10 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		 */
 		public void setSerializableContentLength(long contentLength)
 		{
-			if ( contentLength > (long)Integer.MAX_VALUE ) {
-				M_log.warn("File is longer than "+Integer.MAX_VALUE+", length may be truncated ");
+			if (m_bodyPath == null && contentLength > Integer.MAX_VALUE ) {
+				M_log.warn("File is longer than "+Integer.MAX_VALUE+", may be truncated if not stored in filesystem ");
 			}
-			m_contentLength = (int)contentLength;
+			m_contentLength = contentLength;
 		}
 
 
@@ -12237,13 +12358,23 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		 * resource-id are indexed from 0 to M and this method is called with parameters of N for pageSize and 
 		 * I for page, the resources returned will be those with indexes (I*N) through ((I+1)*N - 1).  For example,
 		 * if pageSize is 1028 and page is 0, the resources would be those with indexes of 0 to 1027.  
-		 * @param resourceType
-		 * @param pageSize
-		 * @param page
-		 * @return
+		 *
+		 * @param resourceType select resources where CONTENT_RESOURCE.RESOURCE_TYPE_ID equals resourceType
+		 * @param pageSize (page) size of results
+		 * @param page (page) increment of results
+		 * @return collection of ContentResource
 		 */
 		public Collection<ContentResource> getResourcesOfType(String resourceType, int pageSize, int page);
-
+      
+		/**
+		 * Retrieve a collection of ContentResource objects of a particular resource-type in a set of contexts.
+		 *
+		 * @param resourceType select resources where CONTENT_RESOURCE.RESOURCE_TYPE_ID equals resourceType
+		 * @param contextIds	 select resources where CONTENT_RESOURCE.CONTEXT in [context,...]
+		 * @return collection of ContentResource
+		 */
+		public Collection<ContentResource> getContextResourcesOfType(String resourceType, Set<String> contextIds);
+		
 	} // Storage
 
 	/**********************************************************************************************************************************************************************************************************************************************************
@@ -12436,5 +12567,282 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		}
 		transferCopyEntities(fromContext, toContext, ids);
 	}
+
+	// Code lightly adapted from Apache Tomcat 5.5.27 catalina default servlet
+	
+	/**
+	 * Range inner class. From Apache Tomcat DefaultServlet.java 
+	 *
+	 */
+    protected class Range {
+
+        public long start;
+        public long end;
+        public long length;
+
+        /**
+         * Validate range.
+         */
+        public boolean validate() {
+            if (end >= length)
+                end = length - 1;
+            return ( (start >= 0) && (end >= 0) && (start <= end)
+                     && (length > 0) );
+        }
+
+        public void recycle() {
+            start = 0;
+            end = 0;
+            length = 0;
+        }
+
+    }
+
+    /**
+     * Parse the range header.
+     *
+     * @param request The servlet request we are processing
+     * @param response The servlet response we are creating
+     * @return Vector of ranges
+     */
+    protected ArrayList<Range> parseRange(HttpServletRequest request,
+                                HttpServletResponse response,
+                                long fileLength)
+        throws IOException {
+
+    	/* Commented out pending implementation of last-modified / if-modified.
+    	 * See http://jira.sakaiproject.org/jira/browse/SAK-3916
+    	
+        // Checking If-Range
+
+    	String headerValue = request.getHeader("If-Range");
+
+        if (headerValue != null) {
+
+            long headerValueTime = (-1L);
+            try {
+                headerValueTime = request.getDateHeader("If-Range");
+            } catch (Exception e) {
+                ;
+            }
+
+            String eTag = getETag(resourceAttributes);
+            long lastModified = resourceAttributes.getLastModified();
+
+            if (headerValueTime == (-1L)) {
+
+                // If the ETag the client gave does not match the entity
+                // etag, then the entire entity is returned.
+                if (!eTag.equals(headerValue.trim()))
+                    return FULL;
+
+            } else {
+
+                // If the timestamp of the entity the client got is older than
+                // the last modification date of the entity, the entire entity
+                // is returned.
+                if (lastModified > (headerValueTime + 1000))
+                    return FULL;
+
+            }
+
+        }
+        
+    	*/
+    	
+        if (fileLength == 0)
+            return null;
+
+        // Retrieving the range header (if any is specified
+        String rangeHeader = request.getHeader("Range");
+
+        if (rangeHeader == null)
+            return null;
+        // bytes is the only range unit supported (and I don't see the point
+        // of adding new ones).
+        if (!rangeHeader.startsWith("bytes")) {
+            response.addHeader("Content-Range", "bytes */" + fileLength);
+            response.sendError
+                (HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+            return null;
+        }
+
+        rangeHeader = rangeHeader.substring(6);
+
+        // Vector which will contain all the ranges which are successfully
+        // parsed.
+        ArrayList result = new ArrayList();
+        StringTokenizer commaTokenizer = new StringTokenizer(rangeHeader, ",");
+
+        // Parsing the range list
+        while (commaTokenizer.hasMoreTokens()) {
+            String rangeDefinition = commaTokenizer.nextToken().trim();
+
+            Range currentRange = new Range();
+            currentRange.length = fileLength;
+
+            int dashPos = rangeDefinition.indexOf('-');
+
+            if (dashPos == -1) {
+                response.addHeader("Content-Range", "bytes */" + fileLength);
+                response.sendError
+                    (HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+                return null;
+            }
+
+            if (dashPos == 0) {
+
+                try {
+                    long offset = Long.parseLong(rangeDefinition);
+                    currentRange.start = fileLength + offset;
+                    currentRange.end = fileLength - 1;
+                } catch (NumberFormatException e) {
+                    response.addHeader("Content-Range",
+                                       "bytes */" + fileLength);
+                    response.sendError
+                        (HttpServletResponse
+                         .SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+                    return null;
+                }
+
+            } else {
+
+                try {
+                    currentRange.start = Long.parseLong
+                        (rangeDefinition.substring(0, dashPos));
+                    if (dashPos < rangeDefinition.length() - 1)
+                        currentRange.end = Long.parseLong
+                            (rangeDefinition.substring
+                             (dashPos + 1, rangeDefinition.length()));
+                    else
+                        currentRange.end = fileLength - 1;
+                } catch (NumberFormatException e) {
+                    response.addHeader("Content-Range",
+                                       "bytes */" + fileLength);
+                    response.sendError
+                        (HttpServletResponse
+                         .SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+                    return null;
+                }
+
+            }
+
+            if (!currentRange.validate()) {
+                response.addHeader("Content-Range", "bytes */" + fileLength);
+                response.sendError
+                    (HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+                return null;
+            }
+
+            result.add(currentRange);
+        }
+
+        return result;
+    }
+
+    /**
+     * Copy the partial contents of the specified input stream to the specified
+     * output stream.
+     * 
+     * @param istream The input stream to read from
+     * @param ostream The output stream to write to
+     * @param start Start of the range which will be copied
+     * @param end End of the range which will be copied
+     * @return Exception which occurred during processing
+     */
+    protected IOException copyRange(InputStream istream,
+                                  OutputStream ostream,
+                                  long start, long end) {
+
+    	try {
+            istream.skip(start);
+        } catch (IOException e) {
+            return e;
+        }
+
+        IOException exception = null;
+        long bytesToRead = end - start + 1;
+
+        byte buffer[] = new byte[STREAM_BUFFER_SIZE];
+        int len = buffer.length;
+        while ( (bytesToRead > 0) && (len >= buffer.length)) {
+            try {
+                len = istream.read(buffer);
+                if (bytesToRead >= len) {
+                    ostream.write(buffer, 0, len);
+                    bytesToRead -= len;
+                } else {
+                    ostream.write(buffer, 0, (int) bytesToRead);
+                    bytesToRead = 0;
+                }
+            } catch (IOException e) {
+                exception = e;
+                len = -1;
+            }
+            if (len < buffer.length)
+                break;
+        }
+
+        return exception;
+    }
+
+  
+    /**
+     * Copy the contents of the specified input stream to the specified
+     * output stream in a set of chunks as per the specified ranges.
+     *
+     * @param InputStream The input stream to read from
+     * @param out The output stream to write to
+     * @param ranges Enumeration of the ranges the client wanted to retrieve
+     * @param contentType Content type of the resource
+     * @exception IOException if an input/output error occurs
+     */
+    protected void copyRanges(ContentResource content, OutputStream out,
+                      Iterator ranges, String contentType)
+        throws IOException {
+
+        IOException exception = null;
+                        
+        while ( (exception == null) && (ranges.hasNext()) ) {
+
+            Range currentRange = (Range) ranges.next();
+                  
+            // Writing MIME header.
+            IOUtils.write("\n--" + MIME_SEPARATOR + "\n", out);
+            if (contentType != null)
+                IOUtils.write("Content-Type: " + contentType + "\n", out);
+            IOUtils.write("Content-Range: bytes " + currentRange.start
+                           + "-" + currentRange.end + "/"
+                           + currentRange.length + "\n", out);
+            IOUtils.write("\n", out);
+
+            // Printing content
+			InputStream in = null;
+			try {
+				in = content.streamContent();
+			} catch (ServerOverloadException se) {
+				exception = new IOException("ServerOverloadException reported getting inputstream");
+			}
+			
+            InputStream istream =
+                new BufferedInputStream(in, STREAM_BUFFER_SIZE);
+          
+            exception = copyRange(istream, out, currentRange.start, currentRange.end);
+
+            try {
+                istream.close();
+            } catch (IOException e) {
+            	// ignore
+            }
+        }
+
+        IOUtils.write("\n--" + MIME_SEPARATOR + "--", out);
+        
+        // Rethrow any exception that has occurred
+        if (exception != null) {
+            throw exception;
+        }
+    }
+    
 } // BaseContentService
 
