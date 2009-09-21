@@ -27,7 +27,6 @@ import java.sql.SQLException;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Stack;
 import java.util.Vector;
@@ -41,17 +40,15 @@ import org.sakaiproject.entity.api.Edit;
 import org.sakaiproject.entity.api.Entity;
 import org.sakaiproject.entity.api.ResourceProperties;
 import org.sakaiproject.event.cover.UsageSessionService;
+import org.sakaiproject.javax.Filter;
+import org.sakaiproject.javax.Order;
+import org.sakaiproject.javax.PagingPosition;
+import org.sakaiproject.javax.Search;
+import org.sakaiproject.javax.SearchFilter;
 import org.sakaiproject.time.api.Time;
 import org.sakaiproject.time.cover.TimeService;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
-import org.sakaiproject.javax.PagingPosition;
-import org.sakaiproject.javax.Filter;
-import org.sakaiproject.javax.Restriction;
-import org.sakaiproject.javax.Order;
-import org.sakaiproject.javax.Search;
-import org.sakaiproject.javax.SearchFilter;
 
 /**
  * <p>
@@ -721,7 +718,12 @@ public class BaseDbDoubleStorage
 			} else {
 			// read the xml
 			Document doc = Xml.readDocumentFromString(xml);
-
+			
+			//The resulting doc could be null
+			if (doc == null) {
+				M_log.warn("null xml document passed to readResource for container" + container.getId());
+				return null;
+			}
 			// verify the root element
 			Element root = doc.getDocumentElement();
 			if (!root.getTagName().equals(m_resourceEntryTagName))
@@ -950,7 +952,7 @@ public class BaseDbDoubleStorage
 	 */
 	public List getAllResources(Entity container, Filter softFilter, String sqlFilter, boolean asc, PagingPosition pager)
 	{
-		List all = new Vector();
+		
 		pager = fixPagingPosition(softFilter, pager);
 		// System.out.println("getAllResources e="+container+" sf="+softFilter+" sqlf="+sqlFilter+" asc="+asc+" pag="+pager);
         
@@ -1017,7 +1019,7 @@ public class BaseDbDoubleStorage
 		// System.out.println("getAllResources="+sql);
 
 		// If we are paged in SQL - then do not pass in the pager
-		all = m_sql.dbRead(sql, fields, new SearchFilterReader(container, softFilter,  pagedInSql ? null : pager, false));
+		List all = m_sql.dbRead(sql, fields, new SearchFilterReader(container, softFilter,  pagedInSql ? null : pager, false));
 		
 		return all;
 	}
