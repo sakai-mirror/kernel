@@ -25,8 +25,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
+import java.util.TreeSet;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -540,4 +544,15 @@ public abstract class SakaiSecurity implements SecurityService
 		
 		return;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.sakaiproject.authz.api.SecurityService#listRealmsWithinContainer(java.lang.String, java.lang.String, java.lang.String)
+	 */
+	public Set<String> listRealmsWithinContainer(String role, String function,
+			String realmsStartingWith) {
+		Set<String> realms = new TreeSet<String>();
+		realms.addAll(this.authzGroupService().listRealmsWithinContainer(function, role, realmsStartingWith));
+		return realms;
+}
+
 }

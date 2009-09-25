@@ -23,6 +23,7 @@ package org.sakai.memory.impl.test;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.api.SecurityService;
@@ -150,5 +151,11 @@ public class MockSecurityService implements SecurityService
 	public boolean setUserEffectiveRole(String arg0, String arg1) {
 		return false;
 	}
+
+	public Set<String> listRealmsWithinContainer(String role, String function,
+			String realmsStartingWith) {
+		// TODO Auto-generated method stub
+		return null;
+}
 
 }

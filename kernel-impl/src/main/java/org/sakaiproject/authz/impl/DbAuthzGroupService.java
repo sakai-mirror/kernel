@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.Vector;
 
 import org.apache.commons.logging.Log;
@@ -2426,6 +2427,34 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			});
 
 			return rv;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.sakaiproject.authz.impl.BaseAuthzGroupService.Storage#listRealmsWithinContainer(java.lang.String, java.lang.String, java.lang.String)
+		 */
+		public Set<String> listRealmsWithinContainer(String function,
+				String role, String startsWith) {
+			Set<String> realms = new TreeSet<String>();
+			
+			String query = "select SAKAI_REALM.REALM_ID from SAKAI_REALM_RL_FN,SAKAI_REALM "
+				+ "where SAKAI_REALM_RL_FN.REALM_KEY = SAKAI_REALM.REALM_KEY and SAKAI_REALM.REALM_ID LIKE ? "
+				+ "and FUNCTION_KEY in (select FUNCTION_KEY from SAKAI_REALM_FUNCTION where FUNCTION_NAME = ?) "
+				+ "and ROLE_KEY in (select ROLE_KEY from SAKAI_REALM_ROLE where ROLE_NAME = ?)";
+			
+			Object[] fields = new Object[3];
+			fields[0] = startsWith.trim() + "%";
+			fields[1] = function;
+			fields[2] = role;
+			try {	
+				List results = sqlService().dbRead(query, fields, null);
+				if(results != null) 
+				{
+					realms.addAll(results);
+				}
+			} catch (Exception e) {
+				M_log.warn(this + ".listRealmsWithinContainer(\"" + function + "\",\"" + role + "\",\"" + startsWith + ")", e );
+			}
+			return realms;
 		}
 
 	} // DbStorage

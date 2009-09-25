@@ -425,4 +425,13 @@ public interface AuthzGroupService extends EntityProducer
 	 * must not be "compound IDs", as defined by the GroupProvider's String[] unpackId(String id) method.
 	 */
 	public Set<String> getProviderIds(String authzGroupId); 
+
+	/**
+	 * 
+	 * @param function TODO
+	 * @param role TODO
+	 * @param ref
+	 * @return
+	 */
+	public Set<String> listRealmsWithinContainer(String function, String role, String realmsStartingWith); 
 }

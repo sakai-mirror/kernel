@@ -1132,6 +1132,14 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		return "";
 	}
 
+	/* (non-Javadoc)
+	 * @see org.sakaiproject.authz.api.AuthzGroupService#listRealmsWithinContainer(java.lang.String, java.lang.String, java.lang.String)
+	 */
+	public Set<String> listRealmsWithinContainer(String function, String role, String startsWith)
+	{
+		return this.m_storage.listRealmsWithinContainer(function , role, startsWith);
+	}
+	
 	/**********************************************************************************************************************************************************************************************************************************************************
 	 * Storage
 	 *********************************************************************************************************************************************************************************************************************************************************/
@@ -1398,6 +1406,16 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		 *        The azGroup to refresh.
 		 */
 		void refreshAuthzGroup(BaseAuthzGroup azGroup);
+		
+		/**
+		 * @param function
+		 * @param role
+		 * @param startsWith
+		 * @return
+		 */
+		Set<String> listRealmsWithinContainer(String function,
+				String role, String startsWith);
+
 	}
 
 	/**********************************************************************************************************************************************************************************************************************************************************

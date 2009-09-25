@@ -181,6 +181,10 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	/** MIME multipart separation string */
     protected static final String MIME_SEPARATOR = "SAKAI_MIME_BOUNDARY";
 
+    protected static final Pattern SITE_LEVEL_COLLECTION_ID_PATTERN = Pattern.compile("^((" + COLLECTION_SITE + "|" + COLLECTION_USER  + "|" 
+    		+ COLLECTION_DROPBOX + "|" + COLLECTION_PUBLIC + "|" + COLLECTION_PRIVATE + "|" + ATTACHMENTS_COLLECTION + "|" 
+    		+ COLLECTION_MELETE_DOCS + ")[^/]+/).*$");
+
 	/** The initial portion of a relative access point URL. */
 	protected String m_relativeAccessPoint = null;
 
@@ -8593,8 +8597,47 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	 */
 	public boolean isPubView(String id)
 	{
-		boolean pubView = SecurityService.unlock(UserDirectoryService.getAnonymousUser(), AUTH_RESOURCE_READ, getReference(id));
-		return pubView;
+		boolean pubview = false;
+		
+		if(id == null) {
+			pubview = false;
+		} else if(isRootCollection(id) || ROOT_COLLECTIONS.contains(id)) {
+			// if isRootCollection(id)  return unlock on getReference(id) 
+			pubview = SecurityService.unlock(UserDirectoryService.getAnonymousUser(), AUTH_RESOURCE_READ, getReference(id));
+		} else {
+			// get site resource root ref
+			Matcher matcher = SITE_LEVEL_COLLECTION_ID_PATTERN.matcher(id);
+			if(matcher.find())
+			{
+				String siteCollectionId = matcher.group(1);
+				
+				// see if cache contains list of pubview realms for this site
+				String cacheKey = "BaseContentService.isPubView@" + siteCollectionId;
+				Set<String> pubviewRealms = (Set<String>) ThreadLocalManager.get(cacheKey);
+				
+				// if not, get list of pubview realms for site (possibly empty) and cache them
+				if(pubviewRealms == null) {
+					String siteCollectionRef = getReference(siteCollectionId);
+					pubviewRealms = SecurityService.listRealmsWithinContainer(AuthzGroupService.ANON_ROLE, AUTH_RESOURCE_READ, siteCollectionRef);
+					ThreadLocalManager.set(cacheKey, pubviewRealms);
+	}
+				// check this whether this id's ref or an ancestor is in cached list 
+				// return true if id  or ancestor is in list, false otherwise
+				String ref = getReference(id);
+				if(pubviewRealms.contains(ref)) {
+					pubview = true;
+				} else {
+					for(String pubviewRealm : pubviewRealms) {
+						if(pubviewRealm.endsWith("/") && ref.startsWith(pubviewRealm)) {
+							pubview = true;
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		return pubview;
 	}
 
 	/**

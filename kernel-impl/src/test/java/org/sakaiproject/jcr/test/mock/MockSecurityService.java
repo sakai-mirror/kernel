@@ -23,6 +23,7 @@ package org.sakaiproject.jcr.test.mock;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
 
 import org.apache.commons.logging.Log;
@@ -202,5 +203,11 @@ public class MockSecurityService implements SecurityService
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	public Set<String> listRealmsWithinContainer(String role, String function,
+			String realmsStartingWith) {
+		throw new RuntimeException(
+		"JCRService appears to be going authZGroups security ");
+}
 
 }

@@ -21,6 +21,8 @@
 
 package org.sakaiproject.authz.cover;
 
+import java.util.Set;
+
 import org.sakaiproject.component.cover.ComponentManager;
 
 /**
@@ -176,4 +178,13 @@ public class SecurityService
 
 		service.clearUserEffectiveRoles();
 	}
+
+	public static Set<String> listRealmsWithinContainer(String role,
+			String function, String realmsStartingWith) {
+		org.sakaiproject.authz.api.SecurityService service = getInstance();
+		if (service == null) return null;
+
+		return service.listRealmsWithinContainer(role, function, realmsStartingWith);
+}
+
 }

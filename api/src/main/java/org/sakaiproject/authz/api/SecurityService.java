@@ -23,6 +23,7 @@ package org.sakaiproject.authz.api;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.sakaiproject.user.api.User;
 
@@ -175,4 +176,15 @@ public interface SecurityService
 	 */
 	void clearUserEffectiveRoles();
 	
+	/**
+	 * Access the realm id's starting with the string "realmsStartingWith" for realms 
+	 * in which the role has permission for the function.
+	 * @param role
+	 * @param function
+	 * @param realmsStartingWith
+	 * @return A collection of realm id's matching the criteria, or an empty set if none match.
+	 */
+	Set<String> listRealmsWithinContainer(String role, String function,
+			String realmsStartingWith);
+
 }
