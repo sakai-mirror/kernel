@@ -8650,8 +8650,8 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 
 		// check for pubview on the container
 		String containerId = isolateContainingId(id);
-		boolean pubView = SecurityService.unlock(UserDirectoryService.getAnonymousUser(), AUTH_RESOURCE_READ,
-				getReference(containerId));
+		boolean pubView = this.isPubView(containerId);
+			//SecurityService.unlock(UserDirectoryService.getAnonymousUser(), AUTH_RESOURCE_READ, getReference(containerId));
 		return pubView;
 	}
 
