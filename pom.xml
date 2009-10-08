@@ -686,6 +686,7 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
                 <configuration>
                     <aggregate>true</aggregate>
@@ -794,6 +795,7 @@
                 <artifactId>dashboard-maven-plugin</artifactId>
             </plugin>
             <!--<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-changelog-plugin</artifactId>
                 <configuration>
                     <type>range</type>
