@@ -4,7 +4,7 @@
   <parent>
     <artifactId>deploy</artifactId>
     <groupId>org.sakaiproject.kernel</groupId>
-    <version>1.0.12-SNAPSHOT</version>
+    <version>1.0.12</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <description>Kernel Assembly</description>
@@ -17,9 +17,9 @@
   </organization>
   <inceptionYear>2008</inceptionYear>
   <scm>
-    <connection>scm:svn:https://source.sakaiproject.org/svn/kernel/branches/uct_1.0.10/deploy/assembly</connection>
-    <developerConnection>scm:svn:https://source.sakaiproject.org/svn/kernel/branches/uct_1.0.10/deploy/assembly</developerConnection>
-    <url>https://source.sakaiproject.org/svn/kernel/branches/uct_1.0.10/deploy/assembly</url>
+    <connection>scm:svn:https://source.sakaiproject.org/svn/kernel/tags/kernel-1.0.12</connection>
+    <developerConnection>scm:svn:https://source.sakaiproject.org/svn/kernel/tags/kernel-1.0.12</developerConnection>
+    <url>https://source.sakaiproject.org/svn/kernel/tags/kernel-1.0.12</url>
   </scm>
   <packaging>pom</packaging>
   <dependencies>
