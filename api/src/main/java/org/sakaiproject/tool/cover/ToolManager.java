@@ -35,7 +35,7 @@ public class ToolManager
 
 	/**
 	 * Access the component instance: special cover only method.
-	 *
+	 * 
 	 * @return the component instance.
 	 */
 	public static org.sakaiproject.tool.api.ToolManager getInstance()
@@ -115,11 +115,5 @@ public class ToolManager
 		if (manager == null) return null;
 
 		return manager.getCurrentPlacement();
-	}
-
-	public static void setResourceBundle (String toolId, String filename)
-	{
-		org.sakaiproject.tool.api.ToolManager manager = getInstance();
-		manager.setResourceBundle (toolId, filename);
 	}
 }

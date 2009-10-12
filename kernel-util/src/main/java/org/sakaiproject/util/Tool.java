@@ -25,13 +25,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Locale;
-import java.util.Iterator;
-import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.sakaiproject.tool.api.ActiveToolManager;
-import org.sakaiproject.util.ResourceLoader;
+import org.sakaiproject.tool.api.ActiveToolManager;;
 
 /**
  * <p>
@@ -42,13 +38,13 @@ public class Tool implements org.sakaiproject.tool.api.Tool, Comparable
 {
 	/** Our log (commons). */
 	private static Log M_log = LogFactory.getLog(Tool.class);
-
+	
 	/** The access security. */
 	protected Tool.AccessSecurity m_accessSecurity = Tool.AccessSecurity.PORTAL;
-
+	
 	/** The tool Manager that possesses the RessourceBundle. */
 	private ActiveToolManager m_activeToolManager = org.sakaiproject.tool.cover.ActiveToolManager.getInstance();
-
+	
 	/** The set of categories. */
 	protected Set m_categories = new HashSet();
 
@@ -72,10 +68,6 @@ public class Tool implements org.sakaiproject.tool.api.Tool, Comparable
 
 	/** The title string. */
 	protected String m_title = null;
-
-	/** Localization data.  */
-	public ResourceLoader m_title_local = null;
-	public Map m_title_bundle = null;
 
 	/**
 	 * Construct
@@ -131,7 +123,7 @@ public class Tool implements org.sakaiproject.tool.api.Tool, Comparable
 	public String getDescription()
 	{
 		final String localizedToolDescription = m_activeToolManager.getLocalizedToolProperty(this.getId(), "description");
-
+		
 		if(localizedToolDescription == null)
 		{
 			return m_description;
@@ -202,41 +194,19 @@ public class Tool implements org.sakaiproject.tool.api.Tool, Comparable
 
 	/**
 	 * @inheritDoc
-	 *
-	 *	Modified to fix SAK-8908 by Mark Norton.
-	 *	This implementation of getTitle() uses a three tier lookup strategy:
-	 *	<OL>
-	 *	<LI>If the title is present in a central tool bundle, use it.</LI>
-	 *	<LI>If there is a tool title resource bundle in the tool package, use it.</LI>
-	 *	<LI>Otherwise default to the title registered in the tool registration file.</LI>
-	 *	</OL>
 	 */
 	public String getTitle()
 	{
-		final String centralToolTitle = m_activeToolManager.getLocalizedToolProperty(this.getId(), "title");
-		if (centralToolTitle != null)
-			return centralToolTitle;
-
-		String localizedToolTitle = null;
-		if (m_title_bundle != null)
+		final String localizedToolTitle = m_activeToolManager.getLocalizedToolProperty(this.getId(), "title");
+		
+		if(localizedToolTitle == null)
 		{
-			//	Get the user's current locale preference.
-			ResourceLoader rl = new ResourceLoader();
-			String loc =rl.getLocale().toString();
-			//	Attempt to get the properties corresponding to that locale.
-			Properties props = (Properties) m_title_bundle.get(loc);
-			//	If a localized set doesn't exist, try for a default set.
-			if (props == null)
-				props = (Properties) m_title_bundle.get("DEFAULT");
-			//	Get the localized tool title.
-			if (props != null)
-				localizedToolTitle = (String) props.get ("title");
+			return m_title;
 		}
-		if (localizedToolTitle != null)
+		else
+		{
 			return localizedToolTitle;
-
-		//	Use the the default tool title from tool definition file.
-		return m_title;
+		}
 	}
 
 	/**
@@ -249,7 +219,7 @@ public class Tool implements org.sakaiproject.tool.api.Tool, Comparable
 
 	/**
 	 * Set the access security.
-	 *
+	 * 
 	 * @param access
 	 *        The new access security setting.
 	 */
@@ -260,7 +230,7 @@ public class Tool implements org.sakaiproject.tool.api.Tool, Comparable
 
 	/**
 	 * Set the categories.
-	 *
+	 * 
 	 * @param categories
 	 *        The new categories set (Strings).
 	 */
@@ -271,7 +241,7 @@ public class Tool implements org.sakaiproject.tool.api.Tool, Comparable
 
 	/**
 	 * Set the description.
-	 *
+	 * 
 	 * @param description
 	 *        The description to set.
 	 */
@@ -287,7 +257,7 @@ public class Tool implements org.sakaiproject.tool.api.Tool, Comparable
 
 	/**
 	 * Set the id.
-	 *
+	 * 
 	 * @param m_id
 	 *        The m_id to set.
 	 */
@@ -298,7 +268,7 @@ public class Tool implements org.sakaiproject.tool.api.Tool, Comparable
 
 	/**
 	 * Set the keywords.
-	 *
+	 * 
 	 * @param keywords
 	 *        The new keywords set (Strings).
 	 */
@@ -309,7 +279,7 @@ public class Tool implements org.sakaiproject.tool.api.Tool, Comparable
 
 	/**
 	 * Set the registered configuration.
-	 *
+	 * 
 	 * @param config
 	 *        The new registered configuration Properties.
 	 */
@@ -330,7 +300,7 @@ public class Tool implements org.sakaiproject.tool.api.Tool, Comparable
 
 	/**
 	 * Set the title.
-	 *
+	 * 
 	 * @param title
 	 *        The title to set.
 	 */

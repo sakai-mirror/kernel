@@ -61,7 +61,7 @@ public class Placement implements org.sakaiproject.tool.api.Placement
 
 	/**
 	 * Construct.
-	 *
+	 * 
 	 * @param id
 	 *        The placement id.
 	 * @param toolId
@@ -147,22 +147,18 @@ public class Placement implements org.sakaiproject.tool.api.Placement
 
 	/**
 	 * @inheritDoc
-	 *
-	 *	Modified by mnorton for SAK-8908.
 	 */
 	public String getTitle()
 	{
 		String rv = null;
-		if (m_tool != null)
-		{
-			rv = m_tool.getTitle();
-		}
-		else if (m_title != null)
+		if (m_title != null)
 		{
 			rv = m_title;
 		}
-		else
-			rv = "(title unknown)";
+		else if (m_tool != null)
+		{
+			rv = m_tool.getTitle();
+		}
 
 		return rv;
 	}
@@ -204,7 +200,7 @@ public class Placement implements org.sakaiproject.tool.api.Placement
 
 	/**
 	 * Set the context.
-	 *
+	 * 
 	 * @param context
 	 *        The context to set.
 	 */
@@ -215,7 +211,7 @@ public class Placement implements org.sakaiproject.tool.api.Placement
 
 	/**
 	 * Set the id.
-	 *
+	 * 
 	 * @param id
 	 *        The id to set.
 	 */
