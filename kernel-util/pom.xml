@@ -4,13 +4,13 @@
   <parent>
     <artifactId>kernel</artifactId>
     <groupId>org.sakaiproject</groupId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1.0-beta04-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <name>Sakai Kernel Util</name>
   <groupId>org.sakaiproject.kernel</groupId>
   <artifactId>sakai-kernel-util</artifactId>
-  <version>1.1-SNAPSHOT</version>
+  <version>1.1.0-beta04-SNAPSHOT</version>
   <organization>
     <name>The Sakai Foundation</name>
     <url>http://sakaiproject.org/</url>
@@ -71,5 +71,9 @@
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
 	</dependency>
+	<dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+    </dependency>
   </dependencies>
 </project>

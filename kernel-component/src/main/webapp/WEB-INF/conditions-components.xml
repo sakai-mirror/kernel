@@ -18,6 +18,8 @@
 	   	</bean>
 
 	   <!-- this is the helper that will register the above bean with the job scheduler -->
+	   <!-- FIXME job scheduler is not available in the kernel -->
+	   <!--
 	   <bean id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.DatetimeEventJob"
 	      class="org.sakaiproject.component.app.scheduler.jobs.SpringJobBeanWrapper"
 	      singleton="true" init-method="init">
@@ -31,5 +33,6 @@
 	         <ref bean="org.sakaiproject.api.app.scheduler.SchedulerManager" />
 	      </property>
 	   </bean>
+	   -->
 	
 	</beans>

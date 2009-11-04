@@ -24,6 +24,7 @@ package org.sakaiproject.content.cover;
 import java.util.Collection;
 import java.util.Set;
 
+import org.sakaiproject.antivirus.api.VirusFoundException;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.content.api.ContentResourceFilter;
@@ -509,7 +510,7 @@ public class ContentHostingService
 	}
 
 	public static void commitResource(org.sakaiproject.content.api.ContentResourceEdit param0)
-			throws org.sakaiproject.exception.OverQuotaException, org.sakaiproject.exception.ServerOverloadException
+			throws org.sakaiproject.exception.OverQuotaException, org.sakaiproject.exception.ServerOverloadException, org.sakaiproject.antivirus.api.VirusFoundException
 	{
 		org.sakaiproject.content.api.ContentHostingService service = getInstance();
 		if (service == null) return;
@@ -518,7 +519,7 @@ public class ContentHostingService
 	}
 
 	public static void commitResource(org.sakaiproject.content.api.ContentResourceEdit param0, int param1)
-			throws org.sakaiproject.exception.OverQuotaException, org.sakaiproject.exception.ServerOverloadException
+			throws org.sakaiproject.exception.OverQuotaException, org.sakaiproject.exception.ServerOverloadException, org.sakaiproject.antivirus.api.VirusFoundException
 	{
 		org.sakaiproject.content.api.ContentHostingService service = getInstance();
 		if (service == null) return;
@@ -820,6 +821,14 @@ public class ContentHostingService
 		service.removeAllLocks(id);
 	}
 
+	public static java.util.List findResources(String type, String primaryMimeType, String subMimeType,  Set<String> contextIds)
+	{
+		org.sakaiproject.content.api.ContentHostingService service = getInstance();
+		if (service == null) return null;
+
+		return service.findResources(type, primaryMimeType, subMimeType);
+	}
+  
 	public static java.util.List findResources(String type, String primaryMimeType, String subMimeType)
 	{
 		org.sakaiproject.content.api.ContentHostingService service = getInstance();
@@ -1098,6 +1107,17 @@ public class ContentHostingService
 		if (service == null) return null;
 		
 		return service.getResourcesOfType(resourceType, pageSize, page);
+	}
+
+	/**
+	 * @see org.sakaiproject.content.api.ContentHostingService#isAvailable(String)
+	 */
+	public static boolean isAvailable(String entityId)
+	{
+		org.sakaiproject.content.api.ContentHostingService service = getInstance();
+		if (service == null) return false;
+
+		return service.isAvailable(entityId);
 	}
 
 	public static Collection<ContentResource> getContextResourcesOfType(String resourceType, Set<String> contextIds)

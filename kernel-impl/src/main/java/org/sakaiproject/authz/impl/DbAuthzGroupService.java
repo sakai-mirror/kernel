@@ -785,23 +785,6 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 		}
 
 		/**
-		 * {@inheritDoc}
-		 */
-		public AuthzGroup edit(String id)
-		{
-			BaseAuthzGroup edit = (BaseAuthzGroup) super.editResource(id);
-
-			if (edit != null)
-			{
-				edit.activate();
-				completeGet(null, edit, true);
-			}
-
-			return edit;
-
-		}
-
-		/**
 		 * @inheritDoc
 		 */
 		public void addNewUser(final AuthzGroup azGroup, final String userId, final String role, final int maxSize) throws GroupFullException
@@ -2048,6 +2031,7 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 		 */
 		public void refreshAuthzGroup(BaseAuthzGroup realm)
 		{
+			M_log.debug("refreshAuthzGroup()");
 			if ((realm == null) || (m_provider == null)) return;
 
 			String sql = "";
@@ -2195,6 +2179,9 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 
 					m_sql.dbWrite(sql, fields);
 				}
+			}
+			if (M_log.isDebugEnabled()) {
+				M_log.debug("refreshAuthzGroup(): deleted: "+ toDelete.size()+ " inserted: "+ toInsert.size()+ " provided: "+ existing.size()+ " nonProvider: "+ nonProvider.size());
 			}
 		}
 

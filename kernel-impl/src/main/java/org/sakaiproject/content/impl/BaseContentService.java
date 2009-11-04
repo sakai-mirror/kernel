@@ -55,6 +55,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.alias.api.AliasService;
+import org.sakaiproject.antivirus.api.VirusFoundException;
+import org.sakaiproject.antivirus.api.VirusScanner;
 import org.sakaiproject.authz.api.AuthzGroup;
 import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.authz.api.AuthzPermissionException;
@@ -346,6 +348,13 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		catch (Throwable t)
 		{
 		}
+	}
+	
+	
+	private VirusScanner virusScanner;
+
+	public void setVirusScanner(VirusScanner virusScanner) {
+		this.virusScanner = virusScanner;
 	}
 
 	/** Configuration: cache, or not. */
@@ -5526,7 +5535,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	 * @exception ServerOverloadException
 	 *            if the server is configured to write the resource body to the filesystem and the save fails.
 	 */
-	public void commitResource(ContentResourceEdit edit, int priority) throws OverQuotaException, ServerOverloadException
+	public void commitResource(ContentResourceEdit edit, int priority) throws OverQuotaException, ServerOverloadException, VirusFoundException
 	{
 
 		// check for closed edit
@@ -5544,6 +5553,8 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 			throw new OverQuotaException(edit.getReference());
 		}
 
+		virusScanner.scan(edit.streamContent());
+		
 		commitResourceEdit(edit, priority);
 
 		if(! readyToUseFilesizeColumn())
@@ -5574,7 +5585,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 
 		if(this.m_prioritySortEnabled)
 		{
-			// ((BasicGroupAwareEdit) edit).setPriority();
+		    ((BasicGroupAwareEdit) edit).setPriority();
 		}
 
 		// update the properties for update
@@ -8748,6 +8759,24 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	/**
 	 * {@inheritDoc}
 	 */
+	public List findResources(String type, String primaryMimeType, String subMimeType,  Set<String> contextIds)
+	{
+		List globalList = new ArrayList();
+
+		Iterator siteIt = contextIds.iterator();
+		while (siteIt.hasNext())
+		{
+			String collId = getSiteCollection( (String)siteIt.next() );
+			List artifacts = getFlatResources(collId);
+			globalList.addAll(filterArtifacts(artifacts, type, primaryMimeType, subMimeType, true));
+		}
+
+		return globalList;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
 	public List findResources(String type, String primaryMimeType, String subMimeType)
 	{
 		List globalList = new ArrayList();
@@ -8758,7 +8787,6 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		{
 			Entry entry = (Entry) siteIt.next();
 			String collId = (String) entry.getKey();
-			String displayName = (String) entry.getValue();
 			List artifacts = getFlatResources(collId);
 			globalList.addAll(filterArtifacts(artifacts, type, primaryMimeType, subMimeType, true));
 		}
@@ -10158,7 +10186,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 					m_properties = new BaseResourcePropertiesEdit(element);
 					if(m_prioritySortEnabled)
 					{
-						// setPriority();
+					    setPriority();
 					}
 				}
 				// look for groups 
@@ -11234,7 +11262,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 					m_properties = new BaseResourcePropertiesEdit(element);
 					if(m_prioritySortEnabled)
 					{
-						// setPriority();
+					    setPriority();
 					}
 				}
 				// look for groups
