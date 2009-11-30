@@ -101,6 +101,11 @@ public class ClamAVScanner implements VirusScanner {
 		Socket socket = null;
 		String virus = null;
 		long start = System.currentTimeMillis();
+		//this could be a null or zero lenght stream
+		if (in == null) {
+		    return;
+		}
+
 		try {
 			socket = getClamdSocket();
 		} catch (UnknownHostException e) {
@@ -181,10 +186,6 @@ public class ClamAVScanner implements VirusScanner {
 					writer.close();
 			} catch (Throwable t) { }
 			try {
-				if(in != null)
-					in.close();
-			} catch (Throwable t) { }
-			try {
 				if(streamSocket != null)
 					streamSocket.close();
 			} catch (Throwable t) { }
@@ -201,6 +202,9 @@ public class ClamAVScanner implements VirusScanner {
 	}
 
 	protected void doScan(byte[] bytesIn) throws VirusScanIncompleteException, VirusFoundException {
+	    if (bytesIn == null) {
+		return;
+	    }
 		doScan(new ByteArrayInputStream(bytesIn));
 	}
 
