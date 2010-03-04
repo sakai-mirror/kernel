@@ -5463,8 +5463,8 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 			cancelResource(edit);
 			throw new OverQuotaException(edit.getReference());
 		}
-
-		virusScanner.scan(edit.streamContent());
+		
+		virusScanner.scan(edit.getContent());
 		
 		commitResourceEdit(edit, priority);
 
