@@ -12477,7 +12477,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 							{
 								ContentCollectionEdit edit = editCollection(oId);
 
-								m_storage.removeCollection(edit);
+								this.removeCollection(edit.getId());
 							}
 							catch (Exception ee)
 							{
