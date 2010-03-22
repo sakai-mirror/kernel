@@ -5278,7 +5278,11 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		newProps.addProperty(ResourceProperties.PROP_DISPLAY_NAME, name);
 
 		if (M_log.isDebugEnabled()) M_log.debug("copyCollection adding colletion=" + new_id + " name=" + name);
-
+		boolean isHidden = false;
+		if (isPubView(thisCollection.getId()))
+		{
+			isHidden = true;
+		}
 		try
 		{
 			addCollection(new_id, newProps, null, isHidden, null, null);
