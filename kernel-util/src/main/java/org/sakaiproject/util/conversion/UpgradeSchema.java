@@ -23,12 +23,15 @@ package org.sakaiproject.util.conversion;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+
+import javax.management.RuntimeErrorException;
 
 import org.apache.commons.dbcp.cpdsadapter.DriverAdapterCPDS;
 import org.apache.commons.dbcp.datasources.SharedPoolDataSource;
@@ -69,15 +72,32 @@ public class UpgradeSchema
 	 * @throws Exception
 	 * @throws Exception
 	 */
-	private void convert(String config) throws Exception
+	private void convert(String config) throws IOException
 	{
 		Properties p = new Properties();
+		
 		if (config != null)
 		{
+			FileInputStream fin = null;
 			log.info("Using Config " + config);
-			FileInputStream fin = new FileInputStream(config);
-			p.load(fin);
-			fin.close();
+			try {
+				fin = new FileInputStream(config);
+				p.load(fin);
+				
+			} catch (FileNotFoundException e) {
+				throw new RuntimeException(e);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			finally {
+				if (fin != null) {
+					try {
+						fin.close();
+					} catch (IOException e) {
+						
+					}
+				}
+			}
 			StringBuilder sb = new StringBuilder();
 			Object[] keys = p.keySet().toArray();
 			Arrays.sort(keys);
@@ -102,14 +122,20 @@ public class UpgradeSchema
                     	sb.append("\n " + k + ":" + p.get(k));
                     }
                     log.info("Loaded Default Properties as " + sb.toString());
-                } finally {
+                } catch (IOException e) {
+					throw new IOException();
+				} finally {
                     is.close();
                 }
 			}
 		}
 
 		tds = new SharedPoolDataSource();
-		tds.setConnectionPoolDataSource(getDataSource(p));
+		try {
+			tds.setConnectionPoolDataSource(getDataSource(p));
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
 		tds.setMaxActive(10);
 		tds.setMaxWait(5);
 		tds.setDefaultAutoCommit(false);
@@ -134,7 +160,11 @@ public class UpgradeSchema
 
 		doMigrate(sequence);
 
-		tds.close();
+		try {
+			tds.close();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 
 	}
 
@@ -194,7 +224,7 @@ public class UpgradeSchema
 	 * (Side note: this configuration logic would be easy to externalize with Spring.)
 	 * @param configProperties
 	 */
-	private DriverAdapterCPDS getDataSource(Properties configProperties) throws Exception
+	private DriverAdapterCPDS getDataSource(Properties configProperties) throws ClassNotFoundException 
 	{
 		String dbDriver = null;
 		String dbUrl = null;
@@ -206,8 +236,9 @@ public class UpgradeSchema
 			File sakaiPropertiesFile = new File(sakaiPropertiesPath);
 			if (sakaiPropertiesFile.exists())
 			{
+				FileInputStream sakaiPropertiesInput = null;
 				try {
-					FileInputStream sakaiPropertiesInput = new FileInputStream(sakaiPropertiesFile);
+					sakaiPropertiesInput = new FileInputStream(sakaiPropertiesFile);
 					Properties sakaiProperties = new Properties();
 					sakaiProperties.load(sakaiPropertiesInput);
 					sakaiPropertiesInput.close();
@@ -218,6 +249,14 @@ public class UpgradeSchema
 				} catch (IOException e) {
 					log.info("Error loading properties from " + sakaiPropertiesFile.getAbsolutePath());
 				}
+				finally {
+					if (sakaiPropertiesInput != null) {
+						try {
+							sakaiPropertiesInput.close();
+						} catch (IOException e) {
+						}
+					}
+				}
 			}
 		}
 		if (dbDriver == null) dbDriver = configProperties.getProperty("dbDriver");
@@ -226,7 +265,11 @@ public class UpgradeSchema
 		if (dbPassword == null) dbPassword = configProperties.getProperty("dbPass");
 
 		DriverAdapterCPDS cpds = new DriverAdapterCPDS();
-		cpds.setDriver(dbDriver);
+		try {
+			cpds.setDriver(dbDriver);
+		} catch (ClassNotFoundException e) {
+			throw new ClassNotFoundException();
+		}
 		cpds.setUrl(dbUrl);
 		cpds.setUser(dbUser);
 		cpds.setPassword(dbPassword);

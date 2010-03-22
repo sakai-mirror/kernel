@@ -103,27 +103,63 @@ public class SchemaConversionController
 		
 		if(createErrorTable != null && errorReportSql != null && verifyErrorTable != null)
 		{
+			PreparedStatement verifyTable = null;
+			PreparedStatement createTable = null;
+			ResultSet rs = null;
 			try 
 			{
 				// reportErrorsInTable should be true if table already exists or is created 
-				PreparedStatement verifyTable = connection.prepareStatement(verifyErrorTable);
-				ResultSet rs = verifyTable.executeQuery();
+				verifyTable = connection.prepareStatement(verifyErrorTable);
+				rs = verifyTable.executeQuery();
 				boolean tableExists = rs.next();
-				
+
 				if(!tableExists)
 				{
-					
-					PreparedStatement createTable = connection.prepareStatement(createErrorTable);
+
+					createTable = connection.prepareStatement(createErrorTable);
 					createTable.execute();
 				}
 				reportErrorsInTable = true;
 			} 
 			catch (SQLException e) 
 			{
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
+			finally {
+				if (rs != null)
+				{
+					try
+					{
+						rs.close();
+					}
+					catch (SQLException e)
+					{
+					}
+				}
+
+				if (verifyTable != null)
+				{
+					try
+					{
+						verifyTable.close();
+					}
+					catch (SQLException e)
+					{
+					}
+				}
+
+				if (createTable != null)
+				{
+					try
+					{
+						createTable.close();
+					}
+					catch (SQLException e)
+					{
+					}
+				}
+			} //END Finally
+		} //END if
 	}
 
 	public boolean migrate(DataSource datasource, SchemaConversionHandler convert,
@@ -241,7 +277,7 @@ public class SchemaConversionController
 						}
 						rs.close();
 					}
-					catch(Exception e)
+					catch(SQLException e)
 					{
 						String msg = "  --> Failure converting or validating item " + id + " [" + count + " of " + l.size() + "] \n";
 						insertErrorReport(reportError, id, driver.getHandler(), "Exception while updating, converting or verifying item");
