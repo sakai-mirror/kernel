@@ -23,7 +23,6 @@ package org.sakaiproject.component.impl;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
@@ -143,7 +142,7 @@ public class BasicConfigurationService implements ServerConfigurationService
 
 			serverIdInstance = getServerId() + "-" + instanceId;
 		}
-		catch (Exception t)
+		catch (Throwable t)
 		{
 			M_log.warn("init(): ", t);
 		}
@@ -154,25 +153,13 @@ public class BasicConfigurationService implements ServerConfigurationService
 			File f = new File(toolOrderFile);
 			if (f.exists())
 			{
-				FileInputStream fis = null;
 				try
 				{
-					fis = new FileInputStream(f);
-					loadToolOrder(fis);
+					loadToolOrder(new FileInputStream(f));
 				}
-				catch (Exception t)
+				catch (Throwable t)
 				{
 					M_log.warn("init(): trouble loading tool order from : " + toolOrderFile, t);
-				}
-				finally {
-					if (fis != null) {
-						try {
-							fis.close();
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
 				}
 			}
 			else
@@ -182,7 +169,7 @@ public class BasicConfigurationService implements ServerConfigurationService
 				{
 					loadToolOrder(defaultToolOrderResource.getInputStream());
 				}
-				catch (Exception t)
+				catch (Throwable t)
 				{
 					M_log.warn("init(): trouble loading tool order from default toolOrder.xml", t);
 				}

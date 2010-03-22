@@ -4,7 +4,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.List;
@@ -15,8 +14,6 @@ import java.util.zip.ZipOutputStream;
 import javax.activation.MimetypesFileTypeMap;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.content.api.ContentCollection;
 import org.sakaiproject.content.api.ContentCollectionEdit;
 import org.sakaiproject.content.api.ContentResource;
@@ -26,11 +23,9 @@ import org.sakaiproject.entity.api.Entity;
 import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.api.ResourcePropertiesEdit;
 import org.sakaiproject.event.api.NotificationService;
-import org.sakaiproject.exception.ServerOverloadException;
 
 public class ZipContentUtil {
 	
-	protected static final Log LOG = LogFactory.getLog(ZipContentUtil.class);
 	private static final String ZIP_EXTENSION = ".zip";
 	private static final int BUFFER_SIZE = 8192;
 	private static final MimetypesFileTypeMap mime = new MimetypesFileTypeMap();
@@ -41,25 +36,22 @@ public class ZipContentUtil {
 	 * @param reference
 	 * @throws Exception
 	 */
-	public void compressFolder(Reference reference) { 
+	public void compressFolder(Reference reference) throws Exception { 
 		File temp = null;
-		FileInputStream fis = null;
-		ZipOutputStream out = null;
 		try {
 			// Create the compressed archive in the filesystem
 			temp = File.createTempFile("sakai_content-", ".tmp");
 			temp.deleteOnExit(); 
 			ContentCollection collection = ContentHostingService.getCollection(reference.getId());
-			out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(temp),BUFFER_SIZE));			
+			ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(temp),BUFFER_SIZE));			
 			storeContentCollection(reference.getId(),collection,out);        		
-			
+			out.close();
 			
 			// Store the compressed archive in the repository
 			String resourceId = reference.getId().substring(0,reference.getId().lastIndexOf(Entity.SEPARATOR))+ZIP_EXTENSION;
 			String resourceName = extractName(resourceId);
-			ContentResourceEdit resourceEdit = ContentHostingService.addResource(resourceId);
-			fis = new FileInputStream(temp);
-			resourceEdit.setContent(fis);
+			ContentResourceEdit resourceEdit = ContentHostingService.addResource(resourceId);	
+			resourceEdit.setContent(new FileInputStream(temp));
 			resourceEdit.setContentType(mime.getContentType(resourceId));
 			ResourcePropertiesEdit props = resourceEdit.getPropertiesEdit();
 			props.addProperty(ResourcePropertiesEdit.PROP_DISPLAY_NAME, resourceName);
@@ -69,23 +61,7 @@ public class ZipContentUtil {
 			e.printStackTrace();
 		} 
 		finally {
-			if (fis != null) {
-				try {
-					fis.close();
-				} catch (IOException e) {
-				}
-			}
-			if (temp != null && temp.exists()) { 
-				if (!temp.delete()) {
-					LOG.warn("failed to remove temp file");
-				}
-			}
-			if (out != null) {
-				try {
-					out.close();
-				} catch (IOException e) {
-				}
-			}
+			temp.delete();
 		}
 	}
 
@@ -174,35 +150,18 @@ public class ZipContentUtil {
 	 * 
 	 * @param resource
 	 * @return
-	 * 
+	 * @throws Exception
 	 */
-	private File exportResourceToFile(ContentResource resource) {
-		File temp = null;
-		FileOutputStream out = null;
-		try {
-			temp = File.createTempFile("sakai_content-", ".tmp");
-
-			temp.deleteOnExit();
-
-			// Write content to file 
-			out = new FileOutputStream(temp);        
-			IOUtils.copy(resource.streamContent(),out);
-			out.flush();
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ServerOverloadException e) {
-			e.printStackTrace();
-		}
-		finally {
-			if (out !=null) {
-				try {
-					out.close();
-				} catch (IOException e) {
-					
-				}
-			}
-		}
+	private File exportResourceToFile(ContentResource resource) throws Exception {
+		File temp = File.createTempFile("sakai_content-", ".tmp");
+        temp.deleteOnExit();
+    
+        // Write content to file 
+        FileOutputStream out = new FileOutputStream(temp);        
+        IOUtils.copy(resource.streamContent(),out);
+        out.flush();
+        out.close();
+        
         return temp;
 	}
     

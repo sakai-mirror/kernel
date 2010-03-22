@@ -99,24 +99,15 @@ public class Xml
 	{
 		Document doc = null;
 		// first try using whatever character encoding the XML itself specifies
-		InputStream fis = null;
 		try
 		{
 			DocumentBuilder docBuilder = getDocumentBuilder();
-			fis = new FileInputStream(name);
+			InputStream fis = new FileInputStream(name);
 			doc = docBuilder.parse(fis);
 		}
 		catch (Exception e)
 		{
 			doc = null;
-		}
-		finally {
-			if (fis != null) {
-				try {
-					fis.close();
-				} catch (IOException e) {
-				}
-			}
 		}
 
 		if (doc != null) return doc;
@@ -264,10 +255,9 @@ public class Xml
 	 */
 	public static void writeDocument(Document doc, String fileName)
 	{
-		OutputStream out = null;
 		try
 		{
-			out = new FileOutputStream(fileName);
+			OutputStream out = new FileOutputStream(fileName);
 //			 get an instance of the DOMImplementation registry
 			 DocumentBuilderFactory factory 
 			   = DocumentBuilderFactory.newInstance();
@@ -286,15 +276,6 @@ public class Xml
 		catch (Exception any)
 		{
 			M_log.warn("writeDocument: " + any.toString());
-		}
-		finally {
-			if (out != null) {
-				try {
-					out.close();
-				} catch (IOException e) {
-					
-				}
-			}
 		}
 	}
 
