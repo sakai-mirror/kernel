@@ -1023,8 +1023,10 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 	 */
 	public Site addSite(String id, String type) throws IdInvalidException, IdUsedException, PermissionException
 	{
-		// check for a valid site name
-		Validator.checkResourceId(id);
+		// check for a valid site id
+		if (!Validator.checkResourceId(id)) {
+			throw new IdInvalidException("Id " + id + " is not valid");
+		}
 
 		id = Validator.escapeResourceName(id);
 
@@ -1062,8 +1064,10 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 	 */
 	public Site addSite(String id, Site other) throws IdInvalidException, IdUsedException, PermissionException
 	{
-		// check for a valid site name
-		Validator.checkResourceId(id);
+		// check for a valid site id
+		if (!Validator.checkResourceId(id)) {
+			throw new IdInvalidException("Id " + id + " is not valid");
+		}
 
 		id = Validator.escapeResourceName(id);
 
