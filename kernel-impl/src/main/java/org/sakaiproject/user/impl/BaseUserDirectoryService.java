@@ -1087,6 +1087,11 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 			}
 
 		}
+		
+		//only a super user should ever be able to edit the EID
+		if (!securityService().isSuperUser()) {
+			user.restrictEditEid();
+		}
 
 		((BaseUserEdit) user).setEvent(function);
 
@@ -1820,6 +1825,9 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 
 		/** If editing the type is restricted **/
 		protected boolean m_restrictedType = false;
+		
+		/** if editing the eid is restricted **/
+		protected boolean m_restrictedEid = false;
 
 		/**
 		 * Construct.
@@ -2403,7 +2411,10 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 		 */
 		public void setEid(String eid)
 		{
-			m_eid = eid;
+			if (!m_restrictedEid) 
+			{
+				m_eid = eid;
+			}
 		}
 
 		/**
@@ -2496,6 +2507,10 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 
 			m_restrictedPassword = true;
 
+		}
+		
+		public void restrictEditEid() {
+			m_restrictedEid = true;
 		}
 
 		public void restrictEditType() {
