@@ -22,13 +22,15 @@
 package org.sakaiproject.authz.cover;
 
 import org.sakaiproject.component.cover.ComponentManager;
+import org.sakaiproject.user.api.User;
 
 /**
  * <p>
  * SecurityService is a static Cover for the {@link org.sakaiproject.authz.api.SecurityService SecurityService}; see that interface for usage details.
  * </p>
  * 
- * @version $Revision$
+ * @deprecated Static covers should not be used in favour of injection or lookup
+ * via the component manager. This cover will be removed in a later version of the Kernel
  */
 public class SecurityService
 {
@@ -57,7 +59,7 @@ public class SecurityService
 
 	public static java.lang.String SERVICE_NAME = org.sakaiproject.authz.api.SecurityService.SERVICE_NAME;
 
-	public static java.util.List unlockUsers(java.lang.String param0, java.lang.String param1)
+	public static java.util.List<User> unlockUsers(java.lang.String param0, java.lang.String param1)
 	{
 		org.sakaiproject.authz.api.SecurityService service = getInstance();
 		if (service == null) return null;

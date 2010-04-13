@@ -48,27 +48,27 @@ public class Validator
 	/** These characters are not allowed in a user id */
 	protected static final String INVALID_CHARS_IN_USER_ID = "^/\\%*?\n\r\t\b\f";
 
-	protected static final String MAP_TO_A = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½";
+	protected static final String MAP_TO_A = "‰ŠˆŒ€‡‡";
 
-	protected static final String MAP_TO_B = "ï¿½ï¿½";
+	protected static final String MAP_TO_B = "§§";
 
-	protected static final String MAP_TO_C = "ï¿½ï¿½ï¿½ï¿½";
+	protected static final String MAP_TO_C = "‚¢¢";
 
-	protected static final String MAP_TO_E = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½";
+	protected static final String MAP_TO_E = "‘ƒ¾®®";
 
-	protected static final String MAP_TO_I = "ï¿½ï¿½ï¿½ï¿½ï¿½";
+	protected static final String MAP_TO_I = "•”“’’";
 
-	protected static final String MAP_TO_L = "ï¿½ï¿½";
+	protected static final String MAP_TO_L = "££";
 
-	protected static final String MAP_TO_N = "ï¿½ï¿½ï¿½";
+	protected static final String MAP_TO_N = "–„„";
 
-	protected static final String MAP_TO_O = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½";
+	protected static final String MAP_TO_O = "™š˜…——";
 
-	protected static final String MAP_TO_U = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½";
+	protected static final String MAP_TO_U = "Ÿ†œœ";
 
 	protected static final String MAP_TO_Y = "Ø´??";
 
-	protected static final String MAP_TO_X = "???ï¿½ï¿½ï¿½ï¿½ï¿½?ï¿½ï¿½ï¿½ï¿½?";
+	protected static final String MAP_TO_X = "???¤©»¨±?«µ¦À?";
 
 	/**
 	 * These characters are allowed; but if escapeResourceName() is called, they are escaped (actually, removed) Certain characters cause problems with filenames in certain OSes - so get rid of these characters in filenames
@@ -210,10 +210,10 @@ public class Validator
 			String rv = buf.toString();
 			return rv;
 		}
-		catch (Exception e)
+		catch (UnsupportedEncodingException e)
 		{
 			M_log.warn("Validator.escapeUrl: ", e);
-			return id;
+			return "";
 		}
 
 	} // escapeUrl
@@ -299,7 +299,7 @@ public class Validator
 		catch (Exception e)
 		{
 			M_log.warn("Validator.escapeResourceName: ", e);
-			return id;
+			return "";
 		}
 
 	} // escapeResourceName
@@ -336,7 +336,7 @@ public class Validator
 		catch (Exception e)
 		{
 			M_log.warn("Validator.escapeQuestionMark: ", e);
-			return id;
+			return "";
 		}
 
 	} // escapeQuestionMark
@@ -373,7 +373,7 @@ public class Validator
 		catch (Exception e)
 		{
 			M_log.warn("Validator.escapeZipEntry: ", e);
-			return id;
+			return "";
 		}
 
 	} // escapeZipEntry
@@ -384,8 +384,6 @@ public class Validator
 	 * @param value
 	 *        The string to escape.
 	 * @return value escaped.
-	 *  @deprecated 
-	 *        Use http://commons.apache.org/lang/api/org/apache/commons/lang/StringEscapeUtils.html instead (see KNL-69).
 	 */
 	public static String escapeJsQuoted(String value)
 	{
@@ -421,7 +419,7 @@ public class Validator
 		catch (Exception e)
 		{
 			M_log.warn("Validator.escapeJsQuoted: ", e);
-			return value;
+			return "";
 		}
 
 	} // escapeJsQuoted
@@ -459,7 +457,7 @@ public class Validator
 		catch (Exception e)
 		{
 			M_log.warn("Validator.escapeSql: ", e);
-			return value;
+			return "";
 		}
 
 	} // escapeSql
@@ -505,7 +503,7 @@ public class Validator
 		catch (Exception e)
 		{
 			M_log.warn("Validator.escapeJavascript: ", e);
-			return value;
+			return "";
 		}
 
 	} // escapeJavascript
@@ -685,6 +683,8 @@ public class Validator
 
 		// text (plain/html) mime types
 		if (lType.startsWith("text/")) return true;
+		// XHTML mime type
+		if (lType.equals("application/xhtml+xml")) return true;
 		
 		// image mime types
 		if (lType.startsWith("image/")) return true;
@@ -702,7 +702,7 @@ public class Validator
 		
 		// checks for VRML file MIME types:x-world/x-vrml, model/vrml, application/x-blaxxunCC3D, application/x-blaxxunCC3Dpro, application/x-CC3D
 		// need to check for any other MIME types which can be opened by browser plug-ins? %%%zqian
-		if (lType.indexOf("vrml") != -1 || lType.indexOf("CC3D") != -1) return true;
+		if (lType.indexOf("vrml") != -1 || lType.indexOf("cc3d") != -1) return true;
 
 		// check additional inline types for this instance specified in sakai.properties
 		String moreInlineTypes[] = ServerConfigurationService.getStrings("content.mime.inline");  

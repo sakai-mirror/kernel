@@ -172,11 +172,19 @@ public interface ResourceProperties extends Serializable
 	static final String PROP_RESOURCE_TYPE = "SAKAI:resource_type";
 
 	/**
+	 * Property name on a Resource or Collection which will allow resources with
+	 * a text/html content type to be output with an inline content-disposition
+	 * (implies this resource is trusted not to include malicious javascript or
+	 * other unwanted html elements) [Boolean]
+	 */
+	public static final String PROP_ALLOW_INLINE = "SAKAI:allow_inline";
+
+	/**
 	 * Access an iterator on the names of the defined properties (Strings).
 	 * 
 	 * @return An iterator on the names of the defined properties (Strings) (may be empty).
 	 */
-	Iterator getPropertyNames();
+	Iterator<String> getPropertyNames();
 
 	/**
 	 * Access a named property as a string (won't find multi-valued ones.)
@@ -194,7 +202,7 @@ public interface ResourceProperties extends Serializable
 	 *        The property name.
 	 * @return the property value, or null if not found.
 	 */
-	List getPropertyList(String name);
+	List<String> getPropertyList(String name);
 
 	/**
 	 * Access a named property; as a String if it's single valued, or a List of (String) if it's multi-valued (or null if it's not defined).

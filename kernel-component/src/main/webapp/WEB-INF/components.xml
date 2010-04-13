@@ -10,6 +10,7 @@
      <import resource="email-components.xml" />
      <import resource="tool-components.xml" />
      <import resource="cluster-components.xml" />
+     <import resource="antivirus-components.xml"/>
 <!--
 Uncomment to enable JCR Content
      <import resource="content-jcr-components.xml" />
@@ -17,6 +18,8 @@ Uncomment to enable JCR Content
 <!-- Comment Out to enable JCR Content 
 -->
      <import resource="content-components.xml" />
+   
+	 <import resource="conditions-components.xml" />
      <import resource="entity-components.xml" />
      <import resource="jackrabbit-components.xml" />
      <import resource="jcr-support-components.xml" />

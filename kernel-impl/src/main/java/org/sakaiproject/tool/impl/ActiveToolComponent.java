@@ -24,15 +24,15 @@ package org.sakaiproject.tool.impl;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.List;
-import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 import javax.servlet.RequestDispatcher;
@@ -55,10 +55,9 @@ import org.sakaiproject.tool.api.Tool;
 import org.sakaiproject.tool.api.ToolException;
 import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.util.Resource;
+import org.sakaiproject.util.ResourceLoader;
 import org.sakaiproject.util.StringUtil;
 import org.sakaiproject.util.Xml;
-import org.sakaiproject.util.ResourceLoader;
-import org.sakaiproject.component.cover.ComponentManager;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -125,13 +124,20 @@ public abstract class ActiveToolComponent extends ToolComponent implements Activ
 
 		at.setServletContext(context);
 
-		// try getting the RequestDispatcher, just to test - but DON'T SAVE IT!
-		// Tomcat's RequestDispatcher is NOT thread safe and must be gotten from the context
-		// every time its needed!
-		RequestDispatcher dispatcher = context.getNamedDispatcher(at.getId());
-		if (dispatcher == null)
+		// KNL-352 - in Websphere ServletContext.getNamedDispatcher(...) will initialize the given Servlet.
+		// However Websphere's normal Servlet initialization happens later at com.ibm.ws.wswebcontainer.webapp.WebApp.initialize(WebApp.java:293).
+		// As a result, Websphere ends up trying to initialize the Servlet twice, causing the observed mapping clash exceptions.
+
+		if (!"websphere".equals(ServerConfigurationService.getString("servlet.container")))
 		{
-			M_log.warn("missing dispatcher for tool: " + at.getId());
+			// try getting the RequestDispatcher, just to test - but DON'T SAVE IT!
+			// Tomcat's RequestDispatcher is NOT thread safe and must be gotten from the context
+			// every time its needed!
+			RequestDispatcher dispatcher = context.getNamedDispatcher(at.getId());
+			if (dispatcher == null)
+			{
+				M_log.warn("missing dispatcher for tool: " + at.getId());
+			}
 		}
 
 		m_tools.put(at.getId(), at);

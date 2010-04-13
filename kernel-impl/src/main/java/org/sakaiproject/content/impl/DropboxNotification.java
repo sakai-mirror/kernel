@@ -21,18 +21,15 @@
 
 package org.sakaiproject.content.impl;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.sakaiproject.authz.cover.SecurityService;
 import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentCollection;
-import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.content.cover.ContentHostingService;
 import org.sakaiproject.entity.api.Entity;
 import org.sakaiproject.entity.api.Reference;
@@ -42,11 +39,8 @@ import org.sakaiproject.event.api.Event;
 import org.sakaiproject.event.api.NotificationAction;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
-import org.sakaiproject.exception.TypeException;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.cover.SiteService;
-import org.sakaiproject.time.api.Time;
-import org.sakaiproject.time.cover.TimeService;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserNotDefinedException;
 import org.sakaiproject.user.cover.UserDirectoryService;
@@ -442,17 +436,18 @@ public class DropboxNotification extends EmailNotification
 		{
 			// grow this collection id as we descend into the collections
 			String root = Entity.SEPARATOR + parts[2] + Entity.SEPARATOR + parts[3] + Entity.SEPARATOR;
-
+			StringBuilder rootBuilder = new StringBuilder();
+			rootBuilder.append(root);
 			// take all the collection parts
 			for (int i = 4; i < parts.length - 1; i++)
 			{
 				buf.append(" > ");
 				String collectionId = parts[i];
-				root = root + collectionId + Entity.SEPARATOR;
+				rootBuilder.append(collectionId + Entity.SEPARATOR);
 				try
 				{
 					// get the display name
-					ContentCollection collection = ContentHostingService.getCollection(root);
+					ContentCollection collection = ContentHostingService.getCollection(rootBuilder.toString());
 					buf.append(collection.getProperties().getPropertyFormatted(ResourceProperties.PROP_DISPLAY_NAME));
 				}
 				catch (Exception any)

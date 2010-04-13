@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroupService;
-import org.sakaiproject.authz.cover.SecurityService;
+import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.db.api.SqlReader;
 import org.sakaiproject.db.api.SqlService;
@@ -141,7 +141,15 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 	 * @return the MemoryService collaborator.
 	 */
 	protected abstract MemoryService memoryService();
+	
+	private SecurityService securityService;
 
+	public void setSecurityService(SecurityService securityService) {
+		this.securityService = securityService;
+	}
+	
+	
+	
 
 	/*************************************************************************************************************************************************
 	 * Configuration
@@ -359,35 +367,6 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 	/**
 	 * @inheritDoc
 	 */
-	public UsageSession setSessionActive(boolean auto)
-	{
-		throw new UnsupportedOperationException();
-		// BaseUsageSession session = (BaseUsageSession) getSession();
-		// if (session == null) return null;
-		//
-		// if (session.isClosed()) return session;
-		//
-		// if (auto)
-		// {
-		// // do not mark the current session as having user activity
-		// // but close it if it's timed out from no user activity
-		// if (session.isInactive())
-		// {
-		// session.close();
-		// }
-		// }
-		// else
-		// {
-		// // mark the current session as having user activity
-		// session.setActivity();
-		// }
-		//
-		// return session;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
 	public UsageSession getSession(String id)
 	{
 		UsageSession rv = m_storage.getSession(id);
@@ -538,7 +517,7 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 	{
 		userDirectoryService().destroyAuthentication();
 
-		SecurityService.clearUserEffectiveRoles();
+		securityService.clearUserEffectiveRoles();
 		
 		// invalidate the sakai session, which makes it unavailable, unbinds all the bound objects,
 		// including the session, which will close and generate the logout event

@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroupService;
@@ -62,6 +63,7 @@ import org.sakaiproject.user.api.AuthenticatedUserProvider;
 import org.sakaiproject.user.api.AuthenticationManager;
 import org.sakaiproject.user.api.ContextualUserDisplayService;
 import org.sakaiproject.user.api.DisplayAdvisorUDP;
+import org.sakaiproject.user.api.ExternalUserSearchUDP;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserAlreadyDefinedException;
 import org.sakaiproject.user.api.UserDirectoryProvider;
@@ -299,10 +301,10 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 	protected List<String> unlock(List<String> locks, String resource) throws UserPermissionException
 	{
 		List<String> locksSucceeded = new ArrayList<String>();
-		String locksFailed = "";
+		
 
 		Iterator<String> locksIterator = locks.iterator();
-
+		StringBuilder  locksFailedSb = new StringBuilder();
 		while (locksIterator.hasNext()) {
 
 			String lock = (String) locksIterator.next();
@@ -313,13 +315,13 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 
 			} else {
 
-				locksFailed += lock + " ";
+				locksFailedSb.append(lock + " ");
 			}
 
 		}
 
 		if (locksSucceeded.size() < 1) {
-			throw new UserPermissionException(sessionManager().getCurrentSessionUserId(), locksFailed, resource);
+			throw new UserPermissionException(sessionManager().getCurrentSessionUserId(), locksFailedSb.toString(), resource);
 		}
 
 		return locksSucceeded;
@@ -365,7 +367,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 	}
 	public void setProviderName(String userDirectoryProviderName)
 	{
-		m_providerName = StringUtil.trimToNull(userDirectoryProviderName);
+		m_providerName = StringUtils.trimToNull(userDirectoryProviderName);
 	}
 
 	public void setContextualUserDisplayService(ContextualUserDisplayService contextualUserDisplayService) {
@@ -618,6 +620,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 			// check with the provider
 			if (m_provider.getUser(user))
 			{
+				user.setEid(cleanEid(user.getEid()));
 				ensureMappedIdForProvidedUser(user);
 				return user;
 			}
@@ -634,6 +637,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 	{
 		if (user.getId() == null)
 		{
+			user.setEid(cleanEid(user.getEid()));
 			String eid = user.getEid();
 			String id = assureUuid(null, eid);
 			m_storage.putMap(id, eid);
@@ -645,6 +649,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 	{
 		if (user.getId() == null)
 		{
+			user.setEid(cleanEid(user.getEid()));
 			user.setId(m_storage.checkMapForId(user.getEid()));
 			ensureMappedIdForProvidedUser(user);
 		}
@@ -732,11 +737,11 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 	/**
 	 * @inheritDoc
 	 */
-	public List getUsers(Collection ids)
+	public List getUsers(Collection<String> ids)
 	{
 		// Clean IDs to match the by-user case.
 		Set<String> searchIds = new HashSet<String>();
-		for (Iterator<Object> idIter = ids.iterator(); idIter.hasNext(); )
+		for (Iterator<String> idIter = ids.iterator(); idIter.hasNext(); )
 		{
 			String id = (String)idIter.next();
 			id = cleanEid(id);
@@ -872,7 +877,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 		// is this the user's own?
 		if (id.equals(sessionManager().getCurrentSessionUserId()))
 		{
-			ArrayList locks = new ArrayList();
+			ArrayList<String> locks = new ArrayList<String>();
 			locks.add(SECURE_UPDATE_USER_OWN);
 			locks.add(SECURE_UPDATE_USER_ANY);
 			locks.add(SECURE_UPDATE_USER_OWN_NAME);
@@ -903,7 +908,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 		//		 is this the user's own?
 		if (id.equals(sessionManager().getCurrentSessionUserId()))
 		{
-			ArrayList locks = new ArrayList();
+			ArrayList<String> locks = new ArrayList<String>();
 			locks.add(SECURE_UPDATE_USER_OWN);
 			locks.add(SECURE_UPDATE_USER_ANY);
 			locks.add(SECURE_UPDATE_USER_OWN_NAME);
@@ -933,7 +938,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 		//		 is this the user's own?
 		if (id.equals(sessionManager().getCurrentSessionUserId()))
 		{
-			ArrayList locks = new ArrayList();
+			ArrayList<String> locks = new ArrayList<String>();
 			locks.add(SECURE_UPDATE_USER_OWN);
 			locks.add(SECURE_UPDATE_USER_ANY);
 			locks.add(SECURE_UPDATE_USER_OWN_EMAIL);
@@ -963,7 +968,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 		//		 is this the user's own?
 		if (id.equals(sessionManager().getCurrentSessionUserId()))
 		{
-			ArrayList locks = new ArrayList();
+			ArrayList<String> locks = new ArrayList<String>();
 			locks.add(SECURE_UPDATE_USER_OWN);
 			locks.add(SECURE_UPDATE_USER_ANY);
 			locks.add(SECURE_UPDATE_USER_OWN_PASSWORD);
@@ -994,7 +999,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 		//		 is this the user's own?
 		if (id.equals(sessionManager().getCurrentSessionUserId()))
 		{
-			ArrayList locks = new ArrayList();
+			ArrayList<String> locks = new ArrayList<String>();
 			locks.add(SECURE_UPDATE_USER_OWN);
 			locks.add(SECURE_UPDATE_USER_ANY);
 			locks.add(SECURE_UPDATE_USER_OWN_TYPE);
@@ -1023,12 +1028,12 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 		if (id == null) throw new UserNotDefinedException("null");
 
 		// is this the user's own?
-		List locksSucceeded = new ArrayList();
+		List<String> locksSucceeded = new ArrayList<String>();
 		String function = null;
 		if (id.equals(sessionManager().getCurrentSessionUserId()))
 		{
 			// own or any
-			List locks = new ArrayList();
+			List<String> locks = new ArrayList<String>();
 			locks.add(SECURE_UPDATE_USER_OWN);
 			locks.add(SECURE_UPDATE_USER_OWN_NAME);
 			locks.add(SECURE_UPDATE_USER_OWN_EMAIL);
@@ -1083,6 +1088,11 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 				user.restrictEditType();
 			}
 
+		}
+		
+		//only a super user should ever be able to edit the EID
+		if (!securityService().isSuperUser()) {
+			user.restrictEditEid();
 		}
 
 		((BaseUserEdit) user).setEvent(function);
@@ -1154,18 +1164,18 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 	/**
 	 * @inheritDoc
 	 */
-	public List getUsers()
+	public List<User> getUsers()
 	{
-		List users = m_storage.getAll();
+		List<User> users = m_storage.getAll();
 		return users;
 	}
 
 	/**
 	 * @inheritDoc
 	 */
-	public List getUsers(int first, int last)
+	public List<User> getUsers(int first, int last)
 	{
-		List all = m_storage.getAll(first, last);
+		List<User> all = m_storage.getAll(first, last);
 
 		return all;
 	}
@@ -1192,6 +1202,30 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 	public int countSearchUsers(String criteria)
 	{
 		return m_storage.countSearch(criteria);
+	}
+	
+	/**
+	 * @inheritDoc
+	 */
+	public List<User> searchExternalUsers(String criteria, int first, int last){
+		
+		List<User> users = new ArrayList<User>();
+		List<UserEdit> providedUserRecords = null;
+		
+		if (m_provider instanceof ExternalUserSearchUDP) {
+			providedUserRecords =  ((ExternalUserSearchUDP) m_provider).searchExternalUsers(criteria, first, last, this);
+		} else {
+			M_log.debug("searchExternalUsers capability is not supported by your provider");
+		}
+		
+		if (providedUserRecords != null){
+			for (UserEdit user : providedUserRecords){
+				checkAndEnsureMappedIdForProvidedUser(user);
+				users.add(user);
+			}
+		}
+		
+		return users;
 	}
 
 	/**
@@ -1265,6 +1299,12 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 		// make sure we have an id
 		id = assureUuid(id, eid);
 
+		//eid can't be longer than 255 chars
+		if (eid.length() > 255) 
+		{
+			throw new UserIdInvalidException("Eid is too long");
+		}
+		
 		// check security (throws if not permitted)
 		unlock(SECURE_ADD_USER, userReference(id));
 
@@ -1412,7 +1452,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 	 */
 	public User authenticate(String loginId, String password)
 	{
-		loginId = StringUtil.trimToNull(loginId);
+		loginId = StringUtils.trimToNull(loginId);
 		if (loginId == null) return null;
 
 		UserEdit user = null;
@@ -1544,7 +1584,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 		// if we are not doing separate id and eid, use the eid rules
 		if (!m_separateIdEid) return cleanEid(id);
 
-		return StringUtil.trimToNull(id);
+		return StringUtils.trimToNull(id);
 	}
 
 	/**
@@ -1561,7 +1601,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 			return StringUtil.trimToNullLower(eid);
 		}
 
-		return StringUtil.trimToNull(eid);
+		return StringUtils.trimToNull(eid);
 	}
 
 	protected UserEdit getCachedUser(String ref)
@@ -1577,7 +1617,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 	protected void putCachedUser(String ref, UserEdit user)
 	{
 		threadLocalManager().set(ref, user);
-		if (m_callCache != null) m_callCache.put(ref, user, m_cacheSeconds);
+		if (m_callCache != null) m_callCache.put(ref, user);
 	}
 
 	protected void removeCachedUser(String ref)
@@ -1811,6 +1851,9 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 
 		/** If editing the type is restricted **/
 		protected boolean m_restrictedType = false;
+		
+		/** if editing the eid is restricted **/
+		protected boolean m_restrictedEid = false;
 
 		/**
 		 * Construct.
@@ -1867,21 +1910,21 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 
 			m_id = cleanId(el.getAttribute("id"));
 			m_eid = cleanEid(el.getAttribute("eid"));
-			m_firstName = StringUtil.trimToNull(el.getAttribute("first-name"));
-			m_lastName = StringUtil.trimToNull(el.getAttribute("last-name"));
-			setEmail(StringUtil.trimToNull(el.getAttribute("email")));
+			m_firstName = StringUtils.trimToNull(el.getAttribute("first-name"));
+			m_lastName = StringUtils.trimToNull(el.getAttribute("last-name"));
+			setEmail(StringUtils.trimToNull(el.getAttribute("email")));
 			m_pw = el.getAttribute("pw");
-			m_type = StringUtil.trimToNull(el.getAttribute("type"));
-			m_createdUserId = StringUtil.trimToNull(el.getAttribute("created-id"));
-			m_lastModifiedUserId = StringUtil.trimToNull(el.getAttribute("modified-id"));
+			m_type = StringUtils.trimToNull(el.getAttribute("type"));
+			m_createdUserId = StringUtils.trimToNull(el.getAttribute("created-id"));
+			m_lastModifiedUserId = StringUtils.trimToNull(el.getAttribute("modified-id"));
 
-			String time = StringUtil.trimToNull(el.getAttribute("created-time"));
+			String time = StringUtils.trimToNull(el.getAttribute("created-time"));
 			if (time != null)
 			{
 				m_createdTime = timeService().newTimeGmt(time);
 			}
 
-			time = StringUtil.trimToNull(el.getAttribute("modified-time"));
+			time = StringUtils.trimToNull(el.getAttribute("modified-time"));
 			if (time != null)
 			{
 				m_lastModifiedTime = timeService().newTimeGmt(time);
@@ -2036,7 +2079,6 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 			if (m_lastName != null) user.setAttribute("last-name", m_lastName);
 			if (m_type != null) user.setAttribute("type", m_type);
 			user.setAttribute("email", getEmail());
-			user.setAttribute("pw", m_pw);
 			user.setAttribute("created-id", m_createdUserId);
 			user.setAttribute("modified-id", m_lastModifiedUserId);
 			user.setAttribute("created-time", m_createdTime.toString());
@@ -2293,7 +2335,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 		 */
 		public boolean checkPassword(String pw)
 		{
-			pw = StringUtil.trimToNull(pw);
+			pw = StringUtils.trimToNull(pw);
 
 			// if we have no password, or none is given, we fail
 			if ((m_pw == null) || (pw == null)) return false;
@@ -2395,7 +2437,10 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 		 */
 		public void setEid(String eid)
 		{
-			m_eid = eid;
+			if (!m_restrictedEid) 
+			{
+				m_eid = eid;
+			}
 		}
 
 		/**
@@ -2488,6 +2533,10 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 
 			m_restrictedPassword = true;
 
+		}
+		
+		public void restrictEditEid() {
+			m_restrictedEid = true;
 		}
 
 		public void restrictEditType() {

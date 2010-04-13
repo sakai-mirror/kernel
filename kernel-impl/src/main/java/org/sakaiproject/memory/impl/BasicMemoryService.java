@@ -33,10 +33,10 @@ import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Status;
 import net.sf.ehcache.event.CacheManagerEventListener;
-import net.sf.ehcache.hibernate.EhCache;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.event.api.Event;
@@ -87,6 +87,11 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 	 * @return the UsageSessionService collaborator.
 	 */
 	protected abstract UsageSessionService usageSessionService();
+
+	/**
+	 * @return the AuthzGroupService collaborator.
+	 */
+	protected abstract AuthzGroupService authzGroupService();
 
 	/**********************************************************************************************************************************************************************************************************************************************************
 	 * Configuration
@@ -146,13 +151,8 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 				public void notifyCacheAdded(String name)
 				{
 					Ehcache cache = cacheManager.getEhcache(name);
-					M_log.info("Added Cache name ["+name+"] as Cache [" + cache.getName() +"] " +
-							"Max Elements in Memory ["+cache.getMaxElementsInMemory()+"] "+
-							"Max Elements on Disk ["+cache.getMaxElementsOnDisk()+"] "+
-							"Time to Idle (seconds) ["+cache.getTimeToIdleSeconds()+"] "+
-							"Time to Live (seconds) ["+cache.getTimeToLiveSeconds()+"] "+
-							"Memory Store Eviction Policy ["+cache.getMemoryStoreEvictionPolicy()+"] ");
-
+					M_log.info("Added Cache name ["+name+"] as Cache [" + cache.getName() +"]");
+						
 				}
 
 				public void notifyCacheRemoved(String name)
@@ -297,10 +297,6 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 			ehcache.clearStatistics();
 		}
 
-		// run the garbage collector now
-		System.runFinalization();
-		System.gc();
-
 		M_log.info("doReset():  Low Memory Recovery to: " + Runtime.getRuntime().freeMemory());
 
 	} // doReset
@@ -404,6 +400,7 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 		return new MultiRefCacheImpl(
 				this,
 				eventTrackingService(),
+				authzGroupService(),
 				instantiateCache("MultiRefCache"));
 	}
 
@@ -547,6 +544,7 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 		return new MultiRefCacheImpl(
 				this,
 				eventTrackingService(),
+				authzGroupService(),
 				instantiateCache(cacheName));
 	}
 

@@ -521,96 +521,99 @@ public abstract class BasicSqlService implements SqlService
 		ResultSetMetaData meta = null;
 		List rv = new Vector();
 
-		try
-		{
-			if (m_showSql) start = System.currentTimeMillis();
+        try {
+            if (m_showSql) {
+                start = System.currentTimeMillis();
+            }
 
-			// borrow a new connection if we are not provided with one to use
-			if (callerConn != null)
-			{
-				conn = callerConn;
-			}
-			else
-			{
-				conn = borrowConnection();
-			}
-			if (m_showSql) connectionTime = System.currentTimeMillis() - start;
-			if (m_showSql) start = System.currentTimeMillis();
+            // borrow a new connection if we are not provided with one to use
+            if (callerConn != null) {
+                conn = callerConn;
+            } else {
+                conn = borrowConnection();
+            }
+            if (m_showSql) {
+                connectionTime = System.currentTimeMillis() - start;
+            }
+            if (m_showSql) {
+                start = System.currentTimeMillis();
+            }
+            pstmt = conn.prepareStatement(sql);
 
-			pstmt = conn.prepareStatement(sql);
+            // put in all the fields
+            prepareStatement(pstmt, fields);
 
-			// put in all the fields
-			prepareStatement(pstmt, fields);
+            result = pstmt.executeQuery();
 
-			result = pstmt.executeQuery();
+            if (m_showSql) {
+                stmtTime = System.currentTimeMillis() - start;
+            }
+            if (m_showSql) {
+                start = System.currentTimeMillis();
+            }
 
-			if (m_showSql) stmtTime = System.currentTimeMillis() - start;
-			if (m_showSql) start = System.currentTimeMillis();
+            while (result.next()) {
+                if (m_showSql) {
+                    count++;
+                }
 
-			while (result.next())
-			{
-				if (m_showSql) count++;
+                // without a reader, we read the first String from each record
+                if (reader == null) {
+                    String s = result.getString(1);
+                    if (s != null) {
+                        rv.add(s);
+                    }
+                } else {
+                    try {
+                        Object obj = reader.readSqlResultRecord(result);
+                        if (obj != null) {
+                            rv.add(obj);
+                        }
+                    } catch (SqlReaderFinishedException e) {
+                        break;
+                    }
+                }
 
-				try
-				{
-					// without a reader, we read the first String from each record
-					if (reader == null)
-					{
-						String s = result.getString(1);
-						if (s != null) rv.add(s);
-					}
-					else
-					{
-						try
-						{
-							Object obj = reader.readSqlResultRecord(result);
-							if (obj != null) rv.add(obj);
-						}
-						catch (SqlReaderFinishedException e)
-						{
-							break;
-						}
-					}
-				}
-				catch (Throwable t)
-				{
-					LOG.warn("Sql.dbRead: unable to read a result from sql: " + sql + debugFields(fields) + " row: " + result.getRow());
-				}
-			}
-		}
-		catch (Exception e)
-		{
-			LOG.warn("Sql.dbRead: sql: " + sql + debugFields(fields), e);
-		}
-		finally
-		{
-			if (m_showSql) resultsTime = System.currentTimeMillis() - start;
+            }
+        } catch (SQLException e) {
+            LOG.warn("Sql.dbRead: sql: " + sql + debugFields(fields), e);
+        } catch (UnsupportedEncodingException e) {
+            LOG.warn("Sql.dbRead: sql: " + sql + debugFields(fields), e);
+        } finally {
+            if (m_showSql) {
+                resultsTime = System.currentTimeMillis() - start;
+            }
+            if (null != result) {
+                try {
+                    result.close();
+                } catch (SQLException e) {
+                    LOG.warn("Sql.dbRead: sql: " + sql + debugFields(fields), e);
+                }
+            }
+            if (null != pstmt) {
+                try {
+                    pstmt.close();
+                } catch (SQLException e) {
+                    LOG.warn("Sql.dbRead: sql: " + sql + debugFields(fields), e);
+                }
+            }
 
-			try
-			{
-				if (null != result) result.close();
-				if (null != pstmt) pstmt.close();
+            // return the connection only if we have borrowed a new one for this call
+            if (callerConn == null) {
+                if (null != conn) {
+                    // if we commit on read
+                    if (m_commitAfterRead) {
+                        try {
+                            conn.commit();
+                        } catch (SQLException e) {
+                            LOG.warn("Sql.dbRead: sql: " + sql + debugFields(fields), e);
+                        }
+                    }
+                    returnConnection(conn);
+                }
+            }
 
-				// return the connection only if we have borrowed a new one for this call
-				if (callerConn == null)
-				{
-					if (null != conn)
-					{
-						// if we commit on read
-						if (m_commitAfterRead)
-						{
-							conn.commit();
-						}
-
-						returnConnection(conn);
-					}
-				}
-			}
-			catch (Exception e)
-			{
-				LOG.warn("Sql.dbRead: sql: " + sql + debugFields(fields), e);
-			}
-		}
+        }
 
 		if (m_showSql) debug("Sql.dbRead: time: " + connectionTime + " / " + stmtTime + " / " + resultsTime + " #: " + count, sql, fields);
 
@@ -708,41 +711,42 @@ public abstract class BasicSqlService implements SqlService
 				index += len;
 				if (m_showSql) lenRead += len;
 			}
-		}
-		catch (Exception e)
-		{
-			LOG.warn("Sql.dbReadBinary(): " + e);
-		}
-		finally
-		{
-			try
-			{
-				if (null != result) result.close();
-				if (null != pstmt) pstmt.close();
+        } catch (Exception e) {
+            LOG.warn("Sql.dbReadBinary(): " + e);
+        } finally {
+            if (null != result) {
+                try {
+                    result.close();
+                } catch (SQLException e) {
+                    LOG.warn("Sql.dbReadBinary(): result close fail: " + e);
+                }
+            }
+            if (null != pstmt) {
+                try {
+                    pstmt.close();
+                } catch (SQLException e) {
+                    LOG.warn("Sql.dbReadBinary(): pstmt close fail: " + e);
+                }
+            }
+            // return the connection only if we have borrowed a new one for this call
+            if (callerConn == null) {
+                if (null != conn) {
+                    // if we commit on read
+                    if (m_commitAfterRead) {
+                        try {
+                            conn.commit();
+                        } catch (SQLException e) {
+                            LOG.warn("Sql.dbReadBinary(): conn commit fail: " + e);
+                        }
+                    }
+                    returnConnection(conn);
+                }
+            }
+        }
 
-				// return the connection only if we have borrowed a new one for this call
-				if (callerConn == null)
-				{
-					if (null != conn)
-					{
-						// if we commit on read
-						if (m_commitAfterRead)
-						{
-							conn.commit();
-						}
-
-						returnConnection(conn);
-					}
-				}
-			}
-			catch (Exception e)
-			{
-				LOG.warn("Sql.dbReadBinary(): " + e);
-			}
-		}
-
-		if (m_showSql)
+		if (m_showSql) {
 			debug("sql read binary: len: " + lenRead + "  time: " + connectionTime + " / " + (System.currentTimeMillis() - start), sql, fields);
+		}
 	}
 
 	/**
@@ -774,95 +778,84 @@ public abstract class BasicSqlService implements SqlService
 		long connectionTime = 0;
 		int lenRead = 0;
 
-		if (LOG.isDebugEnabled())
-		{
-			String userId = usageSessionService().getSessionId();
-			LOG.debug("Sql.dbReadBinary(): " + userId + "\n" + sql);
-		}
+        if (LOG.isDebugEnabled()) {
+            String userId = usageSessionService().getSessionId();
+            LOG.debug("Sql.dbReadBinary(): " + userId + "\n" + sql);
+        }
 
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		ResultSet result = null;
-		ResultSetMetaData meta = null;
 
-		try
-		{
-			if (m_showSql) start = System.currentTimeMillis();
-			if (!big)
-			{
-				conn = borrowConnection();
-			}
-			else
-			{
-				// get a connection if it's available, else throw
-				conn = borrowConnection();
-				if (conn == null)
-				{
-					throw new ServerOverloadException(null);
-				}
-			}
-			if (m_showSql) connectionTime = System.currentTimeMillis() - start;
-			if (m_showSql) start = System.currentTimeMillis();
+        try {
+            if (m_showSql) {
+                start = System.currentTimeMillis();
+            }
+            if (!big) {
+                conn = borrowConnection();
+            } else {
+                // get a connection if it's available, else throw
+                conn = borrowConnection();
+                if (conn == null) {
+                    throw new ServerOverloadException(null);
+                }
+            }
+            if (m_showSql) {
+                connectionTime = System.currentTimeMillis() - start;
+            }
+            if (m_showSql) {
+                start = System.currentTimeMillis();
+            }
+            pstmt = conn.prepareStatement(sql);
+            // put in all the fields
+            prepareStatement(pstmt, fields);
+            result = pstmt.executeQuery();
 
-			pstmt = conn.prepareStatement(sql);
+            if (result.next()) {
+                InputStream stream = result.getBinaryStream(1);
+                rv = new StreamWithConnection(stream, result, pstmt, conn);
+            }
+        } catch (ServerOverloadException e) {
+            throw e;
+        } catch (SQLException e) {
+            LOG.warn("Sql.dbReadBinary(): " + e);
+        } catch (UnsupportedEncodingException e) {
+            LOG.warn("Sql.dbReadBinary(): " + e);
+        } finally {
+            // ONLY if we didn't make the rv - else let the rv hold these OPEN!
+            if (rv == null) {
+                if (null != result) {
+                    try {
+                        result.close();
+                    } catch (SQLException e) {
+                        LOG.warn("Sql.dbReadBinary(): " + e);
+                    }
+                }
+                if (null != pstmt) {
+                    try {
+                        pstmt.close();
+                    } catch (SQLException e) {
+                        LOG.warn("Sql.dbReadBinary(): " + e);
+                    }
+                }
+                if (null != conn) {
+                    // if we commit on read
+                    if (m_commitAfterRead) {
+                        try {
+                            conn.commit();
+                        } catch (SQLException e) {
+                            LOG.warn("Sql.dbReadBinary(): " + e);
+                        }
+                    }
+                    returnConnection(conn);
+                }
+            }
+            // LOG.warn("Sql.dbReadBinary(): " + e);
+        }
 
-			// put in all the fields
-			prepareStatement(pstmt, fields);
-
-			result = pstmt.executeQuery();
-
-			if (result.next())
-			{
-				InputStream stream = result.getBinaryStream(1);
-				rv = new StreamWithConnection(stream, result, pstmt, conn);
-			}
-		}
-		catch (ServerOverloadException e)
-		{
-			throw e;
-		}
-		catch (Exception e)
-		{
-			LOG.warn("Sql.dbReadBinary(): " + e);
-		}
-		finally
-		{
-			// ONLY if we didn't make the rv - else let the rv hold these OPEN!
-			if (rv == null)
-			{
-				try
-				{
-					if (null != result) result.close();
-					if (null != pstmt) pstmt.close();
-					if (null != conn)
-					{
-						// if we commit on read
-						if (m_commitAfterRead)
-						{
-							conn.commit();
-						}
-
-						// return to the proper pool!
-						if (big)
-						{
-							returnConnection(conn);
-						}
-						else
-						{
-							returnConnection(conn);
-						}
-					}
-				}
-				catch (Exception e)
-				{
-					LOG.warn("Sql.dbReadBinary(): " + e);
-				}
-			}
-		}
-
-		if (m_showSql)
+		if (m_showSql) {
 			debug("sql read binary: len: " + lenRead + "  time: " + connectionTime + " / " + (System.currentTimeMillis() - start), sql, fields);
-
+		}
 		return rv;
 	}
 
@@ -970,7 +963,8 @@ public abstract class BasicSqlService implements SqlService
 			// last, put in the binary
 			pstmt.setBinaryStream(pos, varStream, len);
 
-			int result = pstmt.executeUpdate();
+			//int result = 
+			pstmt.executeUpdate();
 
 			// commit and indicate success
 			conn.commit();
@@ -988,30 +982,49 @@ public abstract class BasicSqlService implements SqlService
 		}
 		finally
 		{
-			try
+			//try
+			//{
+			if (null != pstmt)
 			{
-				if (null != pstmt) pstmt.close();
-				varStream.close();
-				if (null != conn)
-				{
-					// rollback on failure
-					if (!success)
-					{
-						conn.rollback();
-					}
-
-					// if we changed the auto commit, reset here
-					if (resetAutoCommit)
-					{
-						conn.setAutoCommit(autoCommit);
-					}
-					returnConnection(conn);
+				try {
+					pstmt.close();
+				} catch (SQLException e) {
+					LOG.warn("Sql.dbWriteBinary(): " + e);
 				}
 			}
-			catch (Exception e)
+			if (null != varStream)
 			{
-				LOG.warn("Sql.dbWriteBinary(): " + e);
+				try {
+					varStream.close();
+				} catch (IOException e) {
+					LOG.warn("Sql.dbWriteBinary(): " + e);
+				}
 			}
+
+			if (null != conn)
+			{
+				// rollback on failure
+				if (!success)
+				{
+					try {
+						conn.rollback();
+					} catch (SQLException e) {
+						LOG.warn("Sql.dbWriteBinary(): " + e);
+					}
+				}
+
+				// if we changed the auto commit, reset here
+				if (resetAutoCommit)
+				{
+					try {
+						conn.setAutoCommit(autoCommit);
+					} catch (SQLException e) {
+						LOG.warn("Sql.dbWriteBinary(): " + e);
+					}
+				}
+				returnConnection(conn);
+			}
+
 		}
 
 		if (m_showSql)
@@ -1483,7 +1496,7 @@ public abstract class BasicSqlService implements SqlService
 					{
 						conn.setAutoCommit(autoCommit);
 					}
-					returnConnection(conn);
+
 				}
 			}
 			catch (Exception e)
@@ -1491,6 +1504,12 @@ public abstract class BasicSqlService implements SqlService
 				LOG.warn("Sql.dbInsert(): " + e);
 				throw new RuntimeException("SqlService.dbInsert failure", e);
 			}
+			//make sure we return the connection even if the rollback etc above
+			if (conn != null)
+			{
+				returnConnection(conn);
+			}
+
 		}
 
 		if (m_showSql) debug("Sql.dbWrite(): len: " + "  time: " + connectionTime + " /  " + (System.currentTimeMillis() - start), sql, fields);
@@ -1562,7 +1581,7 @@ public abstract class BasicSqlService implements SqlService
 					Object[] params = new Object[0];
 					os = (OutputStream) getBinaryOutputStreamMethod.invoke(blob, params);
 					os.write(content);
-					os.close();
+
 				}
 				catch (NoSuchMethodException ex)
 				{
@@ -1575,34 +1594,55 @@ public abstract class BasicSqlService implements SqlService
 				catch (InvocationTargetException ex)
 				{
 					LOG.warn("Oracle driver error: " + ex);
+				} catch (IOException e) {
+					LOG.warn("Oracle driver error: " + e);
 				}
 			}
 		}
-		catch (Exception e)
+		catch (SQLException e)
 		{
 			LOG.warn("Sql.dbReadBlobAndUpdate(): " + e);
 		}
 		finally
 		{
-			try
-			{
-				if (null != result) result.close();
-				if (null != stmt) stmt.close();
-				if (null != conn)
-				{
-					// if we commit on read
-					if (m_commitAfterRead)
-					{
-						conn.commit();
-					}
-
-					returnConnection(conn);
+			if (null != os) {
+				try {
+					os.close();
+				} catch (IOException e) {
+					LOG.warn("Sql.dbRead(): " + e);
 				}
 			}
-			catch (Exception e)
+			if (null != result)
 			{
-				LOG.warn("Sql.dbRead(): " + e);
+				try {
+					result.close();
+				} catch (SQLException e) {
+					LOG.warn("Sql.dbRead(): " + e);
+				}
 			}
+			if (null != stmt)
+			{
+				try {
+					stmt.close();
+				} catch (SQLException e) {
+					LOG.warn("Sql.dbRead(): " + e);
+				}
+			}
+			if (null != conn)
+			{
+				// if we commit on read
+				if (m_commitAfterRead)
+				{
+					try {
+						conn.commit();
+					} catch (SQLException e) {
+						LOG.warn("Sql.dbRead(): " + e);
+					}
+				}
+
+				returnConnection(conn);
+			}
+
 		}
 
 		if (m_showSql)
@@ -1636,7 +1676,7 @@ public abstract class BasicSqlService implements SqlService
 
 		try
 		{
-			// get a new conncetion
+			// get a new connection
 			conn = borrowConnection();
 
 			// adjust to turn off auto commit - we need a transaction
@@ -1672,44 +1712,56 @@ public abstract class BasicSqlService implements SqlService
 		catch (SQLException e)
 		{
 			// Note: ORA-00054 gives an e.getErrorCode() of 54, if anyone cares...
-			// LOG.warn("Sql.dbUpdateLock(): " + e.getErrorCode() + " - " + e);
+			LOG.warn("Sql.dbUpdateLock(): " + e.getErrorCode() + " - " + e);
 			closeConn = true;
 		}
-
-		catch (Exception e)
-		{
-			LOG.warn("Sql.dbReadLock(): " + e);
-			closeConn = true;
-		}
-
 		finally
 		{
-			try
-			{
-				// close the result and statement
-				if (null != result) result.close();
-				if (null != stmt) stmt.close();
-
-				// if we are failing, restore and release the connectoin
-				if ((closeConn) && (conn != null))
-				{
-					// just in case we got a lock
-					conn.rollback();
-					if (resetAutoCommit) conn.setAutoCommit(autoCommit);
-					returnConnection(conn);
-					conn = null;
+			// close the result and statement
+			if (result != null) {
+				try {
+					result.close();
+				} catch (SQLException e) {
+					LOG.warn("Sql.dbReadBinary(): " + e);
 				}
 			}
-			catch (Exception e)
+			if (null != stmt) {
+				try {
+					stmt.close();
+				} catch (SQLException e) {
+					LOG.warn("Sql.dbReadBinary(): " + e);
+				}
+			}
+
+			// if we are failing, restore and release the connection
+			if ((closeConn) && (conn != null))
 			{
-				LOG.warn("Sql.dbReadLock(): " + e);
+				// just in case we got a lock
+				try {
+					conn.rollback();
+				} catch (SQLException e) {
+					LOG.warn("Sql.dbReadBinary(): " + e);
+				}
+				if (resetAutoCommit)
+					try {
+						conn.setAutoCommit(autoCommit);
+					} catch (SQLException e) {
+						LOG.warn("Sql.dbReadBinary(): " + e);
+					}
+
+			}
+
+
+			if (conn != null)
+			{
+				returnConnection(conn);
 			}
 		}
 
 		return conn;
 	}
 
-	
+
 	/**
 	 * Read a single field from the db, from a single record, return the value found, and lock for update.
 	 * 
@@ -1774,34 +1826,51 @@ public abstract class BasicSqlService implements SqlService
 			// LOG.warn("Sql.dbUpdateLock(): " + e.getErrorCode() + " - " + e);
 			closeConn = true;
 		}
-
-		catch (Exception e)
-		{
+		catch (SqlReaderFinishedException e) {
 			LOG.warn("Sql.dbReadLock(): " + e);
 			closeConn = true;
 		}
 
 		finally
 		{
-			try
-			{
-				// close the result and statement
-				if (null != result) result.close();
-				if (null != stmt) stmt.close();
-
-				// if we are failing, restore and release the connectoin
-				if ((closeConn) && (conn != null))
-				{
-					// just in case we got a lock
-					conn.rollback();
-					if (resetAutoCommit) conn.setAutoCommit(autoCommit);
-					returnConnection(conn);
-					conn = null;
+			// close the result and statement
+			if (null != result) {
+				try {
+					result.close();
+				} catch (SQLException e) {
+					LOG.warn("Sql.dbReadBinary(): " + e);
 				}
 			}
-			catch (Exception e)
+			if (null != stmt) {
+				try {
+					stmt.close();
+				} catch (SQLException e) {
+					LOG.warn("Sql.dbReadBinary(): " + e);
+				}
+			}
+
+			// if we are failing, restore and release the connectoin
+			if ((closeConn) && (conn != null))
 			{
-				LOG.warn("Sql.dbReadLock(): " + e);
+				// just in case we got a lock
+				try {
+					conn.rollback();
+				} catch (SQLException e) {
+					LOG.warn("Sql.dbReadBinary(): " + e);
+				}
+				if (resetAutoCommit)
+					try {
+						conn.setAutoCommit(autoCommit);
+					} catch (SQLException e) {
+						LOG.warn("Sql.dbReadBinary(): " + e);
+					}
+
+			}
+			//	LOG.warn("Sql.dbReadLock(): " + e);
+
+			if (conn != null) 
+			{
+				returnConnection(conn);
 			}
 		}
 
@@ -1848,15 +1917,17 @@ public abstract class BasicSqlService implements SqlService
 			}
 
 			// run the SQL statement
-			int result = pstmt.executeUpdate();
+			pstmt.executeUpdate();
 			pstmt.close();
 			pstmt = null;
 
 			// commit
 			conn.commit();
 		}
-		catch (Exception e)
+		catch (SQLException e)
 		{
+			LOG.warn("Sql.dbUpdateCommit(): " + e);
+		} catch (UnsupportedEncodingException e) {
 			LOG.warn("Sql.dbUpdateCommit(): " + e);
 		}
 		finally
@@ -2034,9 +2105,9 @@ public abstract class BasicSqlService implements SqlService
 					// and ALSO treat a zero-length Java string as an SQL null
 					// This makes sure that Oracle vs MySQL use the same value
 					// for null.
-               sqlServiceSql.setNull(pstmt, pos);
+					sqlServiceSql.setNull(pstmt, pos);
 
-               pos++;
+					pos++;
 				}
 				else if (fields[i] instanceof Time)
 				{
@@ -2069,10 +2140,10 @@ public abstract class BasicSqlService implements SqlService
 				}
 				else if ( fields[i] instanceof byte[] ) 
 				{
-               sqlServiceSql.setBytes(pstmt, (byte[])fields[i], pos);
+					sqlServiceSql.setBytes(pstmt, (byte[])fields[i], pos);
 					pos++;
 				}
-				
+
 				// %%% support any other types specially?
 				else
 				{
@@ -2148,7 +2219,7 @@ public abstract class BasicSqlService implements SqlService
 
 	/**
 	 * <p>
-	 * StreamWithConnection is a cover over a stream that comes from a statmenet result in a connection, holding all these until closed.
+	 * StreamWithConnection is a cover over a stream that comes from a statement result in a connection, holding all these until closed.
 	 * </p>
 	 */
 	public class StreamWithConnection extends InputStream
@@ -2161,137 +2232,156 @@ public abstract class BasicSqlService implements SqlService
 
 		protected InputStream m_stream;
 
-		public StreamWithConnection(InputStream stream, ResultSet result, PreparedStatement pstmt, Connection conn)
-		{
-			if (SWC_LOG.isDebugEnabled())
-			{
-				SWC_LOG.debug("new StreamWithConnection(InputStream " + stream + ", ResultSet " + result + ", PreparedStatement " + pstmt
-						+ ", Connection " + conn + ")");
-			}
+        public StreamWithConnection(InputStream stream, ResultSet result, PreparedStatement pstmt,
+                Connection conn) {
+            if (SWC_LOG.isDebugEnabled()) {
+                SWC_LOG.debug("new StreamWithConnection(InputStream " + stream + ", ResultSet "
+                        + result + ", PreparedStatement " + pstmt + ", Connection " + conn + ")");
+            }
 
-			m_conn = conn;
-			m_result = result;
-			m_pstmt = pstmt;
-			m_stream = stream;
-		}
+            m_conn = conn;
+            m_result = result;
+            m_pstmt = pstmt;
+            m_stream = stream;
+        }
 
-		public void close() throws IOException
-		{
-			SWC_LOG.trace("close()");
+        /* (non-Javadoc)
+         * @see java.io.InputStream#close()
+         */
+        public void close() throws IOException {
+            if (SWC_LOG.isDebugEnabled()) {
+                SWC_LOG.debug("close()");
+            }
+            try {
+                if (m_stream != null) {
+                    m_stream.close();
+                }
+                m_stream = null;
+            } catch (Exception e) {
+            }
+            try {
+                if (null != m_result) {
+                    m_result.close();
+                }
+                m_result = null;
+            } catch (Exception e) {
+            }
+            try {
+                if (null != m_pstmt) {
+                    m_pstmt.close();
+                }
+                m_pstmt = null;
+            } catch (Exception e) {
+            }
+            if (null != m_conn) {
+                returnConnection(m_conn);
+                m_conn = null;
+            }
+        }
 
-			if (m_stream != null) m_stream.close();
-			m_stream = null;
+        /* (non-Javadoc)
+         * @see java.lang.Object#finalize()
+         */
+        protected void finalize() {
+            if (SWC_LOG.isDebugEnabled()) {
+                SWC_LOG.debug("finalize()");
+            }
+            try {
+                close();
+            } catch (IOException any) {
+                LOG.error(any.getMessage(), any);
+            }
+        }
 
-			try
-			{
-				if (null != m_result)
-				{
-					m_result.close();
-				}
-				m_result = null;
-			}
-			catch (SQLException any)
-			{
-			}
-
-			try
-			{
-				if (null != m_pstmt)
-				{
-					m_pstmt.close();
-				}
-				m_pstmt = null;
-			}
-			catch (SQLException any)
-			{
-			}
-
-			if (null != m_conn)
-			{
-				returnConnection(m_conn);
-				m_conn = null;
-			}
-		}
-
-		protected void finalize()
-		{
-			SWC_LOG.debug("finalize()");
-
-			try
-			{
-				close();
-			}
-			catch (IOException any)
-			{
-				LOG.error(any.getMessage(), any);
-			}
-		}
-
+		/* (non-Javadoc)
+		 * @see java.io.InputStream#read()
+		 */
 		public int read() throws IOException
 		{
-			SWC_LOG.trace("read()");
-
+            if (SWC_LOG.isDebugEnabled()) {
+                SWC_LOG.debug("read()");
+            }
 			return m_stream.read();
 		}
 
+		/* (non-Javadoc)
+		 * @see java.io.InputStream#read(byte[])
+		 */
 		public int read(byte b[]) throws IOException
 		{
-			if (SWC_LOG.isDebugEnabled())
-			{
+			if (SWC_LOG.isDebugEnabled()) {
 				SWC_LOG.debug("read(byte " + Arrays.toString(b) + ")");
 			}
 
 			return m_stream.read(b);
 		}
 
+		/* (non-Javadoc)
+		 * @see java.io.InputStream#read(byte[], int, int)
+		 */
 		public int read(byte b[], int off, int len) throws IOException
 		{
-			if (SWC_LOG.isDebugEnabled())
-			{
+			if (SWC_LOG.isDebugEnabled()) {
 				SWC_LOG.debug("read(byte " + Arrays.toString(b) + ", int " + off + ", int " + len + ")");
 			}
 
 			return m_stream.read(b, off, len);
 		}
 
+		/* (non-Javadoc)
+		 * @see java.io.InputStream#skip(long)
+		 */
 		public long skip(long n) throws IOException
 		{
-			if (SWC_LOG.isDebugEnabled())
-			{
+			if (SWC_LOG.isDebugEnabled()) {
 				SWC_LOG.debug("skip(long " + n + ")");
 			}
 
 			return m_stream.skip(n);
 		}
 
+		/* (non-Javadoc)
+		 * @see java.io.InputStream#available()
+		 */
 		public int available() throws IOException
 		{
-			SWC_LOG.trace("available()");
-
+            if (SWC_LOG.isDebugEnabled()) {
+                SWC_LOG.debug("available()");
+            }
 			return m_stream.available();
 		}
 
+		/* (non-Javadoc)
+		 * @see java.io.InputStream#mark(int)
+		 */
 		public synchronized void mark(int readlimit)
 		{
-			if (SWC_LOG.isDebugEnabled())
-			{
+			if (SWC_LOG.isDebugEnabled()) {
 				SWC_LOG.debug("mark(int " + readlimit + ")");
 			}
 
 			m_stream.mark(readlimit);
 		}
 
+		/* (non-Javadoc)
+		 * @see java.io.InputStream#reset()
+		 */
 		public synchronized void reset() throws IOException
 		{
-			SWC_LOG.trace("reset()");
-
+            if (SWC_LOG.isDebugEnabled()) {
+                SWC_LOG.debug("reset()");
+            }
 			m_stream.reset();
 		}
 
+		/* (non-Javadoc)
+		 * @see java.io.InputStream#markSupported()
+		 */
 		public boolean markSupported()
 		{
-			SWC_LOG.trace("markSupported()");
-
+            if (SWC_LOG.isDebugEnabled()) {
+                SWC_LOG.debug("markSupported()");
+            }
 			return m_stream.markSupported();
 		}
 	}

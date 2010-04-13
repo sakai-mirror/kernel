@@ -231,7 +231,7 @@ public interface UserDirectoryService extends EntityProducer
 	/**
 	 * Remove authentication for the current user.
 	 * 
-	 * @deprecated Unused; will likely be removed from the interface
+	 * @deprecated Unused; will likely be removed from the interface in 2.0
 	 */
 	void destroyAuthentication();
 
@@ -389,6 +389,21 @@ public interface UserDirectoryService extends EntityProducer
 	 * @return A list (User) of all the aliases matching the criteria, within the record range given (sorted by sort name).
 	 */
 	List<User> searchUsers(String criteria, int first, int last);
+	
+	/** 
+     * Search all the externally provided users that match this criteria in eid, 
+     * email, first or last name. 
+     * 
+     * @param criteria 
+     * The search criteria. 
+     * @param first 
+     * The first record position to return. 
+     * @param last 
+     * The last record position to return. 
+     * @return A list (User) of all the aliases matching the criteria, within the 
+     * record range given (sorted by sort name). 
+     */ 
+    List<User> searchExternalUsers(String criteria, int first, int last); 
 
 	/**
 	 * Access the internal reference which can be used to access the resource from within the system.

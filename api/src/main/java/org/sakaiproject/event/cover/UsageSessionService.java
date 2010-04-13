@@ -27,6 +27,8 @@ import org.sakaiproject.component.cover.ComponentManager;
  * <p>
  * UsageSessionService is a static Cover for the {@link org.sakaiproject.event.api.UsageSessionService UsageSessionService}; see that interface for usage details.
  * </p>
+ * @deprecated Static covers should not be used in favour of injection or lookup
+ * via the component manager. This cover will be removed in a later version of the Kernel
  */
 public class UsageSessionService
 {
@@ -100,14 +102,6 @@ public class UsageSessionService
 		if (service == null) return null;
 
 		return service.getSessionState(param0);
-	}
-
-	public static org.sakaiproject.event.api.UsageSession setSessionActive(boolean param0)
-	{
-		org.sakaiproject.event.api.UsageSessionService service = getInstance();
-		if (service == null) return null;
-
-		return service.setSessionActive(param0);
 	}
 
 	public static java.util.List getSessions(java.lang.String joinTable, java.lang.String joinAlias, java.lang.String joinColumn, java.lang.String joinCriteria, java.lang.Object[] values)

@@ -444,6 +444,10 @@ public abstract class BaseAliasService implements AliasService, StorageUser
 	 */
 	public void setAlias(String alias, String target) throws IdUsedException, IdInvalidException, PermissionException
 	{
+		if (alias!=null && alias.length()>99){ //KNL-454
+			M_log.warn("The length of the alias: \""+alias+"\" cannot be greater than 99 characters");
+			throw new IdInvalidException(alias);
+		} 
 		// check for a valid alias name
 		Validator.checkResourceId(alias);
 
@@ -533,8 +537,8 @@ public abstract class BaseAliasService implements AliasService, StorageUser
 			throw new PermissionException(sessionManager().getCurrentSessionUserId(), SECURE_REMOVE_ALIAS, target);
 		}
 
-		List all = getAliases(target);
-		for (Iterator iAll = all.iterator(); iAll.hasNext();)
+		List<Alias> all = getAliases(target);
+		for (Iterator<Alias> iAll = all.iterator(); iAll.hasNext();)
 		{
 			Alias alias = (Alias) iAll.next();
 			try
@@ -693,6 +697,10 @@ public abstract class BaseAliasService implements AliasService, StorageUser
 	 */
 	public AliasEdit add(String id) throws IdInvalidException, IdUsedException, PermissionException
 	{
+		if (id!=null && id.length()>99){ //KNL-454
+			M_log.warn("The length of the alias: \""+id+"\" cannot be greater than 99 characters");
+			throw new IdInvalidException(id);
+		} 
 		// check for a valid user name
 		Validator.checkResourceId(id);
 

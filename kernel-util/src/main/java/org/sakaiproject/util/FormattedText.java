@@ -21,6 +21,7 @@
 
 package org.sakaiproject.util;
 
+import java.io.InputStream;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,6 +29,14 @@ import java.util.regex.Pattern;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Element;
+
+import org.owasp.validator.html.AntiSamy;
+import org.owasp.validator.html.CleanResults;
+import org.owasp.validator.html.Policy;
+import org.owasp.validator.html.PolicyException;
+import org.owasp.validator.html.ScanException;
+import org.sakaiproject.component.cover.ComponentManager;
+import org.sakaiproject.util.ResourceLoader;
 
 /**
  * FormattedText provides support for user entry of formatted text; the formatted text is HTML. This includes text formatting in user input such as bold, underline, and fonts.
@@ -37,38 +46,10 @@ public class FormattedText
 	/** Our log (commons). */
 	private static Log M_log = LogFactory.getLog(FormattedText.class);
 
-	/**
-	 * This list of good and evil tags was extracted from:
-	 * 
-	 * @link http://www.blooberry.com/indexdot/html/tagindex/all.htm
-	 */
-	private static String[] M_goodTags = {"a", "abbr", "acronym", "address", "b", "big", "blockquote", "br", "center", "cite", "code", 
-                        "dd", "del", "dir", "div", "dl", "dt", "em", "font", "hr", "h1", "h2", "h3", "h4", "h5", "h6", "i", "ins",
-                        "kbd", "li", "marquee", "menu", "nobr", "noembed", "ol", "p", "pre", "q", "rt", "ruby", "rbc", "rb", "rtc", "rp",
-                        "s", "samp", "small", "span", "strike", "strong", "sub", "sup", "tt", "u", "ul", "var", "xmp", "img", "embed",
-                        "object", "table", "tr", "td", "th", "tbody", "caption", "thead", "tfoot", "colgroup", "col"};
-
-        private static String[] M_goodAttributes = {"abbr", "accept", "accesskey", "align", "alink", "alt", "axis", "background",
-        	"bgcolor", "border", "cellpadding", "cellspacing", "char", "charoff", "charset", "checked", "cite", "class", "classid",
-        	"clear", "color", "cols", "colspan", "compact", "content", "coords", "datetime", "dir", "disabled", "enctype", "face",
-        	"for", "header", "height", "href", "hreflang", "hspace", "id", "ismap", "label", "lang", "longdesc", "maxlength", "multiple",
-        	"name", "noshade", "nowrap", "profile", "readonly", "rel", "rev", "rows", "rowspan", "rules", "scope", "selected", "shape",
-        	"size", "span", "src", "start", "style", "summary", "tabindex", "target", "text", "title", "type", "usemap", "valign",
-        	"value", "vlink", "vspace", "width"};
-
-        private static String[] M_evilValues = {"javascript:", "behavior:", "vbscript:", "mocha:", "livescript:", "expression"};
-
-
-	/**
-	 * These evil HTML tags are disallowed when the user inputs formatted text; this protects the system from broken pages as well as Cross-Site Scripting (XSS) attacks.
-	 */
-	private static String[] M_evilTags = { "applet", "base", "body", "bgsound", "button", "col", "colgroup", "comment",  
-			"dfn", "fieldset", "form", "frame", "frameset", "head", "html", "iframe", "ilayer", "inlineinput",
-			"isindex", "input", "keygen", "label", "layer", "legend", "link", "listing", "map", "meta", "multicol", "nextid",
-			"noframes", "nolayer", "noscript", "optgroup", "option", "param", "plaintext", "script", "select",
-			"sound", "spacer", "spell", "submit", "textarea", "title", "wbr" };
-
-
+	/** Resource bundle and class for retrieving good and bad html tags, attributes and values */
+	private static String RESOURCE_BUNDLE = "org.sakaiproject.localization.bundle.content_type.formattedtext";
+	private static String RESOURCE_CLASS  = "org.sakaiproject.localization.util.ContentTypeProperties"; 
+	
 	/** An array of regular expression pattern-matchers, that will match the tags given in M_evilTags */
 	private static Pattern[] M_evilTagsPatterns;
 
@@ -83,14 +64,46 @@ public class FormattedText
 	
 	/** An array of regular expression pattern-matchers, that will match the attributes given in M_evilValues */
 	private static Pattern[] M_evilValuePatterns;
-	
-	static
-	{
-		init();
+
+	/**
+	 * This is the html cleaner object
+	 */
+	private static AntiSamy antiSamy = null;
+	static {
+        // added in support for antisamy html cleaner
+        try {
+            InputStream is = FormattedText.class.getClassLoader().getResourceAsStream("antisamy/policy.xml");
+            Policy policy = Policy.getInstance(is);
+            antiSamy = new AntiSamy(policy);
+        } catch (Exception e) {
+            M_log.warn("Unable to startup the antisamy html code cleanup handler: " + e, e);
+        }
 	}
 
-	private static void init()
+	/**
+	 * If true then the legacy HTML cleaner is used, if false use the antiSamy html cleaner
+	 */
+	public static boolean useLegacyCleaner = true;
+
+	static void init()
 	{
+	    // DEFAULT values to allow for testing and in case the resource loader values do not exist
+	    M_evilTags = "applet,base,body,bgsound,button,col,colgroup,comment, dfn,fieldset,form,frame,frameset,head,html,iframe,ilayer,inlineinput,isindex,input,keygen,label,layer,legend,link,listing,map,meta,multicol,nextid,noframes,nolayer,noscript,optgroup,option,plaintext,script,select,sound,spacer,spell,submit,textarea,title,wbr".split(",");
+        M_goodTags = "a,abbr,acronym,address,b,big,blockquote,br,center,cite,code,dd,del,dir,div,dl,dt,em,font,hr,h1,h2,h3,h4,h5,h6,i,ins,kbd,li,marquee,menu,nobr,noembed,ol,p,pre,q,rt,ruby,rbc,rb,rtc,rp,s,samp,small,span,strike,strong,sub,sup,tt,u,ul,var,xmp,img,embed,object,table,tr,td,th,tbody,caption,thead,tfoot,colgroup,col,param".split(",");
+        M_goodAttributes = "abbr,accept,accesskey,align,alink,alt,axis,background,bgcolor,border,cellpadding,cellspacing,char,charoff,charset,checked,cite,class,classid,clear,color,cols,colspan,compact,content,coords,datetime,dir,disabled,enctype,face,for,header,height,href,hreflang,hspace,id,ismap,label,lang,longdesc,maxlength,multiple,name,noshade,nowrap,profile,readonly,rel,rev,rows,rowspan,rules,scope,selected,shape,size,span,src,start,style,summary,tabindex,target,text,title,type,usemap,valign,value,vlink,vspace,width,pluginspage,play,loop,menu,codebase,data,pluginspace,wmode,allowscriptaccess,allowfullscreen".split(",");
+        M_evilValues = "javascript:,behavior:,vbscript:,mocha:,livescript:,expression".split(",");
+
+        try {
+            ResourceLoader properties = new ResourceLoader(RESOURCE_BUNDLE, ComponentManager.get(RESOURCE_CLASS).getClass().getClassLoader());
+            M_evilTags = properties.getString("evilTags").split(",");
+            M_goodTags = properties.getString("goodTags").split(",");
+            M_goodAttributes = properties.getString("goodAttributes").split(",");
+            M_evilValues = properties.getString("evilValues").split(",");
+        } catch (Exception e) {
+            // this is a failure and cannot really be recovered from
+            M_log.error("Error collecting formattedtext.properties (using defaults)", e);
+        }
+		
 		M_evilTagsPatterns = new Pattern[M_evilTags.length];
 		for (int i = 0; i < M_evilTags.length; i++)
 		{
@@ -136,7 +149,7 @@ public class FormattedText
 			M_evilValuePatterns[i] = Pattern.compile(complexPattern, Pattern.CASE_INSENSITIVE | 
 					Pattern.UNICODE_CASE | Pattern.DOTALL);
 		}
-		
+
 	}
 	
 	/** Matches HTML-style line breaks like &lt;br&gt; */
@@ -171,22 +184,24 @@ public class FormattedText
 	private static Pattern M_patternHref = Pattern.compile("\\shref\\s*=\\s*(\".*?\"|'.*?')",
 			Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
-		/**
-		* @see #processFormattedText(String, StringBuilder)
-		* @deprecated since Nov 2007, use {@link #processFormattedText(String, StringBuilder)} instead
-		*/
-		public static String processFormattedText(final String strFromBrowser,
-			StringBuffer errorMessages)	{
-			StringBuilder sb = new StringBuilder(errorMessages.toString());
-			String fixed = processFormattedText(strFromBrowser, sb);
-			errorMessages.setLength(0);
-			errorMessages.append(sb.toString());
-			return fixed;
-		}
+    /**
+     * This is maintained for backwards compatibility
+     * @see #processFormattedText(String, StringBuilder)
+     * @deprecated since Nov 2007, use {@link #processFormattedText(String, StringBuilder)} instead
+     */
+    public static String processFormattedText(final String strFromBrowser, StringBuffer errorMessages) {
+        StringBuilder sb = new StringBuilder(errorMessages.toString());
+        String fixed = processFormattedText(strFromBrowser, sb);
+        errorMessages.setLength(0);
+        errorMessages.append(sb.toString());
+        return fixed;
+    }
 		
 	/**
 	 * Processes and validates user-entered HTML received from the web browser (from the WYSIWYG editor). Validates that the user input follows the Sakai formatted text specification; disallows dangerous stuff such as &lt;SCRIPT&gt; JavaScript tags.
 	 * Encodes the text according to the formatted text specification, for the rest of the system to use.
+	 * <br/>
+	 * Use {@link #processFormattedText(String, StringBuilder, boolean)} if you need the behavior of the old sakai html cleaner processor
 	 * 
 	 * @param strFromBrowser
 	 *        The formatted text as sent from the web browser (from the WYSIWYG editor)
@@ -198,8 +213,27 @@ public class FormattedText
 	{
 		boolean checkForEvilTags = true;
 		boolean replaceWhitespaceTags = true;
-		return processFormattedText(strFromBrowser, errorMessages, checkForEvilTags, replaceWhitespaceTags);
+		return processFormattedText(strFromBrowser, errorMessages, checkForEvilTags, replaceWhitespaceTags, useLegacyCleaner);
 	}
+
+    /**
+     * Processes and validates user-entered HTML received from the web browser (from the WYSIWYG editor). Validates that the user input follows the Sakai formatted text specification; disallows dangerous stuff such as &lt;SCRIPT&gt; JavaScript tags.
+     * Encodes the text according to the formatted text specification, for the rest of the system to use.
+     * 
+     * @param strFromBrowser
+     *        The formatted text as sent from the web browser (from the WYSIWYG editor)
+     * @param errorMessages
+     *        User-readable error messages will be returned here.
+     * @param useLegacySakaiCleaner if true the old html cleaner is used, if false the new OWASP antisamy cleaner is used
+     * @return The validated processed formatted text, ready for use by the system.
+     */
+    public static String processFormattedText(final String strFromBrowser,
+            StringBuilder errorMessages, boolean useLegacySakaiCleaner) {
+        boolean checkForEvilTags = true;
+        boolean replaceWhitespaceTags = true;
+        return processFormattedText(strFromBrowser, errorMessages, checkForEvilTags,
+                replaceWhitespaceTags, useLegacySakaiCleaner);
+    }
 
 	/**
 	 * Process an HTML document that has been edited using the formatted text widget. The document can contain any valid HTML; it will NOT be checked to eliminate things like image tags, script tags, etc, because it is its own document.
@@ -215,6 +249,8 @@ public class FormattedText
 	/**
 	 * Processes and validates HTML formatted text received from the web browser (from the WYSIWYG editor). Validates that the user input follows the Sakai formatted text specification; can disallow dangerous stuff such as &lt;SCRIPT&gt; JavaScript tags.
 	 * Encodes the text according to the formatted text specification, for the rest of the system to use.
+     * <br/>
+     * Use {@link #processFormattedText(String, StringBuilder, boolean, boolean, boolean)} if you need the behavior of the old sakai html cleaner processor
 	 * 
 	 * @param strFromBrowser
 	 *        The formatted text as sent from the web browser (from the WYSIWYG editor)
@@ -229,45 +265,89 @@ public class FormattedText
 	public static String processFormattedText(final String strFromBrowser, StringBuilder errorMessages, boolean checkForEvilTags,
 			boolean replaceWhitespaceTags)
 	{
-		String val = strFromBrowser;
-		if (val == null || val.length() == 0) return val;
-
-		if (replaceWhitespaceTags)
-		{
-			// normalize all variants of the "<br>" HTML tag to be "<br />\n"
-			val = M_patternTagBr.matcher(val).replaceAll("<br />");
-
-			// replace "<p>" with nothing. Replace "</p>" and "<p />" HTML tags with "<br />"
-			// val = val.replaceAll("<p>", "");
-			// val = val.replaceAll("</p>", "<br />\n");
-			// val = val.replaceAll("<p />", "<br />\n");
-		}
-
-		if (checkForEvilTags)
-		{
-			val = processHtml(strFromBrowser, errorMessages);
-		}
-
-		// deal with hardcoded empty space character from Firefox 1.5
-		if (val.equals("&nbsp;"))
-		{
-			val = "";
-		}
-
-		// close any open HTML tags (that the user may have accidentally left open)
-		StringBuilder buf = new StringBuilder();
-		trimFormattedText(val, Integer.MAX_VALUE, buf);
-		val = buf.toString();
-
-		// TODO: Fully parse and validate the formatted text against
-		// the formatted text specification. Perhaps this could be
-		// done by treating the text as an XML document and validating
-		// the XML document against a Document-Type-Definition (DTD) for
-		// formatted text. This would allow for validating the
-		// attributes of allowed tags, for example.
-
-		return val;
+		return processFormattedText(strFromBrowser, errorMessages, checkForEvilTags, replaceWhitespaceTags, useLegacyCleaner);
 	}
+
+    /**
+     * Processes and validates HTML formatted text received from the web browser (from the WYSIWYG editor). Validates that the user input follows the Sakai formatted text specification; can disallow dangerous stuff such as &lt;SCRIPT&gt; JavaScript tags.
+     * Encodes the text according to the formatted text specification, for the rest of the system to use.
+     * 
+     * @param strFromBrowser
+     *        The formatted text as sent from the web browser (from the WYSIWYG editor)
+     * @param errorMessages
+     *        User-readable error messages will be returned here.
+     * @param checkForEvilTags
+     *        If true, check for tags and attributes that shouldn't be in formatted text
+     * @param replaceWhitespaceTags
+     *        If true, clean up line breaks to be like "&lt;br /&gt;".
+     * @param useLegacySakaiCleaner if true the old html cleaner is used, if false the new OWASP antisamy cleaner is used
+     * @return The validated processed HTML formatted text, ready for use by the system.
+     */
+    public static String processFormattedText(final String strFromBrowser,
+            StringBuilder errorMessages, boolean checkForEvilTags, boolean replaceWhitespaceTags,
+            boolean useLegacySakaiCleaner) {
+        String val = strFromBrowser;
+        if (val == null || val.length() == 0)
+            return val;
+
+        if (replaceWhitespaceTags) {
+            // normalize all variants of the "<br>" HTML tag to be "<br />\n"
+            val = M_patternTagBr.matcher(val).replaceAll("<br />");
+
+            // replace "<p>" with nothing. Replace "</p>" and "<p />" HTML tags with "<br />"
+            // val = val.replaceAll("<p>", "");
+            // val = val.replaceAll("</p>", "<br />\n");
+            // val = val.replaceAll("<p />", "<br />\n");
+        }
+
+        if (checkForEvilTags) {
+            if (useLegacySakaiCleaner || antiSamy == null) {
+                val = processHtml(strFromBrowser, errorMessages);
+            } else {
+                // use the owasp processor
+                if (antiSamy != null) {
+                    try {
+                        CleanResults cr = antiSamy.scan(strFromBrowser);
+                        if (cr.getNumberOfErrors() > 0) {
+                            for (Object errorMsg : cr.getErrorMessages()) {
+                                errorMessages.append("<div class=\"error\">");
+                                errorMessages.append(errorMsg.toString());
+                                errorMessages.append("</div>");
+                            }
+                        }
+                        val = cr.getCleanHTML();
+                    } catch (ScanException e) {
+                        // this will match the current behavior
+                        val = "";
+                        M_log.warn("processFormattedText: Failure during scan of input html: " + e, e);
+                    } catch (PolicyException e) {
+                        throw new RuntimeException("Unable to access the antiSamy policy file: "+e, e);
+                    }
+                }
+            }
+        }
+
+        // deal with hardcoded empty space character from Firefox 1.5
+        if (val.equals("&nbsp;")) {
+            val = "";
+        }
+
+        if (useLegacySakaiCleaner || antiSamy == null) {
+            // close any open HTML tags (that the user may have accidentally left open)
+            StringBuilder buf = new StringBuilder();
+            trimFormattedText(val, Integer.MAX_VALUE, buf);
+            val = buf.toString();
+        }
+
+        // TODO: Fully parse and validate the formatted text against
+        // the formatted text specification. Perhaps this could be
+        // done by treating the text as an XML document and validating
+        // the XML document against a Document-Type-Definition (DTD) for
+        // formatted text. This would allow for validating the
+        // attributes of allowed tags, for example.
+
+        return val;
+    }
 
 	/**
 	 * Prepares the given HTML formatted text for output as part of an HTML document.
@@ -444,7 +524,7 @@ public class FormattedText
 		catch (Exception e)
 		{
 			M_log.warn("Validator.escapeHtml: ", e);
-			return value;
+			return "";
 		}
 
 	} // escapeHtml
@@ -503,7 +583,7 @@ public class FormattedText
 		catch (Exception e)
 		{
 			M_log.warn("Validator.escapeHtml: ", e);
-			return value;
+			return "";
 		}
 	}
 
@@ -531,34 +611,32 @@ public class FormattedText
 	 *        The anchor tag to be normalized.
 	 * @return The anchor tag containing only href and target="_blank".
 	 */
-	public static String processAnchor(String anchor)
-	{
-		String newAnchor = "";
-		String href = null;
+    public static String processAnchor(String anchor) {
+        String newAnchor = "";
+        String href = null;
 
-		// get href
-		try
-		{
-			Matcher matcher = M_patternHref.matcher(anchor);
-			if (matcher.find()) href = matcher.group();
-		}
-		catch (Exception e)
-		{
-			M_log.warn("FormattedText.processAnchor ", e);
-		}
+        // get href
+        try {
+            Matcher matcher = M_patternHref.matcher(anchor);
+            if (matcher.find()) {
+                href = matcher.group();
+            }
+        } catch (Exception e) {
+            M_log.warn("FormattedText.processAnchor ", e);
+        }
 
-		// open in a new window
-		if (href != null)
-		{
-			href = href.replaceAll("\"", "");
-			href = href.replaceAll(">", "");
-			href = href.replaceFirst("http", "\"http");
-			newAnchor = "<a " + href + "\" target=\"_blank\">";
-		}
-		else
-			M_log.warn("FormattedText.processAnchor href == null");
-		return newAnchor;
-	}
+        // open in a new window
+        if (href != null) {
+            href = href.replaceAll("\"", "");
+            href = href.replaceAll(">", "");
+            href = href.replaceFirst("href=", "href=\"");
+            newAnchor = "<a " + href + "\" target=\"_blank\">";
+        } else {
+            M_log.debug("FormattedText.processAnchor href == null");
+            newAnchor = anchor; // default to the original one so we don't lose the anchor
+        }
+        return newAnchor;
+    }
 
 	/**
 	 * Processes and validates character data as HTML. Disallows dangerous stuff such as &lt;SCRIPT&gt; JavaScript tags. Encodes the text according to the formatted text specification, for the rest of the system to use.
@@ -597,6 +675,9 @@ public class FormattedText
 
 	private static String processHtml(final String source, StringBuilder errorMessages)
 	{
+		if ( M_evilTags == null )
+			init();
+			
 		// normalize all variants of the "<br>" HTML tag to be "<br />\n"
 		// TODO call a method to do this in each process routine
 		String Html = M_patternTagBr.matcher(source).replaceAll("<br />");
@@ -637,6 +718,9 @@ public class FormattedText
 
 	private static String checkTag (final String tag, StringBuilder errorMessages)
 	{
+		if ( M_goodTags == null )
+			init();
+			
 		StringBuilder buf = new StringBuilder();
 		boolean escape = true;
 
@@ -686,6 +770,9 @@ public class FormattedText
 	
 	private static String checkAttributes(final String tag, StringBuilder errorMessages)
 	{
+		if ( M_goodAttributes == null )
+			init();
+			
 		Matcher fullTag = M_patternTagPieces.matcher(tag);
 		String close = "";
 		StringBuilder buf = new StringBuilder();
@@ -739,8 +826,10 @@ public class FormattedText
 
 	private static boolean checkValue(final String value, StringBuilder errorMessages)
 	{
+		if ( M_evilValues == null )
+			init();
+			
 		boolean pass = true;
-
 		Matcher matcher;
 		for (int i = 0; i < M_evilValuePatterns.length; i++)
 		{
@@ -1079,5 +1168,9 @@ public class FormattedText
 			8773, 8776, 8800, 8801, 8804, 8805, 8834, 8835, 8836, 8838, 8839, 8853, 8855, 8869, 8901, 8968, 8969, 8970, 8971, 9001,
 			9002, 9674, 9824, 9827, 9829, 9830, 34, 38, 60, 62, 338, 339, 352, 353, 376, 710, 732, 8194, 8195, 8201, 8204, 8205,
 			8206, 8207, 8211, 8212, 8216, 8217, 8218, 8220, 8221, 8222, 8224, 8225, 8240, 8249, 8250, 8364 };
-
+         
+	private static String[] M_goodTags = null;
+	private static String[] M_goodAttributes = null;
+	private static String[] M_evilValues =  null;
+	private static String[] M_evilTags = null;
 }
