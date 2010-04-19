@@ -42,7 +42,7 @@ import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.antivirus.api.VirusFoundException;
 import org.sakaiproject.antivirus.api.VirusScanIncompleteException;
 import org.sakaiproject.antivirus.api.VirusScanner;
-import org.sakaiproject.component.cover.ServerConfigurationService;
+import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.event.api.EventTrackingService;
@@ -82,11 +82,17 @@ public class ClamAVScanner implements VirusScanner {
 	 */
 	private boolean enabled = false;
 
+	private ServerConfigurationService serverConfigurationService;
+	public void setServerConfigurationService(
+			ServerConfigurationService serverConfigurationService) {
+		this.serverConfigurationService = serverConfigurationService;
+	}
+
 	public void init(){
 		logger.info("init()");
-		port = ServerConfigurationService.getInt("virusScan.port", 3310);
-		host = ServerConfigurationService.getString("virusScan.host", "localhost");
-		enabled = ServerConfigurationService.getBoolean("virusScan.enabled", false);
+		port = serverConfigurationService.getInt("virusScan.port", 3310);
+		host = serverConfigurationService.getString("virusScan.host", "localhost");
+		enabled = serverConfigurationService.getBoolean("virusScan.enabled", false);
 	}
 
 	public void scan(byte[] bytes) throws VirusScanIncompleteException, VirusFoundException {
