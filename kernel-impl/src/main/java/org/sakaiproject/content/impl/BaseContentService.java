@@ -2425,16 +2425,24 @@ public abstract class BaseContentService implements ContentHostingService, Cache
 		String currentUser = SessionManager.getCurrentSessionUserId();
 		String owner = "";
       
+		if (m_securityService.isSuperUser(currentUser)) {
+			//supper users should always get a 404 rather than a permission exception
+			return true;
+		}
+		
 		try
 		{
  			ResourceProperties props = getProperties(id);
 			owner = props.getProperty(ResourceProperties.PROP_CREATOR);
 		}
-		catch ( Exception e ) 
+		catch (PermissionException e ) 
 		{
 			// PermissionException can be thrown if not AUTH_RESOURCE_READ
 			return false;
-		}
+		} catch (IdUnusedException e) {
+			//Also non admin users should get a permission exception is the resource doesn't exist
+			return false;
+		} 
       
 		// check security to delete any collection
 		if ( unlockCheck(AUTH_RESOURCE_WRITE_ANY, id) )
