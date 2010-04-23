@@ -1402,6 +1402,11 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	 */
 	protected String convertLockIfDropbox(String lock, String id)
 	{
+		//the id could be null
+		if (id == null) {
+			return null;
+		}
+		
 		// if this resource is a dropbox, you need dropbox maintain permission
 		if (id.startsWith(COLLECTION_DROPBOX))
 		{
@@ -3737,6 +3742,11 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	 */
 	public boolean isAttachmentResource(String id)
 	{
+		//the id could be null
+		if (id == null) {
+			return false;
+		}
+		
 		// TODO: Should we check whether this is a valid resource id?
 		return id.startsWith(ATTACHMENTS_COLLECTION);
 	}
