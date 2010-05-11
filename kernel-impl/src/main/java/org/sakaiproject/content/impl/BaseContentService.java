@@ -2962,7 +2962,8 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		m_storage.cancelCollection(edit);
 
 		// if the edit is newly created during an add collection process, remove it from the storage
-		if (((BaseCollectionEdit) edit).getEvent().equals(EVENT_RESOURCE_ADD))
+    String event = ((BaseCollectionEdit) edit).getEvent();
+		if (EVENT_RESOURCE_ADD.equals(event))
 		{
 			removeRecursive(edit);
 			m_storage.removeCollection(edit);
@@ -11136,7 +11137,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 
 		public void unbind() {
 			if ( !m_sessionBound && m_active ) {
-				M_log.warn("Edit Object not closed correctly, Cancelling "+this.getId());
+				//M_log.warn("Edit Object not closed correctly, Cancelling "+this.getId());
 				cancelCollection(this);
 			}			
 		}
@@ -12318,7 +12319,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 
 		public void unbind() {
 			if ( !m_sessionBound && m_active ) {
-				M_log.warn("Edit Object not closed correctly, Cancelling "+this.getId());
+				//M_log.warn("Edit Object not closed correctly, Cancelling "+this.getId());
 				cancelResource(this);
 			}			
 		}
