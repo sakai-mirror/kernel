@@ -233,7 +233,7 @@ public class DbResourceTypeRegistry extends ResourceTypeRegistryImpl
 			}
 
 		}
-		catch (Throwable t)
+		catch (Exception t)
 		{
 		}
 	}
