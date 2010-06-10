@@ -54,7 +54,7 @@ public class FormattedText
         	"for", "header", "height", "href", "hreflang", "hspace", "id", "ismap", "label", "lang", "longdesc", "maxlength", "multiple",
         	"name", "noshade", "nowrap", "profile", "readonly", "rel", "rev", "rows", "rowspan", "rules", "scope", "selected", "shape",
         	"size", "span", "src", "start", "style", "summary", "tabindex", "target", "text", "title", "type", "usemap", "valign",
-        	"value", "vlink", "vspace", "width"};
+        	"value", "vlink", "vspace", "width", "flashvars"};
 
         private static String[] M_evilValues = {"javascript:", "behavior:", "vbscript:", "mocha:", "livescript:", "expression"};
 
