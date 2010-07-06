@@ -175,7 +175,7 @@ public abstract class BaseContentService implements ContentHostingService, Cache
 	protected static final Pattern contextPattern = Pattern.compile("\\A/(group/|user/|~)(.+?)/");
 
 	/** sakai.properties setting to enable secure inline html (true by default) */
-	protected static final String SECURE_INLINE_HTML = "content.html.secure";
+	protected static final String SECURE_INLINE_HTML = "content.html.forcedownload";
 	
 	private static final String PROP_AVAIL_NOTI = "availableNotified";
 	
