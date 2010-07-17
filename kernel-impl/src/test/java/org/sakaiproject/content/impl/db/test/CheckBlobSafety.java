@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Properties;
@@ -192,7 +193,6 @@ public class CheckBlobSafety extends TestCase
 			log.info("Loaded Random Data");
 
 			log.info("Got Connection");
-			Statement stmt = null;
 			PreparedStatement pstout = null;
 			PreparedStatement pstin = null;
 			InputStream instream = null;
@@ -244,6 +244,18 @@ public class CheckBlobSafety extends TestCase
 			}
 			finally
 			{
+				try {
+					pstin.close();
+				}
+				catch (SQLException e) {
+					
+				}
+				try {
+					pstout.close();
+				}
+				catch (SQLException e) {
+					
+				}
 				try
 				{
 					instream.close();
@@ -258,13 +270,7 @@ public class CheckBlobSafety extends TestCase
 				catch (Exception ex)
 				{
 				}
-				try
-				{
-					stmt.close();
-				}
-				catch (Exception ex)
-				{
-				}
+				
 			}
 		}
 		catch (Exception ex)
