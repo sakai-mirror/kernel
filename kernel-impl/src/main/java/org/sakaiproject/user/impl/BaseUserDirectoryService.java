@@ -2350,6 +2350,10 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 		public boolean equals(Object obj)
 		{
 			if (!(obj instanceof User)) return false;
+			//its possible that the user object has no id set
+			if (((User) obj).getId() == null) {
+				return false;
+			}
 			return ((User) obj).getId().equals(getId());
 		}
 
