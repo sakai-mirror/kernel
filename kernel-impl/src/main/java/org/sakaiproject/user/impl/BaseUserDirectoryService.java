@@ -636,6 +636,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 			// check with the provider
 			if (m_provider.getUser(user))
 			{
+				user.setEid(cleanEid(user.getEid()));
 				ensureMappedIdForProvidedUser(user);
 				return user;
 			}
@@ -652,6 +653,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 	{
 		if (user.getId() == null)
 		{
+			user.setEid(cleanEid(user.getEid()));
 			String eid = user.getEid();
 			String id = assureUuid(null, eid);
 			m_storage.putMap(id, eid);
@@ -663,6 +665,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 	{
 		if (user.getId() == null)
 		{
+			user.setEid(cleanEid(user.getEid()));
 			user.setId(m_storage.checkMapForId(user.getEid()));
 			ensureMappedIdForProvidedUser(user);
 		}
