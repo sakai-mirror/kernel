@@ -32,6 +32,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.sakaiproject.component.cover.ComponentManager;
+import org.sakaiproject.tool.api.SessionManager;
 
 /**
  * <p>
@@ -46,6 +48,9 @@ public class Web
 	// used to remove javascript from html
 	private static final String START_JAVASCRIPT = "<script";
 	private static final String END_JAVASCRIPT = "</script>";
+	
+	private static SessionManager sessionManager = (SessionManager)
+			ComponentManager.get(SessionManager.class);
 	
 	protected static void displayStringChars(PrintWriter out, String str)
 	{
@@ -355,12 +360,21 @@ public class Web
 	 *        The tool's placement id / presence location / part of the delivery address
 	 * @param updateTime
 	 *        The time (seconds) between courier checks
+	 * @deprecated 
+	 *        To avoid inappropriate kernel dependencies, construct this URL in the tool pending relocation of this to courier (see SAK-18481).
 	 */
 	public static void sendAutoUpdate(PrintWriter out, HttpServletRequest req, String placementId, int updateTime)
 	{
+		String userId = sessionManager.getCurrentSessionUserId();
+		StringBuilder url = new StringBuilder(serverUrl(req));
+		url.append("/courier/");
+		url.append(placementId);
+		url.append("?userId=");
+		url.append(userId);
+		
 		out.println("<script type=\"text/javascript\" language=\"JavaScript\">");
 		out.println("updateTime = " + updateTime + "000;");
-		out.println("updateUrl = \"" + serverUrl(req) + "/courier/" + placementId + "\";");
+		out.println("updateUrl = \"" + url.toString() + "\";");
 		out.println("scheduleUpdate();");
 		out.println("</script>");
 	}
