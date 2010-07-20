@@ -12870,13 +12870,13 @@ public abstract class BaseContentService implements ContentHostingService, Cache
             Range currentRange = (Range) ranges.next();
                   
             // Writing MIME header.
-            IOUtils.write("\n--" + MIME_SEPARATOR + "\n", out);
+            IOUtils.write("\r\n--" + MIME_SEPARATOR + "\r\n", out);
             if (contentType != null)
-                IOUtils.write("Content-Type: " + contentType + "\n", out);
+                IOUtils.write("Content-Type: " + contentType + "\r\n", out);
             IOUtils.write("Content-Range: bytes " + currentRange.start
                            + "-" + currentRange.end + "/"
-                           + currentRange.length + "\n", out);
-            IOUtils.write("\n", out);
+                           + currentRange.length + "\r\n", out);
+            IOUtils.write("\r\n", out);
 
             // Printing content
 			InputStream in = null;
@@ -12898,7 +12898,7 @@ public abstract class BaseContentService implements ContentHostingService, Cache
             }
         }
 
-        IOUtils.write("\n--" + MIME_SEPARATOR + "--", out);
+        IOUtils.write("\r\n--" + MIME_SEPARATOR + "--\r\n", out);
         
         // Rethrow any exception that has occurred
         if (exception != null) {
