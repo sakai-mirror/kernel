@@ -1067,8 +1067,11 @@ public class RequestFilter implements Filter
 		boolean allowSetCookieEarly = true;
 		Cookie c = null;
 		
-		// automatic, i.e. not from user activite, request?
+		// automatic, i.e. not from user activity, request?
 		boolean auto = req.getParameter(PARAM_AUTO) != null;
+
+		// session id provided in a request parameter?
+		boolean reqsession = req.getParameter(ATTR_SESSION) != null;
 
 		String suffix = getCookieSuffix();
 
@@ -1129,6 +1132,12 @@ public class RequestFilter implements Filter
 
 				// find the session
 				s = SessionManager.getSession(sessionId);
+			}
+
+			// ignore the session id provided in a request parameter 
+			// if the session is not authenticated 
+			if (reqsession && s != null && s.getUserId() == null) {
+				s = null;
 			}
 		}
 
