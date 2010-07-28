@@ -211,6 +211,9 @@ public class RequestFilter implements Filter
 	/** The name of the system property that will be used when setting the domain of the session cookie. */
 	protected static final String SAKAI_COOKIE_DOMAIN = "sakai.cookieDomain";
 
+	/** The name of the Sakai property to allow passing a session id in the ATTR_SESSION request parameter */
+	protected static final String SAKAI_SESSION_PARAM_ALLOW = "session.parameter.allow";
+	
 	/** If true, we deliver the Sakai wide session as the Http session for each request. */
 	protected int m_sakaiHttpSession = TOOL_SESSION;
 
@@ -253,6 +256,8 @@ public class RequestFilter implements Filter
 	/** Is this a Terracotta clustered environment? */
 	protected boolean TERRACOTTA_CLUSTER = false;
 
+	/** Allow setting the cookie in a request parameter */
+	protected boolean m_sessionParamAllow = false;
                                                                                                              
     /** The name of the cookie we use to keep sakai session. */                                            
     protected String cookieName = "JSESSIONID";                                                            
@@ -754,6 +759,11 @@ public class RequestFilter implements Filter
 	 */
 	public void init(FilterConfig filterConfig) throws ServletException
 	{
+		
+		// Requesting the ServerConfigurationService here also triggers the promotion of certain 
+		// sakai.properties settings to system properties - see SakaiPropertyPromoter() 		
+		ServerConfigurationService configService = org.sakaiproject.component.cover.ServerConfigurationService.getInstance();
+
 		// capture the servlet context for later user
 		m_servletContext = filterConfig.getServletContext();
 
@@ -894,6 +904,9 @@ public class RequestFilter implements Filter
 		{
 			cookieDomain = System.getProperty(SAKAI_COOKIE_DOMAIN);
 		}
+		
+		m_sessionParamAllow = configService.getBoolean(SAKAI_SESSION_PARAM_ALLOW, false);
+
 	}
 
 	/**
@@ -1122,8 +1135,11 @@ public class RequestFilter implements Filter
 		boolean allowSetCookieEarly = true;
 		Cookie c = null;
 		
-		// automatic, i.e. not from user activite, request?
+		// automatic, i.e. not from user activity, request?
 		boolean auto = req.getParameter(PARAM_AUTO) != null;
+
+		// session id provided in a request parameter?
+		boolean reqsession = m_sessionParamAllow && req.getParameter(ATTR_SESSION) != null;
 
 		String suffix = getCookieSuffix();
 
@@ -1158,8 +1174,10 @@ public class RequestFilter implements Filter
 		// if no principal, check request parameter and cookie
 		if (sessionId == null || s == null)
 		{
-			sessionId = req.getParameter(ATTR_SESSION);
-
+			if (m_sessionParamAllow) {
+				sessionId = req.getParameter(ATTR_SESSION);
+			}
+			
 			// find our session id from our cookie
 			c = findCookie(req, cookieName, suffix);
 
@@ -1184,6 +1202,12 @@ public class RequestFilter implements Filter
 
 				// find the session
 				s = SessionManager.getSession(sessionId);
+			}
+
+			// ignore the session id provided in a request parameter 
+			// if the session is not authenticated 
+			if (reqsession && s != null && s.getUserId() == null) {
+				s = null;
 			}
 		}
 
