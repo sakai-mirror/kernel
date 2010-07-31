@@ -729,19 +729,18 @@ public abstract class BaseContentService implements ContentHostingService, Cache
 				m_entityManager.registerEntityProducer(this,
 					ContentHostingService.REFERENCE_ROOT);
 	
-				// register functions
-				FunctionManager.registerFunction(AUTH_RESOURCE_ADD);
-				FunctionManager.registerFunction(AUTH_RESOURCE_READ);
-				FunctionManager.registerFunction(AUTH_RESOURCE_WRITE_ANY);
-				FunctionManager.registerFunction(AUTH_RESOURCE_WRITE_OWN);
-				FunctionManager.registerFunction(AUTH_RESOURCE_REMOVE_ANY);
-				FunctionManager.registerFunction(AUTH_RESOURCE_REMOVE_OWN);
-				FunctionManager.registerFunction(AUTH_RESOURCE_ALL_GROUPS);
-				FunctionManager.registerFunction(AUTH_RESOURCE_HIDDEN);
+			// register functions
+			FunctionManager.registerFunction(AUTH_RESOURCE_ADD, true);
+			FunctionManager.registerFunction(AUTH_RESOURCE_READ, true);
+			FunctionManager.registerFunction(AUTH_RESOURCE_WRITE_ANY, true);
+			FunctionManager.registerFunction(AUTH_RESOURCE_WRITE_OWN, true);
+			FunctionManager.registerFunction(AUTH_RESOURCE_REMOVE_ANY, true);
+			FunctionManager.registerFunction(AUTH_RESOURCE_REMOVE_OWN, true);
+			FunctionManager.registerFunction(AUTH_RESOURCE_ALL_GROUPS, true);
+			FunctionManager.registerFunction(AUTH_RESOURCE_HIDDEN, true);
 
-				FunctionManager.registerFunction(AUTH_DROPBOX_OWN);
-				FunctionManager.registerFunction(AUTH_DROPBOX_MAINTAIN);
-			
+			FunctionManager.registerFunction(AUTH_DROPBOX_OWN, false);
+			FunctionManager.registerFunction(AUTH_DROPBOX_MAINTAIN, false);
 
 			M_log.info("init(): site quota: " + m_siteQuota + " body path: " + m_bodyPath + " volumes: "
 					+ buf.toString());
