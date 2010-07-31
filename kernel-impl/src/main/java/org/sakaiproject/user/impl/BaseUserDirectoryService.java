@@ -1213,7 +1213,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 	/**
 	 * @inheritDoc
 	 */
-	public List searchUsers(String criteria, int first, int last)
+	public List<User> searchUsers(String criteria, int first, int last)
 	{
 		return m_storage.search(criteria, first, last);
 	}
