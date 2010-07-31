@@ -57,6 +57,7 @@ import org.sakaiproject.user.cover.UserDirectoryService;
 import org.sakaiproject.util.BaseResourceProperties;
 import org.sakaiproject.util.BaseResourcePropertiesEdit;
 import org.sakaiproject.util.StringUtil;
+import org.sakaiproject.util.Validator;
 import org.sakaiproject.util.Xml;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -1273,7 +1274,9 @@ public class BaseSite implements Site
 	 */
 	public void setSkin(String skin)
 	{
-		m_skin = skin;
+		if (Validator.checkSiteSkin(skin)) {
+			m_skin = skin;			
+		}
 	}
 
 	/**
@@ -1353,7 +1356,9 @@ public class BaseSite implements Site
 	 */
 	public void setType(String type)
 	{
-		m_type = type;
+		if (Validator.checkSiteType(type)) {
+			m_type = type;
+		}
 	}
 
 	/**
