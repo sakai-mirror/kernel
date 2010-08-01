@@ -698,7 +698,7 @@ public interface SiteService extends EntityProducer
 	 * @param visitSites
 	 *        The set of String site ids where the user has visit access.
 	 */
-	void setUserSecurity(String userId, Set updateSites, Set visitUnpSites, Set visitSites);
+	void setUserSecurity(String userId, Set<String> updateSites, Set<String> visitUnpSites, Set<String> visitSites);
 
 	/**
 	 * Merge the site information from the archive into the given site.
