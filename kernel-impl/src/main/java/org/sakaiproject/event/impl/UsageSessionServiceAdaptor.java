@@ -1,5 +1,5 @@
 /**********************************************************************************
- * $URL$
+  * $URL$
  * $Id$
  ***********************************************************************************
  *
@@ -25,6 +25,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
@@ -37,7 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroupService;
-import org.sakaiproject.authz.cover.SecurityService;
+import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.db.api.SqlReader;
 import org.sakaiproject.db.api.SqlService;
@@ -71,9 +72,9 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 	/** Storage manager for this service. */
 	protected Storage m_storage = null;
 
-	 /** A Cache of recently refreshed users. This is to prevent frequent authentications refreshing user data */
+	/** A Cache of recently refreshed users. This is to prevent frequent authentications refreshing user data */
 	protected Cache m_recentUserRefresh = null;
-
+	
 	/*************************************************************************************************************************************************
 	 * Abstractions, etc.
 	 ************************************************************************************************************************************************/
@@ -141,7 +142,15 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 	 * @return the MemoryService collaborator.
 	 */
 	protected abstract MemoryService memoryService();
+	
+	private SecurityService securityService;
 
+	public void setSecurityService(SecurityService securityService) {
+		this.securityService = securityService;
+	}
+	
+	
+	
 
 	/*************************************************************************************************************************************************
 	 * Configuration
@@ -205,10 +214,10 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 			m_storage.open();
 
 			m_recentUserRefresh = memoryService().newCache("org.sakaiproject.event.api.UsageSessionService.recentUserRefresh");
-
+			
 			M_log.info("init()");
 		}
-		catch (Throwable t)
+		catch (Exception t)
 		{
 			M_log.warn("init(): ", t);
 		}
@@ -354,35 +363,6 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 
 		M_log.warn("getSessionState(): no session:  key: " + key);
 		return null;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public UsageSession setSessionActive(boolean auto)
-	{
-		throw new UnsupportedOperationException();
-		// BaseUsageSession session = (BaseUsageSession) getSession();
-		// if (session == null) return null;
-		//
-		// if (session.isClosed()) return session;
-		//
-		// if (auto)
-		// {
-		// // do not mark the current session as having user activity
-		// // but close it if it's timed out from no user activity
-		// if (session.isInactive())
-		// {
-		// session.close();
-		// }
-		// }
-		// else
-		// {
-		// // mark the current session as having user activity
-		// session.setActivity();
-		// }
-		//
-		// return session;
 	}
 
 	/**
@@ -538,7 +518,7 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 	{
 		userDirectoryService().destroyAuthentication();
 
-		SecurityService.clearUserEffectiveRoles();
+		securityService.clearUserEffectiveRoles();
 		
 		// invalidate the sakai session, which makes it unavailable, unbinds all the bound objects,
 		// including the session, which will close and generate the logout event
@@ -561,6 +541,7 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 			// generate a logout event (this session)
 			eventTrackingService().post(eventTrackingService().newEvent(EVENT_LOGOUT, null, true), session);
 		}
+		
 	}
 
 	/*************************************************************************************************************************************************
@@ -745,7 +726,7 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 				{
 					((SessionStateBindingListener) attribute).valueUnbound(null, attributeName);
 				}
-				catch (Throwable e)
+				catch (Exception e)
 				{
 					M_log.warn("unBindAttributeValue: unbinding exception: ", e);
 				}
@@ -769,7 +750,7 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 				{
 					((SessionStateBindingListener) attribute).valueBound(null, attributeName);
 				}
-				catch (Throwable e)
+				catch (Exception e)
 				{
 					M_log.warn("bindAttributeValue: unbinding exception: ", e);
 				}
@@ -1039,4 +1020,7 @@ public abstract class UsageSessionServiceAdaptor implements UsageSessionService
 		
 		return sessions.size();
 	}
+	
+	
 }
+	

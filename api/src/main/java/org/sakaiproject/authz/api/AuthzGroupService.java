@@ -52,6 +52,13 @@ public interface AuthzGroupService extends EntityProducer
 	/** Name for the event of updating an AuthzGroup. */
 	static final String SECURE_UPDATE_AUTHZ_GROUP = "realm.upd";
 
+	/** Name for the event of joining an AuthzGroup. */
+	static final String SECURE_JOIN_AUTHZ_GROUP = "realm.join";
+
+	/** Name for the event of unjoining an AuthzGroup. */
+	static final String SECURE_UNJOIN_AUTHZ_GROUP = "realm.unjoin";
+
+	
 	/** Name for the event of updating ones own relationship in an AuthzGroup. */
 	static final String SECURE_UPDATE_OWN_AUTHZ_GROUP = "realm.upd.own";
 
@@ -63,6 +70,8 @@ public interface AuthzGroupService extends EntityProducer
 
 	/**
 	 * Access a list of AuthzGroups that meet specified criteria, naturally sorted.
+	 * NOTE: The group objects returned will not have the associated roles loaded.
+	 * if you need to save the realm retrieve it with {@link #getAuthzGroup(String)}
 	 * 
 	 * @param criteria
 	 *        Selection criteria: AuthzGroups returned will match this string somewhere in their id, or provider group id.
@@ -367,8 +376,6 @@ public interface AuthzGroupService extends EntityProducer
 	 * 
 	 * @param userId
 	 *        The user id.
-	 * @param function
-	 *        The function to open.
 	 * @param azGroupId
 	 *        The AuthzGroup id to consult, if it exists.
 	 * @return the role name for this user in this AuthzGroup, if the user has active membership, or null if not.
@@ -392,8 +399,6 @@ public interface AuthzGroupService extends EntityProducer
 	 * 
 	 * @param userIds
 	 *        The user ids as a Collection of String.
-	 * @param function
-	 *        The function to open.
 	 * @param azGroupId
 	 *        The AuthzGroup id to consult, if it exists.
 	 * @return A Map (userId (String) -> role name (String)) of role names for each user who have active membership; if the user does not, it will not be in the Map.

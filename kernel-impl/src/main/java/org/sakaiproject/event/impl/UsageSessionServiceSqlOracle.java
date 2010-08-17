@@ -26,4 +26,5 @@ package org.sakaiproject.event.impl;
  */
 public class UsageSessionServiceSqlOracle extends UsageSessionServiceSqlDefault
 {
+	
 }

@@ -207,7 +207,7 @@ public abstract class SakaiSecurity implements SecurityService
 		// cache
 		if (m_callCache != null)
 		{
-			Collection azgIds = new Vector();
+			Collection<String> azgIds = new Vector<String>();
 			azgIds.add("/site/!admin");
 			m_callCache.put(command, Boolean.valueOf(rv), m_cacheMinutes * 60, null, azgIds);
 		}
@@ -248,7 +248,7 @@ public abstract class SakaiSecurity implements SecurityService
 	/**
 	 * {@inheritDoc}
 	 */
-	public boolean unlock(String userId, String function, String entityRef, Collection azgs)
+	public boolean unlock(String userId, String function, String entityRef, Collection<String> azgs)
 	{
 		// make sure we have complete parameters (azgs is optional)
 		if (userId == null || function == null || entityRef == null)
@@ -289,7 +289,7 @@ public abstract class SakaiSecurity implements SecurityService
 	 *        The entity reference string.
 	 * @return true if allowed, false if not.
 	 */
-	protected boolean checkAuthzGroups(String userId, String function, String entityRef, Collection azgs)
+	protected boolean checkAuthzGroups(String userId, String function, String entityRef, Collection<String> azgs)
 	{
 		// check the cache
 		String command = "unlock@" + userId + "@" + function + "@" + entityRef;
@@ -326,6 +326,7 @@ public abstract class SakaiSecurity implements SecurityService
 	 *        The resource reference string.
 	 * @return A List (User) of the users can unlock the lock (may be empty).
 	 */
+	@SuppressWarnings("unchecked")
 	public List<User> unlockUsers(String lock, String reference)
 	{
 		if (reference == null)
@@ -361,12 +362,13 @@ public abstract class SakaiSecurity implements SecurityService
 	 * @param force
 	 *        if true, create if missing
 	 */
-	protected Stack getAdvisorStack(boolean force)
+	@SuppressWarnings("unchecked")
+	protected Stack<SecurityAdvisor>  getAdvisorStack(boolean force)
 	{
-		Stack advisors = (Stack) threadLocalManager().get(ADVISOR_STACK);
+		Stack<SecurityAdvisor>  advisors = (Stack<SecurityAdvisor>) threadLocalManager().get(ADVISOR_STACK);
 		if ((advisors == null) && force)
 		{
-			advisors = new Stack();
+			advisors = new Stack<SecurityAdvisor>();
 			threadLocalManager().set(ADVISOR_STACK, advisors);
 		}
 
@@ -394,7 +396,7 @@ public abstract class SakaiSecurity implements SecurityService
 	 */
 	protected SecurityAdvisor.SecurityAdvice adviseIsAllowed(String userId, String function, String reference)
 	{
-		Stack advisors = getAdvisorStack(false);
+		Stack<SecurityAdvisor>  advisors = getAdvisorStack(false);
 		if ((advisors == null) || (advisors.isEmpty())) return SecurityAdvisor.SecurityAdvice.PASS;
 
 		// a Stack grows to the right - process from top to bottom
@@ -417,23 +419,34 @@ public abstract class SakaiSecurity implements SecurityService
 	 */
 	public void pushAdvisor(SecurityAdvisor advisor)
 	{
-		Stack advisors = getAdvisorStack(true);
+		Stack<SecurityAdvisor>  advisors = getAdvisorStack(true);
 		advisors.push(advisor);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public SecurityAdvisor popAdvisor()
+	public SecurityAdvisor popAdvisor(SecurityAdvisor advisor)
 	{
-		Stack advisors = getAdvisorStack(false);
+		Stack<SecurityAdvisor> advisors = getAdvisorStack(false);
 		if (advisors == null) return null;
 
 		SecurityAdvisor rv = null;
 
 		if (advisors.size() > 0)
 		{
-			rv = (SecurityAdvisor) advisors.pop();
+			if (advisor == null) 
+			{
+				rv = (SecurityAdvisor) advisors.pop();
+			}
+			else
+			{
+				SecurityAdvisor sa = advisors.firstElement();
+				if (advisor.equals(sa))
+				{
+					rv = (SecurityAdvisor) advisors.pop();
+				}
+			}
 		}
 
 		if (advisors.isEmpty())
@@ -444,12 +457,17 @@ public abstract class SakaiSecurity implements SecurityService
 		return rv;
 	}
 
+	public SecurityAdvisor popAdvisor()
+	{
+		return popAdvisor(null);
+	}
+	
 	/**
 	 * {@inheritDoc}
 	 */
 	public boolean hasAdvisors()
 	{
-		Stack advisors = getAdvisorStack(false);
+		Stack<SecurityAdvisor>  advisors = getAdvisorStack(false);
 		if (advisors == null) return false;
 
 		return !advisors.isEmpty();
@@ -504,7 +522,7 @@ public abstract class SakaiSecurity implements SecurityService
 	/**
 	 * {@inheritDoc}
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public void clearUserEffectiveRoles() {
 		
 		// get all the roleswaps from the session and clear them

@@ -22,10 +22,6 @@
 package org.sakaiproject.content.api;
 
 import java.util.List;
-import java.util.Set;
-
-import org.sakaiproject.entity.api.Reference;
-import org.sakaiproject.user.api.User;
 
 /**
  * 
@@ -126,7 +122,7 @@ public interface ResourceType
 	 * @param entity The resource that's being displayed, or null indicating that the entity might  
 	 * not yet exist.
 	 * @return A short string describing the size of an entity, or null. 
-	 * @see ResourceType.MAX_LENGTH_SHORT_SIZE_LABEL
+	 * @see ResourceType#MAX_LENGTH_SHORT_SIZE_LABEL
 	 */
 	public String getSizeLabel(ContentEntity entity);
 	
@@ -141,7 +137,7 @@ public interface ResourceType
 	 * @param entity The resource that's being displayed, or null indicating that the entity might  
 	 * not yet exist.
 	 * @return A short string describing the size of an entity, or null. 
-	 * @see ResourceType.MAX_LENGTH_LONG_SIZE_LABEL
+	 * @see ResourceType#MAX_LENGTH_LONG_SIZE_LABEL
 	 */
 	public String getLongSizeLabel(ContentEntity entity);
 

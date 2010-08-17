@@ -62,4 +62,5 @@ public interface UsageSessionServiceSql
 	 * @return the SQL statement which retrieves all supposedly active sessions associated with inactive servers
 	 */
 	String getOpenSessionsOnInvalidServersSql(List<String> validServerIds);
+	
 }

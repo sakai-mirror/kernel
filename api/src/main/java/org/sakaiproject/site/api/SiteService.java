@@ -446,7 +446,7 @@ public interface SiteService extends EntityProducer
 	/**
 	 * Remove this site's information.
 	 * 
-	 * @param id
+	 * @param site
 	 *        The site id.
 	 * @exception PermissionException
 	 *            if the current user does not have permission to remove this site.
@@ -640,7 +640,8 @@ public interface SiteService extends EntityProducer
 
 	/**
 	 * Access a list of Site objects that meet specified criteria.
-	 * 
+	 * NOTE: The sites returned will not have child objects loaded. If these sites need to be saved
+	 * a completely populated site should be retrieved from {@link #getSite(String)}
 	 * @param type
 	 *        The SelectionType specifying what sort of selection is intended.
 	 * @param ofType
@@ -705,8 +706,6 @@ public interface SiteService extends EntityProducer
 	 * 
 	 * @param toSiteId
 	 *        The target site id.
-	 * @param fromSite
-	 *        The source site id
 	 * @param e
 	 *        The XML DOM tree of content to merge.
 	 * @param creatorId

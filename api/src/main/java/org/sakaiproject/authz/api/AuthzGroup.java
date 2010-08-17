@@ -22,6 +22,7 @@
 package org.sakaiproject.authz.api;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.Set;
 
 import org.sakaiproject.entity.api.Edit;
@@ -46,7 +47,7 @@ public interface AuthzGroup extends Edit, Comparable, Serializable
 	 * 
 	 * @param userId
 	 *        The user.
-	 * @param role
+	 * @param roleId
 	 *        The role name.
 	 * @param active
 	 *        The active flag.
@@ -81,13 +82,21 @@ public interface AuthzGroup extends Edit, Comparable, Serializable
 
 	/**
 	 * @return the user who created this.
+	 * 
 	 */
 	User getCreatedBy();
 
 	/**
 	 * @return the time created.
+	 * @deprecated use {#link {@link #getCreatedDate()}
 	 */
 	Time getCreatedTime();
+	
+	/**
+	 * Get the date created
+	 * @return
+	 */
+	Date getCreatedDate();
 
 	/**
 	 * @return a description of the item this realm applies to.
@@ -124,8 +133,15 @@ public interface AuthzGroup extends Edit, Comparable, Serializable
 
 	/**
 	 * @return the time last modified.
+	 * @deprecated see {@link #getModifiedDate()}
 	 */
 	Time getModifiedTime();
+	
+	/**
+	 * Get date last modified
+	 * @return
+	 */
+	Date getModifiedDate();
 
 	/**
 	 * Access the group id for the GroupProvider for this AuthzGroup.

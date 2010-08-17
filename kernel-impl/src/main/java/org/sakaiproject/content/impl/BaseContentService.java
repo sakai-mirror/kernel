@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.SocketException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -85,11 +87,6 @@ import org.sakaiproject.content.api.providers.SiteContentAdvisorTypeRegistry;
 import org.sakaiproject.content.api.ContentTypeImageService;
 import org.sakaiproject.content.impl.serialize.api.SerializableCollectionAccess;
 import org.sakaiproject.content.impl.serialize.api.SerializableResourceAccess;
-import org.sakaiproject.content.types.FileUploadType;
-import org.sakaiproject.content.types.FolderType;
-import org.sakaiproject.content.types.HtmlDocumentType;
-import org.sakaiproject.content.types.TextDocumentType;
-import org.sakaiproject.content.types.UrlResourceType;
 import org.sakaiproject.entity.api.ContextObserver;
 import org.sakaiproject.entity.api.Edit;
 import org.sakaiproject.entity.api.Entity;
@@ -814,14 +811,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 			M_log.warn("init(): ", t);
 		}
 
-		if(usingResourceTypeRegistry())
-		{
-			this.getResourceTypeRegistry().register(new FileUploadType());
-			this.getResourceTypeRegistry().register(new FolderType());
-			this.getResourceTypeRegistry().register(new TextDocumentType());
-			this.getResourceTypeRegistry().register(new HtmlDocumentType());
-			this.getResourceTypeRegistry().register(new UrlResourceType());
-		}
+
 
 		this.m_useSmartSort = m_serverConfigurationService.getBoolean("content.smartSort", true);
 
@@ -5352,9 +5342,8 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		}
 		try
 		{
-			ContentCollection newCollection = addCollection(new_id, newProps, null, isHidden, null, null);
+			addCollection(new_id, newProps, null, isHidden, null, null);
 			
-
 			if (M_log.isDebugEnabled()) M_log.debug("copyCollection successful");
 		}
 		catch (InconsistentException e)
@@ -6293,20 +6282,9 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 						throw new IdUnusedException(ref.getReference());
 					}
 	
-					String one = new String(content);
-					StringBuilder two = new StringBuilder("");
-					for (int i = 0; i < one.length(); i++)
-					{
-						if (one.charAt(i) == '+')
-						{
-							two.append("%2b");
-						}
-						else
-						{
-							two.append(one.charAt(i));
-						}
-					}
-					res.sendRedirect(two.toString());
+					// An invalid URI format will get caught by the outermost catch block 
+					URI uri = new URI(new String(content, "UTF-8"));				
+					res.sendRedirect(uri.toASCIIString());
 					
 				} else {
 					// we have a text/url mime type, but the body is too long to issue as a redirect
@@ -6502,6 +6480,14 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 						{
 							throw e;
 						}
+						catch (SocketException e)
+						{
+							//a socket exception usualy means the client aborted the connection or similar
+							if (M_log.isDebugEnabled())
+							{
+								M_log.debug("SocketExcetion", e);
+							}
+						}
 						catch (Exception ignore)
 						{
 						}
@@ -6551,6 +6537,14 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 
 			            	copyRanges(resource, out, ranges.iterator(), contentType);
 
+						}
+						catch (SocketException e)
+						{
+							//a socket exception usualy means the client aborted the connection or similar
+							if (M_log.isDebugEnabled())
+							{
+								M_log.debug("SocketExcetion", e);
+							}
 						}
 						catch (Exception ignore)
 						{
@@ -6941,7 +6935,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 
 	protected Collection getEntityHierarchyAuthzGroups(Reference ref) 
 	{
-		Collection rv = new TreeSet();
+		Collection<String> rv = new TreeSet<String>();
 
 		// add the root
 		rv.add(getReference("/"));
@@ -6953,15 +6947,17 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 		{
 			String root = getReference(Entity.SEPARATOR + paths[1] + Entity.SEPARATOR);
 			rv.add(root);
-
+			StringBuilder rootBuilder = new StringBuilder();
+			rootBuilder.append(root);
+			
 			for (int next = 2; next < paths.length; next++)
 			{
-				root += paths[next];
+				rootBuilder.append(paths[next]);
 				if ((next < paths.length - 1) || container)
 				{
-					root +=  Entity.SEPARATOR;
+					rootBuilder.append(Entity.SEPARATOR);
 				}
-				rv.add(root);
+				rv.add(rootBuilder.toString());
 			}
 		}
 
@@ -8617,7 +8613,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 			try {
 				siteType = m_siteService.getSite(siteId).getType();
 			} catch (IdUnusedException e) {
-				M_log.warn("SiteService could not find the site type");
+				M_log.warn("Quota calculation could not find the site '"+ siteId + "' to determine the type.", M_log.isDebugEnabled()?e:null);
 			}
 
 			// use this quota unless we have one more specific
@@ -8659,19 +8655,20 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 			// check each collection from the root
 			String[] parts = StringUtil.split(target, "/");
 			String id = "/";
-
+			StringBuilder idBuilder = new StringBuilder();
+			idBuilder.append(id);
 			for (int i = 1; i < parts.length; i++)
 			{
 				// grow the id to the next collection
-				id = id + parts[i] + "/";
+				idBuilder.append(parts[i] + "/");
 
 				// does it exist?
-				ContentCollection collection = findCollection(id);
+				ContentCollection collection = findCollection(idBuilder.toString());
 
 				// if not, can we make it
 				if (collection == null)
 				{
-					ContentCollectionEdit edit = addValidPermittedCollection(id);
+					ContentCollectionEdit edit = addValidPermittedCollection(idBuilder.toString());
 					edit.getPropertiesEdit().addProperty(ResourceProperties.PROP_DISPLAY_NAME, parts[i]);
 					commitCollection(edit);
 				}

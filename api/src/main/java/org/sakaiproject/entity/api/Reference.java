@@ -103,7 +103,7 @@ public interface Reference
 	 * 
 	 * @return List of AuthzGroup ids (String) associated with this referenced resource.
 	 */
-	Collection getAuthzGroups();
+	Collection<String> getAuthzGroups();
 
 	/**
 	 * Compute the set of AuthzGroup ids associated with this referenced resource, perhaps customized for security about this end user.
@@ -112,7 +112,7 @@ public interface Reference
 	 *        the end user ID, or null if we want the generic set.
 	 * @return List of AuthzGroup ids (String) associated with this referenced resource.
 	 */
-	Collection getAuthzGroups(String userId);
+	Collection<String> getAuthzGroups(String userId);
 
 	/**
 	 * Access the reference.
@@ -156,7 +156,6 @@ public interface Reference
 	 * @param subType
 	 * @param id
 	 * @param container
-	 * @param container2
 	 * @param context
 	 * @return true if settings are accepted, false if not.
 	 */

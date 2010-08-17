@@ -23,6 +23,7 @@ package org.sakaiproject.site.api;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import org.sakaiproject.authz.api.AuthzGroup;
@@ -49,11 +50,15 @@ public interface Site extends Edit, Comparable, Serializable, AuthzGroup
 
 	/**
 	 * @return the time created.
+	 * @deprecated use {@link #getCreatedDate()}
 	 */
 	Time getCreatedTime();
+	
+	
 
 	/**
 	 * @return the time last modified.
+	 * @deprecated use {@link #getModifiedTime()}
 	 */
 	Time getModifiedTime();
 
@@ -271,7 +276,7 @@ public interface Site extends Edit, Comparable, Serializable, AuthzGroup
 	/**
 	 * Set the published state of this site.
 	 * 
-	 * @param status
+	 * @param published
 	 *        The published state of the site.
 	 */
 	void setPublished(boolean published);

@@ -48,6 +48,7 @@ import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.IdUsedException;
 import org.sakaiproject.exception.InUseException;
 import org.sakaiproject.exception.PermissionException;
+import org.sakaiproject.memory.api.Cache;
 import org.sakaiproject.memory.api.MemoryService;
 import org.sakaiproject.time.api.Time;
 import org.sakaiproject.user.api.Preferences;
@@ -88,6 +89,10 @@ public abstract class BasePreferencesService implements PreferencesService, Stor
 	
 	/** The session cache variable for indicating whether the current user's preference was null when last looked */
 	protected String ATTR_PREFERENCE_IS_NULL = "attr_preference_is_null";
+	
+	
+	/** the cache for Preference objects **/
+	private Cache m_cache;
 	/**********************************************************************************************************************************************************************************************************************************************************
 	 * Abstractions, etc.
 	 *********************************************************************************************************************************************************************************************************************************************************/
@@ -239,9 +244,13 @@ public abstract class BasePreferencesService implements PreferencesService, Stor
 			functionManager().registerFunction(SECURE_EDIT_PREFS);
 			functionManager().registerFunction(SECURE_REMOVE_PREFS);
 
+			
+			//register a cache
+			m_cache = memoryService().newCache(BasePreferencesService.class.getName() +".preferences");
+			
 			M_log.info("init()");
 		}
-		catch (Throwable t)
+		catch (Exception t)
 		{
 			M_log.warn("init(): ", t);
 		}
@@ -325,7 +334,10 @@ public abstract class BasePreferencesService implements PreferencesService, Stor
 
 			// update the properties
 			// addLiveUpdateProperties(user.getPropertiesEdit());
-
+			
+			//invalidate the cache
+			m_cache.remove(edit.getId());
+				
 			// complete the edit
 			m_storage.commit(edit);
 		
@@ -406,6 +418,8 @@ public abstract class BasePreferencesService implements PreferencesService, Stor
 
 		// complete the edit
 		m_storage.remove(edit);
+		
+		m_cache.remove(edit.getId());
 
 		// track it
 		eventTrackingService().post(eventTrackingService().newEvent(SECURE_REMOVE_PREFS, edit.getReference(), true));
@@ -436,30 +450,46 @@ public abstract class BasePreferencesService implements PreferencesService, Stor
 				{
 					if (!((Boolean) session.getAttribute(ATTR_PREFERENCE_IS_NULL)).booleanValue())
 					{
-						// if the cache indicate the preference is not null, get the preferences from cache
+						// if the session cache indicate the preference is not null, get the preferences from cache
 						prefs = new BasePreferences((BasePreferences) session.getAttribute(ATTR_PREFERENCE));
 					}
 				}
 				else
 				{
-					//otherwise, get preferences from storage and update session cache
-					prefs = (BasePreferences) m_storage.get(id);
+					//is the preference in the cache?
+					prefs = (BasePreferences) m_cache.get(id);
+					
+					//otherwise, get preferences from storage and update caches
+					if (prefs == null)
+					{
+						prefs = (BasePreferences) m_storage.get(id);
+					}
 					if (prefs != null)
 					{
 						session.setAttribute(ATTR_PREFERENCE_IS_NULL, Boolean.FALSE);
 						session.setAttribute(ATTR_PREFERENCE, new BasePreferences(prefs));
+						m_cache.put(id, prefs);
 					}
 					else
 					{
 						session.setAttribute(ATTR_PREFERENCE_IS_NULL, Boolean.TRUE);
 						session.removeAttribute(ATTR_PREFERENCE);
+						m_cache.put(id, prefs);
 					}
 				}
 			}
 			else
 			{
-				// uf the preference is not for current user, ignore cache completely
-				prefs = (BasePreferences) m_storage.get(id);
+				//is the preference in the cache?
+				prefs = (BasePreferences) m_cache.get(id);
+				
+				if (prefs == null) 
+				{
+					// uf the preference is not for current user, ignore sessioncache completely
+					prefs = (BasePreferences) m_storage.get(id);
+				}
+				
+				m_cache.put(id, prefs);
 			}
 		}
 		
@@ -578,7 +608,7 @@ public abstract class BasePreferencesService implements PreferencesService, Stor
 	public Collection getEntityAuthzGroups(Reference ref, String userId)
 	{
 		// double check that it's mine
-		if (APPLICATION_ID != ref.getType()) return null;
+		if (!APPLICATION_ID.equals(ref.getType())) return null;
 
 		Collection rv = new Vector();
 

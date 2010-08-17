@@ -7,6 +7,4 @@
    	<property name="eventTrackingService" ref="org.sakaiproject.event.api.EventTrackingService"/>
    </bean>
    
-
 </beans>
-

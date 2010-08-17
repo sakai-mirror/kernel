@@ -22,6 +22,7 @@
 package org.sakaiproject.alias.impl;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -388,7 +389,7 @@ public abstract class BaseAliasService implements AliasService, StorageUser
  					"postmaster").trim().toLowerCase().split("\\s*,\\s*"));
 
 		}
-		catch (Throwable t)
+		catch (Exception t)
 		{
 			M_log.warn("init(): ", t);
 		}
@@ -1309,6 +1310,17 @@ public abstract class BaseAliasService implements AliasService, StorageUser
 			return m_lastModifiedTime;
 		}
 
+		
+		public Date getDateCreated() {
+			return new Date(m_createdTime.getTime());
+		}
+
+		public Date getDateModified() {
+			return new Date(m_lastModifiedTime.getTime());
+			
+		}
+
+		
 		/**
 		 * Access the alias target.
 		 * 
@@ -1507,7 +1519,7 @@ public abstract class BaseAliasService implements AliasService, StorageUser
 				Reference ref = entityManager().newReference(getTarget());
 				return ref.getDescription();
 			}
-			catch (Throwable any)
+			catch (Exception any)
 			{
 				return "unknown";
 			}
@@ -1533,6 +1545,7 @@ public abstract class BaseAliasService implements AliasService, StorageUser
 			}
 
 		} // valueUnbound
+
 
 	} // BaseAliasEdit
 

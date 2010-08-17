@@ -21,6 +21,7 @@
 
 package org.sakaiproject.site.impl;
 
+import java.util.Date;
 import java.util.Set;
 import java.util.Stack;
 
@@ -361,7 +362,7 @@ public class BaseGroup implements Group, Identifiable
 					m_azg = AuthzGroupService.newAuthzGroup(getReference(), template, null);
 					m_azgChanged = true;
 				}
-				catch (Throwable t)
+				catch (Exception t)
 				{
 					M_log.warn("getAzg: " + t);
 				}
@@ -398,6 +399,12 @@ public class BaseGroup implements Group, Identifiable
 	{
 		return getAzg().getCreatedTime();
 	}
+	
+	public Date getCreatedDate()
+	{
+		return getAzg().getCreatedDate();
+	}
+
 
 	public String getMaintainRole()
 	{
@@ -422,6 +429,11 @@ public class BaseGroup implements Group, Identifiable
 	public Time getModifiedTime()
 	{
 		return getAzg().getModifiedTime();
+	}
+	
+	public Date getModifiedDate() {
+		
+		return getAzg().getModifiedDate();
 	}
 
 	public String getProviderGroupId()

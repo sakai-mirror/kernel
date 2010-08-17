@@ -475,7 +475,7 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 			functionManager().registerFunction(SECURE_UPDATE_GROUP_MEMBERSHIP);
 			functionManager().registerFunction(SECURE_ADD_COURSE_SITE);
 		}
-		catch (Throwable t)
+		catch (Exception t)
 		{
 			M_log.warn(".init(): ", t);
 		}
@@ -683,7 +683,7 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 					User user = userDirectoryService().getUser(sessionManager().getCurrentSessionUserId());
 					template = (BaseSite) getDefinedSite(USER_SITE_TEMPLATE + "." + user.getType());
 				}
-				catch (Throwable t)
+				catch (Exception t)
 				{
 				}
 
@@ -973,7 +973,7 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 			{
 				authzGroupService().save(((BaseSite) site).m_azg);
 			}
-			catch (Throwable t)
+			catch (Exception t)
 			{
 				M_log.warn(".saveAzgs - site: " + t);
 			}
@@ -998,7 +998,7 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 				{
 					authzGroupService().save(group.m_azg);
 				}
-				catch (Throwable t)
+				catch (Exception t)
 				{
 					M_log.warn(".saveAzgs - group: " + group.getTitle() + " : " + t);
 				}
@@ -1775,7 +1775,7 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 					out.println(description);
 					out.println("</div></body></html>");
 				}
-				catch (Throwable t)
+				catch (Exception t)
 				{
 					throw new EntityNotDefinedException(ref.getReference());
 				}
@@ -1908,7 +1908,7 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 			// site helper
 			rv.add("!site.helper");
 		}
-		catch (Throwable e)
+		catch (Exception e)
 		{
 			M_log.warn("getEntityRealms(): " + e);
 		}
@@ -1992,7 +1992,7 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 						co.contextUpdated(site.getId(), toolPlacement);
 					}
 				}
-				catch (Throwable t)
+				catch (Exception t)
 				{
 					M_log.warn("Error encountered while notifying ContextObserver of Site Change", t);
 				}
@@ -2028,7 +2028,7 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 					boolean toolPlacement = !site.getTools(co.myToolIds()).isEmpty();
 					co.contextDeleted(site.getId(), toolPlacement);
 				}
-				catch (Throwable t)
+				catch (Exception t)
 				{
 					M_log.warn("Error encountered while notifying ContextObserver of Site Change", t);
 				}
@@ -2826,7 +2826,7 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 					{
 						save(site);
 					}
-					catch (Throwable t)
+					catch (Exception t)
 					{
 						M_log.warn(".merge: " + t);
 					}

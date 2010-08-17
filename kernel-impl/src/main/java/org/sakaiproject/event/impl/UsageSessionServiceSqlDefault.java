@@ -29,6 +29,7 @@ import java.util.List;
 public class UsageSessionServiceSqlDefault implements UsageSessionServiceSql
 {
 	protected static final String USAGE_SESSION_COLUMNS = "SESSION_ID,SESSION_SERVER,SESSION_USER,SESSION_IP,SESSION_HOSTNAME,SESSION_USER_AGENT,SESSION_START,SESSION_END,SESSION_ACTIVE";
+	protected static final String MOST_RECENT_USAGE_SESSION_COLUMNS = "SESSION_ID,SESSION_SERVER,SESSION_USER,SESSION_IP,SESSION_HOSTNAME,SESSION_USER_AGENT,MAX(SESSION_START) as SESSION_START,SESSION_END,SESSION_ACTIVE";
 
    /**
 	 * returns the sql statement which inserts a sakai session into the sakai_session table.
@@ -94,4 +95,5 @@ public class UsageSessionServiceSqlDefault implements UsageSessionServiceSql
 	public String getUpdateServerSakaiSessionSql() {
 		return "update SAKAI_SESSION set SESSION_SERVER = ? where SESSION_ID = ?";
 	}
+
 }
