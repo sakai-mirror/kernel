@@ -534,9 +534,14 @@ public class ResourceLoader extends DummyMap implements InternationalizedMessage
 		return bundle;
 	}
 
+    /**
+     *
+     * @return ResourceBundle from the cache or retrieved from the MessageService data store
+     */
 	protected ResourceBundle getBundleFromDb()
 	{
 		Locale loc = getLocale();
+        //TODO consider using a better caching method here
 		ResourceBundle bundle = (ResourceBundle) this.bundles.get(loc);
         Date timeStamp = (Date) this.bundlesTimestamp.get(loc);
 		if ((timeStamp == null || timeStamp.getTime() + ServerConfigurationService.getInt("load.bundles.from.db.timeout", 30000) < new Date().getTime() ) )
@@ -596,7 +601,9 @@ public class ResourceLoader extends DummyMap implements InternationalizedMessage
 	}
 
 	/**
-	 * Return ResourceBundle for specified locale
+	 * Return ResourceBundle for specified locale.  Returns values from the classpath
+     * overridden with any values found in the database via the MessageService.  Also,
+     * responsible for indexing any new or changes values.
 	 *
 	 * @param loc
 	 *        properties bundle * *

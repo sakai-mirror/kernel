@@ -32,6 +32,14 @@ import java.util.Map.Entry;
 
 
 /**
+ * An extension of ResourceBundle which gets the bundle data in the normal way and then
+ * consults with the MessageBundleService for addition data.
+ * Any values returned by the MessageBundleService will override values returned from
+ * the normal ResourceBundle.
+ *
+ * Also provides a method to index new bundle data by interacting with the MessageBundleService
+ * to do the real work.
+ *
  * Created by IntelliJ IDEA.
  * User: jbush
  * Date: May 7, 2009
@@ -50,6 +58,14 @@ public class DbResourceBundle extends ResourceBundle {
         this.locale = locale;
     }
 
+    /**
+     *
+     * @param baseName
+     * @param locale
+     * @param classLoader
+     * @return ResourceBundle with values from classpath loading, and overridden by any values
+     *         retrieved from the MessageBundleService
+     */
     static public ResourceBundle addResourceBundle(String baseName, Locale locale, ClassLoader classLoader) {
         DbResourceBundle newBundle = new DbResourceBundle(baseName, locale);
         String context =  (String)ThreadLocalManager.get(org.sakaiproject.util.RequestFilter.CURRENT_CONTEXT);
@@ -76,7 +92,6 @@ public class DbResourceBundle extends ResourceBundle {
             catch (NullPointerException e)
             {
             } // ignore
-
 
             Enumeration<String> keys = loadedBundle.getKeys();
             while (keys.hasMoreElements()){
@@ -110,7 +125,15 @@ public class DbResourceBundle extends ResourceBundle {
         return Collections.enumeration(entries.keySet());
     }
 
+    /**
+     * imports or updates bundle data via the MessageBundleService
+     * @param baseName
+     * @param newBundle
+     * @param loc
+     * @param classLoader
+     */
     public static void indexResourceBundle(String baseName, ResourceBundle newBundle, Locale loc, ClassLoader classLoader) {
+        // serves as the moduleName
         String context =  (String)ThreadLocalManager.get(org.sakaiproject.util.RequestFilter.CURRENT_CONTEXT);
         if (context == null) return;
         MessageBundleService messageBundleService = getMessageBundleService();

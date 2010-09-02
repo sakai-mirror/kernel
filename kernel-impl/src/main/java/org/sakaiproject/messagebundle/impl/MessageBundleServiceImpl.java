@@ -195,7 +195,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
     }
 
 
-    public List search(String searchQuery, String module, String baseName, String locale) {
+    public List<MessageBundleProperty> search(String searchQuery, String module, String baseName, String locale) {
         List values = new ArrayList();
         StringBuffer queryString = new StringBuffer("");
 
@@ -279,11 +279,11 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
         return (MessageBundleProperty) results.get(0);
     }
 
-    public Map getBundle(String baseName, String moduleName, Locale loc) {
+    public Map<String,String> getBundle(String baseName, String moduleName, Locale loc) {
         Object[] values = new Object[]{baseName, moduleName, loc.toString()};
         String sql = "from MessageBundleProperty where baseName = ? and moduleName = ? and locale = ? and value != null";
         List results = getHibernateTemplate().find(sql, values );
-        Map map = new HashMap();
+        Map<String,String> map = new HashMap();
         if (results.size() == 0) {
             logger.debug("can't find any overridden values for: " + getIndexKeyName(baseName, moduleName, loc.toString()));
             return map;
@@ -304,7 +304,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
         return executeCountQuery(query);
     }
 
-    public List getAllProperties(String locale, String module) {
+    public List<MessageBundleProperty> getAllProperties(String locale, String module) {
         if ((locale == null || locale.length() == 0) && (module == null || module.length() == 0)) {
             return getHibernateTemplate().find("from MessageBundleProperty");
         } else if (module == null || module.length() == 0) {
@@ -353,11 +353,11 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
         return rows;
     }
 
-    public List getAllModuleNames() {
+    public List<String> getAllModuleNames() {
         return getHibernateTemplate().find("select distinct(moduleName) from MessageBundleProperty  order by moduleName");
     }
 
-    public List getAllBaseNames() {
+    public List<String> getAllBaseNames() {
         return getHibernateTemplate().find("select distinct(baseName) from MessageBundleProperty  order by baseName");
     }
 
@@ -376,7 +376,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
       return count.intValue();
    }
 
-    public List getModifiedProperties(int sortOrder, int sortField, int startingIndex, int pageSize) {
+    public List<MessageBundleProperty> getModifiedProperties(int sortOrder, int sortField, int startingIndex, int pageSize) {
         String orderBy = "asc";
         if (sortOrder == SORT_ORDER_DESCENDING) {
             orderBy = "desc";
@@ -407,7 +407,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
 
     }
 
-    public List getLocales() {
+    public List<String> getLocales() {
         return getHibernateTemplate().find("select distinct(locale) from MessageBundleProperty");
     }
 
@@ -420,7 +420,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
         private String moduleName;
         private Map bundleData;
         private Locale loc;
-        public SaveOrUpdateTask(String baseName, String moduleName, Map bundleData, Locale loc) {
+        public SaveOrUpdateTask(String baseName, String moduleName, Map<String,String> bundleData, Locale loc) {
             this.baseName = baseName;
             this.moduleName = moduleName;
             this.bundleData = bundleData;
