@@ -28,6 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.thread_local.cover.ThreadLocalManager;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 
 /**
@@ -56,10 +57,11 @@ public class DbResourceBundle extends ResourceBundle {
 		{
             if (context != null) {
                 Map bundleValues = getMessageBundleService().getBundle(baseName, context, locale);
-                Iterator bundleValuesIter = bundleValues.keySet().iterator();
-                while (bundleValuesIter.hasNext()) {
-                    String key = (String) bundleValuesIter.next();
-                    String value = (String) bundleValues.get(key);
+                Iterator<Entry<String,String>> bundleEntryIter = bundleValues.entrySet().iterator();
+                while (bundleEntryIter.hasNext()) {
+                	Entry<String,String> entry = bundleEntryIter.next();
+                    String key = entry.getKey();
+                    String value = entry.getValue();
                     newBundle.addProperty(key, value);
                 }
             }
