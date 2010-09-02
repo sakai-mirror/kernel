@@ -32,6 +32,7 @@ import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 import java.sql.SQLException;
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Responsible for managing the message bundle data in a database.  Provides search capabilities
@@ -156,22 +157,25 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
      * @param newBundle
      * @param loc
      */
-    protected void saveOrUpdateInternal(String baseName, String moduleName, Map newBundle, String loc) {
+    protected void saveOrUpdateInternal(String baseName, String moduleName, Map<String, String> newBundle, String loc) {
         String keyName = getIndexKeyName(baseName, moduleName, loc);
         if (indexedList.contains(keyName)) {
             logger.debug("skip saveOrUpdate() as its already happened once for :" + keyName);
             return;
         }
-        Iterator keys = newBundle.keySet().iterator();
+        
+        Set<Entry<String, String>> entrySet = newBundle.entrySet();
+        Iterator<Entry<String, String>> entries = entrySet.iterator();
 
-        while (keys.hasNext()) {
-            String key = (String) keys.next();
+        while (entries.hasNext()) {
+        	Entry<String, String> entry = entries.next();  
+            String key = entry.getKey();
             MessageBundleProperty mbp = new MessageBundleProperty();
             mbp.setBaseName(baseName);
             mbp.setModuleName(moduleName);
             mbp.setLocale(loc.toString());
             mbp.setPropertyName(key);
-            mbp.setDefaultValue((String)newBundle.get(key));
+            mbp.setDefaultValue(entry.getValue());
             MessageBundleProperty existingMbp = getProperty(mbp);
             if (existingMbp != null) {
                 //don"t update id or value, we don't want to loose that data
@@ -321,7 +325,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
                org.hibernate.Query query = session.createQuery(hql);
                query.setString("locale", locale);
                int rowCount = query.executeUpdate();
-               return new Integer(rowCount);
+               return  Integer.valueOf(rowCount);
            }
         };
 
