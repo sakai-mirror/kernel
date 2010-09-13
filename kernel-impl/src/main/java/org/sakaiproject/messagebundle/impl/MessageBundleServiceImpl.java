@@ -147,6 +147,14 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
 
     }
 
+    public void saveOrUpdate(String baseName, String moduleName, ResourceBundle newBundle, Locale loc, boolean newThread) {
+        if (newThread) {
+            saveOrUpdate(baseName, moduleName, newBundle, loc);
+        } else {
+            saveOrUpdateInternal(baseName, moduleName, convertResourceBundleToMap(newBundle), loc.toString());
+        }
+    }
+
     /**
      * internal work for responding to a save or update request.  This method will add new bundles data
      * if it doesn't exist, otherwise updates the data preserving any current value if its been modified.
@@ -354,11 +362,20 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
     }
 
     public List<String> getAllModuleNames() {
-        return getHibernateTemplate().find("select distinct(moduleName) from MessageBundleProperty  order by moduleName");
+        List<String> retValue = getHibernateTemplate().find("select distinct(moduleName) from MessageBundleProperty  order by moduleName");
+        if (retValue == null) return new ArrayList();
+        //force deep load
+        retValue.size();
+        return retValue;
     }
 
     public List<String> getAllBaseNames() {
-        return getHibernateTemplate().find("select distinct(baseName) from MessageBundleProperty  order by baseName");
+         List<String> retValue = getHibernateTemplate().find("select distinct(baseName) from MessageBundleProperty  order by baseName");
+        if (retValue == null) return new ArrayList();
+        //force deep load
+        retValue.size();
+        return retValue;
+
     }
 
     public void revert(MessageBundleProperty mbp) {
