@@ -24,6 +24,7 @@ import org.sakaiproject.messagebundle.api.MessageBundleService;
 import org.sakaiproject.messagebundle.api.MessageBundleProperty;
 
 import org.hibernate.*;
+import org.hibernate.type.NullableType;
 import org.hibernate.type.Type;
 import org.springframework.beans.BeanUtils;
 import org.springframework.orm.hibernate3.HibernateCallback;
@@ -49,7 +50,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
    /**
      * list of bundles that we've already indexed, only want to update once per startup
      */
-    private Set indexedList = new HashSet();
+    private Set<String> indexedList = new HashSet<String>();
     private static final String MBS_ADDORUPDATE_TYPE = "mbs.addOrUpdate.type";
     private long scheduleDelay = 1000;
     Timer timer = new Timer();
@@ -59,8 +60,8 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
 
 
     public int getSearchCount(String searchQuery, String module, String baseName, String locale) {
-        List values = new ArrayList();
-        List types = new ArrayList();
+        List<String> values = new ArrayList<String>();
+        List<NullableType> types = new ArrayList<NullableType>();
         StringBuffer queryString = new StringBuffer("");
 
         try {
@@ -204,7 +205,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
 
 
     public List<MessageBundleProperty> search(String searchQuery, String module, String baseName, String locale) {
-        List values = new ArrayList();
+        List<String> values = new ArrayList<String>();
         StringBuffer queryString = new StringBuffer("");
 
         try {
@@ -248,7 +249,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
         } catch (Exception e) {
             logger.error("problem searching the message bundle data", e);
         }
-        return new ArrayList();
+        return new ArrayList<MessageBundleProperty>();
     }
 
     private  Map<String, String> convertResourceBundleToMap(ResourceBundle resource) {
