@@ -1,22 +1,22 @@
 package org.sakaiproject.messagebundle.impl.test;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.ResourceBundle;
+
 import junit.extensions.TestSetup;
 import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.messagebundle.api.MessageBundleProperty;
 import org.sakaiproject.messagebundle.api.MessageBundleService;
 import org.sakaiproject.test.SakaiKernelTestBase;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListResourceBundle;
-import java.util.Locale;
-import java.util.Map;
-import java.util.ResourceBundle;
 
 /**
  * Created by IntelliJ IDEA.
