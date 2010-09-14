@@ -51,7 +51,6 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
      * list of bundles that we've already indexed, only want to update once per startup
      */
     private Set<String> indexedList = new HashSet<String>();
-    private static final String MBS_ADDORUPDATE_TYPE = "mbs.addOrUpdate.type";
     private long scheduleDelay = 1000;
     Timer timer = new Timer();
 
@@ -203,7 +202,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
         indexedList.add(getIndexKeyName(baseName, moduleName, loc));
     }
 
-
+    @SuppressWarnings("unchecked")
     public List<MessageBundleProperty> search(String searchQuery, String module, String baseName, String locale) {
         List<String> values = new ArrayList<String>();
         StringBuffer queryString = new StringBuffer("");
@@ -280,7 +279,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
     public MessageBundleProperty getProperty(MessageBundleProperty mbp) {
         Object[] values = new Object[]{mbp.getBaseName(), mbp.getModuleName(), mbp.getPropertyName(), mbp.getLocale()};
         String sql = "from MessageBundleProperty where baseName = ? and moduleName = ? and propertyName = ? and locale = ?";
-        List results = getHibernateTemplate().find(sql, values );
+        List<?> results = getHibernateTemplate().find(sql, values );
         if (results.size() == 0) {
             logger.debug("can't find a default value for : " + mbp);
             return null;
@@ -291,13 +290,13 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
     public Map<String,String> getBundle(String baseName, String moduleName, Locale loc) {
         Object[] values = new Object[]{baseName, moduleName, loc.toString()};
         String sql = "from MessageBundleProperty where baseName = ? and moduleName = ? and locale = ? and value != null";
-        List results = getHibernateTemplate().find(sql, values );
-        Map<String,String> map = new HashMap();
+        List<?> results = getHibernateTemplate().find(sql, values );
+        Map<String,String> map = new HashMap<String,String>();
         if (results.size() == 0) {
             logger.debug("can't find any overridden values for: " + getIndexKeyName(baseName, moduleName, loc.toString()));
             return map;
         }
-        for (Iterator i=results.iterator();i.hasNext();) {
+        for (Iterator<?> i=results.iterator();i.hasNext();) {
             MessageBundleProperty mbp = (MessageBundleProperty) i.next();
             map.put(mbp.getPropertyName(), mbp.getValue());
         }
@@ -313,6 +312,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
         return executeCountQuery(query);
     }
 
+    @SuppressWarnings("unchecked")
     public List<MessageBundleProperty> getAllProperties(String locale, String module) {
         if ((locale == null || locale.length() == 0) && (module == null || module.length() == 0)) {
             return getHibernateTemplate().find("from MessageBundleProperty");
@@ -362,6 +362,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
         return rows;
     }
 
+    @SuppressWarnings("unchecked")
     public List<String> getAllModuleNames() {
         List<String> retValue = getHibernateTemplate().find("select distinct(moduleName) from MessageBundleProperty  order by moduleName");
         if (retValue == null) return new ArrayList();
@@ -370,6 +371,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
         return retValue;
     }
 
+    @SuppressWarnings("unchecked")
     public List<String> getAllBaseNames() {
          List<String> retValue = getHibernateTemplate().find("select distinct(baseName) from MessageBundleProperty  order by baseName");
         if (retValue == null) return new ArrayList();
@@ -394,6 +396,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
       return count.intValue();
    }
 
+    @SuppressWarnings("unchecked")
     public List<MessageBundleProperty> getModifiedProperties(int sortOrder, int sortField, int startingIndex, int pageSize) {
         String orderBy = "asc";
         if (sortOrder == SORT_ORDER_DESCENDING) {
@@ -425,6 +428,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
 
     }
 
+    @SuppressWarnings("unchecked")
     public List<String> getLocales() {
         return getHibernateTemplate().find("select distinct(locale) from MessageBundleProperty");
     }
