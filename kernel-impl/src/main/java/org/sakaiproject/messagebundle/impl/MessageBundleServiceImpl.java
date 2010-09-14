@@ -436,7 +436,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
     public class SaveOrUpdateTask extends TimerTask {
         private String baseName;
         private String moduleName;
-        private Map bundleData;
+        private Map<String,String> bundleData;
         private Locale loc;
         public SaveOrUpdateTask(String baseName, String moduleName, Map<String,String> bundleData, Locale loc) {
             this.baseName = baseName;
