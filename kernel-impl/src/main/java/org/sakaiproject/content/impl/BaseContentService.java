@@ -9588,6 +9588,11 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 	 */
 	protected String convertIdToUserEid(String id)
 	{
+		//SAK-18908/KNL-584 id could be null
+		if (id == null) {
+			return null;
+		}
+		
 		if (id.startsWith("/user/"))
 		{
 			try
