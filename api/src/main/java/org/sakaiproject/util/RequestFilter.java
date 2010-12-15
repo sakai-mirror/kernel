@@ -206,6 +206,9 @@ public class RequestFilter implements Filter
 	/** The name of the system property that will be used when setting the value of the session cookie. */
 	protected static final String SAKAI_SERVERID = "sakai.serverId";
 
+	/** The name of the Sakai property to disable setting the HttpOnly attribute on the cookie (if false). */
+	protected static final String SAKAI_COOKIE_HTTP_ONLY = "sakai.cookieHttpOnly";
+	
 	/** The name of the Sakai property to allow passing a session id in the ATTR_SESSION request parameter */
 	protected static final String SAKAI_SESSION_PARAM_ALLOW = "session.parameter.allow";
 	
@@ -251,6 +254,9 @@ public class RequestFilter implements Filter
 	/** Allow setting the cookie in a request parameter */
 	protected boolean m_sessionParamAllow = false;
 
+	/** Set the HttpOnly attribute on the cookie */
+	protected boolean m_cookieHttpOnly = true;
+            
 	/**
 	 * Wraps a request object so we can override some standard behavior.
 	 */
@@ -643,7 +649,7 @@ public class RequestFilter implements Filter
 							{
 								c.setSecure(true);
 							}
-							resp.addCookie(c);
+							addCookie(resp, c);
 						}
 					}
 
@@ -852,6 +858,9 @@ public class RequestFilter implements Filter
 		
 		
 		m_sessionParamAllow = configService.getBoolean(SAKAI_SESSION_PARAM_ALLOW, false);
+
+		// retrieve option to enable or disable cookie HttpOnly
+		m_cookieHttpOnly = configService.getBoolean(SAKAI_COOKIE_HTTP_ONLY, true);
 
 	}
 
@@ -1188,7 +1197,7 @@ public class RequestFilter implements Filter
 			c = new Cookie(SESSION_COOKIE, "");
 			c.setPath("/");
 			c.setMaxAge(0);
-			res.addCookie(c);
+			addCookie(res, c);
 		}
 
 		// if we have a session and had no cookie,
@@ -1208,7 +1217,7 @@ public class RequestFilter implements Filter
 				{
 					c.setSecure(true);
 				}
-				res.addCookie(c);
+				addCookie(res, c);
 			}
 		}
 
@@ -1391,5 +1400,25 @@ public class RequestFilter implements Filter
 		}
 		return suffix;
 	}
+	
+	protected void addCookie(HttpServletResponse res, Cookie cookie) {
+		
+		if (!m_cookieHttpOnly) {
+			// Use the standard servlet mechanism for setting the cookie
+			res.addCookie(cookie);
+		} else {
+			// Set the cookie manually
+
+			StringBuffer sb = new StringBuffer();
+
+			ServerCookie.appendCookieValue(sb, cookie.getVersion(), cookie.getName(), cookie.getValue(),
+					cookie.getPath(), cookie.getDomain(), cookie.getComment(),
+					cookie.getMaxAge(), cookie.getSecure(), m_cookieHttpOnly);
+
+			res.addHeader("Set-Cookie", sb.toString());
+		}
+		return;
+	}
+
 
 }
