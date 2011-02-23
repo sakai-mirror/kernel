@@ -77,7 +77,7 @@ public class BasicTimeService implements TimeService
 	protected DateFormat M_fmtG = null;
 
 	// Map of Timezone/Locales to LocalTzFormat objects
-	private Hashtable M_localeTzMap = new Hashtable();
+	private Hashtable<String, LocalTzFormat> M_localeTzMap = new Hashtable<String, LocalTzFormat>();
 
 	// Cache of userIds to Timezone/Locales
 	private Cache M_userTzCache;
@@ -192,20 +192,47 @@ public class BasicTimeService implements TimeService
 
 	protected LocalTzFormat getLocalTzFormat(String[] timeZoneLocale)
 	{
-		LocalTzFormat tzFormat = (LocalTzFormat) M_localeTzMap.get(timeZoneLocale);
-
+		//we need to convert the String[] to a string key
+		String tzLocaleString = stringAraytoKeyString(timeZoneLocale);
+		
+		LocalTzFormat tzFormat = (LocalTzFormat) M_localeTzMap.get(tzLocaleString);
+		if (M_log.isDebugEnabled()) 
+		{
+			M_log.debug("M_localeTzMap contains: " + M_localeTzMap.size() + " members");
+		}
 		if (tzFormat == null)
 		{
 			tzFormat = new LocalTzFormat(timeZoneLocale[0], timeZoneLocale[1]);
-			M_localeTzMap.put(timeZoneLocale, tzFormat);
+			M_localeTzMap.put(tzLocaleString, tzFormat);
 		}
 
 		return tzFormat;
 	}
 
+	private String stringAraytoKeyString(String[] timeZoneLocale) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < timeZoneLocale.length; i++ )
+		{
+			if (i > 0) 
+			{
+				sb.append("_");
+			}
+			sb.append(timeZoneLocale[i]);
+		}
+		
+		if (M_log.isDebugEnabled())
+		{
+			M_log.debug("returing key: " + sb.toString());
+		}
+		return sb.toString();
+	}
+
+	
 	/**********************************************************************************************************************************************************************************************************************************************************
 	 * Work interface methods: org.sakai.service.time.TimeService
 	 *********************************************************************************************************************************************************************************************************************************************************/
+
+	
 
 	/**
 	 * no arg constructor
