@@ -396,11 +396,11 @@
                 <enabled>true</enabled>
             </releases>
         </pluginRepository>
-        <pluginRepository>
+       <!-- <pluginRepository>
             <id>xebia-maven2</id>
             <name>Xebia Maven2 Repository</name>
             <url>http://mojo.os.xebia.com/repository</url>
-        </pluginRepository>
+        </pluginRepository>-->
     </pluginRepositories>
     <repositories>
         <repository>
