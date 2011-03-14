@@ -21,6 +21,8 @@
 
 package org.sakaiproject.tool.cover;
 
+import java.util.List;
+
 import org.sakaiproject.component.cover.ComponentManager;
 
 /**
@@ -90,6 +92,15 @@ public class SessionManager
 
 		return manager.getSession(param0);
 	}
+	
+	public static List<org.sakaiproject.tool.api.Session> getSessions()
+	{
+		org.sakaiproject.tool.api.SessionManager manager = getInstance();
+		if (manager == null) return null;
+		
+		return manager.getSessions();
+	}
+	
 
 	public static org.sakaiproject.tool.api.Session getCurrentSession()
 	{

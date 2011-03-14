@@ -32,17 +32,17 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
 import javax.servlet.http.HttpSessionContext;
-
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -68,7 +68,7 @@ public abstract class SessionComponent implements SessionManager
 	private static Log M_log = LogFactory.getLog(SessionComponent.class);
 
 	/** The sessions - keyed by session id. */
-	protected Map m_sessions = new ConcurrentHashMap();
+	protected Map<String, Session> m_sessions = new ConcurrentHashMap<String, Session>();
 
 	/** The maintenance. */
 	protected Maintenance m_maintenance = null;
@@ -204,6 +204,10 @@ public abstract class SessionComponent implements SessionManager
 		return s;
 	}
 	
+	public List<Session> getSessions() {
+		 return new ArrayList<Session>(m_sessions.values());
+	}
+	
 	public String makeSessionId(HttpServletRequest req, Principal principal)
 	{
 		MessageDigest sha;
@@ -329,11 +333,11 @@ public abstract class SessionComponent implements SessionManager
 	 */
 	public int getActiveUserCount(int secs)
 	{
-		Set activeusers = new HashSet(m_sessions.size());
+		Set<String> activeusers = new HashSet<String>(m_sessions.size());
 
 		long now = System.currentTimeMillis();
 
-		for (Iterator i = m_sessions.values().iterator(); i.hasNext();)
+		for (Iterator<Session> i = m_sessions.values().iterator(); i.hasNext();)
 		{
 			MySession s = (MySession) i.next();
 

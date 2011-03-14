@@ -44,6 +44,13 @@ public interface SessionManager
 	Session getSession(String sessionId);
 
 	/**
+	 * Get all current sessions.
+	 *
+	 * @return List of sessions.
+	 */
+	List<Session> getSessions();
+	
+	/**
 	 * Generate a session ID for the given request and principal
 	 * 
 	 * @return The session id that should be used for the given request and principal.
