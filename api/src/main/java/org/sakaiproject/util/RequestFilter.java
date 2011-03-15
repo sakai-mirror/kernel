@@ -815,6 +815,12 @@ public class RequestFilter implements Filter
 		{
 			m_uploadMaxSize = Long.valueOf(filterConfig.getInitParameter(CONFIG_UPLOAD_MAX)).longValue() * 1024L * 1024L;
 		}
+		
+		//KNL-516 - Upload max size of 2.6 is 2047
+		if (m_uploadMaxSize > (2047 * 1024L * 1024L)) {
+			M_log.info(SYSTEM_UPLOAD_MAX+" or "+CONFIG_UPLOAD_MAX+" are greater than 2047. This is the limit for Sakai 2.6. See KNL-516");
+			m_uploadMaxSize = 2047 * 1024L * 1024L;
+		}
 
 		// get the upload max ceiling that limits any other upload max, if defined
 		if (System.getProperty(SYSTEM_UPLOAD_CEILING) != null)
