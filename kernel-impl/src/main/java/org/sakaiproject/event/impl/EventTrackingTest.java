@@ -25,6 +25,7 @@ import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.db.api.SqlService;
 import org.sakaiproject.entity.api.EntityManager;
+import org.sakaiproject.event.api.EventHandlerRegistry;
 import org.sakaiproject.event.api.UsageSessionService;
 import org.sakaiproject.time.api.TimeService;
 import org.sakaiproject.tool.api.SessionManager;
@@ -100,5 +101,11 @@ public class EventTrackingTest extends ClusterEventTracking
 	{
 		return null;
 	}
+
+	@Override
+	protected EventHandlerRegistry eventHandlerRegistry() {
+		// TODO Auto-generated method stub
+		return null;
+}
 
 }

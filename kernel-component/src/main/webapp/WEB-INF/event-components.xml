@@ -19,6 +19,11 @@
     <bean id="org.sakaiproject.event.impl.UsageSessionServiceSqlMySql"             class="org.sakaiproject.event.impl.UsageSessionServiceSqlMySql"           singleton="true"/>
     <bean id="org.sakaiproject.event.impl.UsageSessionServiceSqlOracle"            class="org.sakaiproject.event.impl.UsageSessionServiceSqlOracle"          singleton="true"/>
 
+	<bean id="org.sakaiproject.event.api.EventHandlerRegistry"
+			class="org.sakaiproject.event.impl.BasicEventHandlerRegistry"
+            init-method="init" destroy-method="destroy" singleton="true">
+	</bean>
+
 	<bean id="org.sakaiproject.event.api.EventTrackingService"
 			class="org.sakaiproject.event.impl.ClusterEventTracking"
             init-method="init" destroy-method="destroy" singleton="true">
@@ -31,6 +36,7 @@
         <lookup-method name="securityService"            bean="org.sakaiproject.authz.api.SecurityService"/>
         <lookup-method name="toolManager"                bean="org.sakaiproject.tool.api.ToolManager"/>
         <lookup-method name="entityManager"              bean="org.sakaiproject.entity.api.EntityManager"/>
+        <lookup-method name="eventHandlerRegistry"       bean="org.sakaiproject.event.api.EventHandlerRegistry"/>
 	    <property name="checkDb">    <value>true</value>         </property>
         <property name="autoDdl">    <value>${auto.ddl}</value>  </property>
         <property name="period">     <value>5</value>            </property>

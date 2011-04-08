@@ -37,6 +37,8 @@ import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.db.api.SqlReader;
 import org.sakaiproject.db.api.SqlService;
 import org.sakaiproject.event.api.Event;
+import org.sakaiproject.event.api.EventHandlerRegistry;
+import org.sakaiproject.event.api.EventHandler;
 import org.sakaiproject.event.api.NotificationService;
 import org.sakaiproject.time.api.Time;
 import org.sakaiproject.util.StringUtil;
@@ -93,6 +95,8 @@ public abstract class ClusterEventTracking extends BaseEventTrackingService impl
 	 * @return the ServerConfigurationService collaborator.
 	 */
 	protected abstract ServerConfigurationService serverConfigurationService();
+
+	protected abstract EventHandlerRegistry eventHandlerRegistry();
 
 	/*************************************************************************************************************************************************
 	 * Configuration
@@ -188,6 +192,20 @@ public abstract class ClusterEventTracking extends BaseEventTrackingService impl
 	public void setClusterEventTrackingServiceSql(String vendor)
 	{
 		this.clusterEventTrackingServiceSql = (databaseBeans.containsKey(vendor) ? databaseBeans.get(vendor) : databaseBeans.get("default"));
+	}
+	
+	/*
+	 * KNL-707 -- This property (false by default) determines whether EventHandlers are used.
+	 */
+	protected boolean useEventHandlers = false;
+	
+	/**
+	 * Sets property useEventHandlers, which determines whether any EventHandler impls will be used 
+	 * for processing new events posted to the event tracking service.  
+	 * @param value 
+	 */
+	public void setUseEventHandlers(boolean value) {
+		useEventHandlers = value;
 	}
 
 	/*************************************************************************************************************************************************
@@ -345,6 +363,18 @@ public abstract class ClusterEventTracking extends BaseEventTrackingService impl
 		// mark the event time
 		((BaseEvent) event).m_time = timeService().newTime();
 
+		if(this.useEventHandlers && this.eventHandlerRegistry() != null) {
+			// see if any event handlers want to handle this event
+			Collection<EventHandler> eventHandlers = this.eventHandlerRegistry().getEventHandlers();
+			if(eventHandlers != null) {
+				for(EventHandler eventHandler : eventHandlers) {
+					if(eventHandler.handleEvent(event)) {
+						return;
+					}
+				}
+			}
+		}
+		
 		// notify locally generated events immediately -
 		// they will not be process again when read back from the database
 		try
