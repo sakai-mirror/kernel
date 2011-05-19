@@ -316,7 +316,7 @@ public class FolderType extends BaseResourceType implements ExpandableResourceTy
         	else
     		{
     			ContentCollection parent = entity.getContainingCollection();
-    			if(parent == null || ContentHostingService.ROOT_COLLECTIONS.contains(parent.getId()))
+    			if(parent == null)
     			{
     				ok = false;
     			}
@@ -604,7 +604,7 @@ public class FolderType extends BaseResourceType implements ExpandableResourceTy
     		else
     		{
     			ContentCollection parent = entity.getContainingCollection();
-    			if(parent == null || ContentHostingService.ROOT_COLLECTIONS.contains(parent.getId()))
+    			if(parent == null)
     			{
     				ok = false;
     			}
@@ -749,7 +749,7 @@ public class FolderType extends BaseResourceType implements ExpandableResourceTy
     		else
     		{
     			ContentCollection parent = entity.getContainingCollection();
-    			if(parent == null || ContentHostingService.ROOT_COLLECTIONS.contains(parent.getId()))
+    			if(parent == null)
     			{
     				ok = false;
     			}
@@ -858,7 +858,7 @@ public class FolderType extends BaseResourceType implements ExpandableResourceTy
     		else
     		{
     			ContentCollection parent = entity.getContainingCollection();
-    			if(parent == null || ContentHostingService.ROOT_COLLECTIONS.contains(parent.getId()))
+    			if(parent == null)
     			{
     				ok = false;
     			}
@@ -1117,7 +1117,7 @@ public class FolderType extends BaseResourceType implements ExpandableResourceTy
     		else
     		{
     			ContentCollection parent = entity.getContainingCollection();
-    			if(parent == null || ContentHostingService.ROOT_COLLECTIONS.contains(parent.getId()))
+    			if(parent == null)
     			{
     				ok = false;
     			}
