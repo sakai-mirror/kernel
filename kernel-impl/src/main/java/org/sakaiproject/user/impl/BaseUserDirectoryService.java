@@ -2308,7 +2308,11 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 				if (m_lastName != null) buf.append(m_lastName);
 				if (m_firstName != null)
 				{
-					buf.append(", ");
+					//KNL-524 no comma if the last name is null
+					if (m_lastName != null)
+					{
+						buf.append(", ");
+					}
 					buf.append(m_firstName);
 				}
 
