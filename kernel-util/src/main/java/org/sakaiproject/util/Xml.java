@@ -330,6 +330,12 @@ public class Xml
 	 */
 	public static void encodeAttribute(Element el, String tag, String value)
 	{
+		//KNL-688 avoid a NPE being logged - DH
+		if (value == null)
+		{
+			return;
+		}
+		
 		// encode the message body base64, and make it an attribute
 		try
 		{
