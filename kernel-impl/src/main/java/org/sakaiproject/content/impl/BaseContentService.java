@@ -6383,6 +6383,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry
 							two.append(one.charAt(i));
 						}
 					}
+					eventTrackingService.post(eventTrackingService.newEvent(EVENT_RESOURCE_READ, resource.getReference(null), false));
 					res.sendRedirect(two.toString());
 					
 				} else {
