@@ -7562,6 +7562,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, EntityTransferrerRef
 					{
 						String oId2 = oResource.getId();
 						String nId = "";
+						String nUrl = "";
 
 						int ind = oId2.indexOf(fromContext);
 						if (ind != -1)
@@ -7606,6 +7607,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, EntityTransferrerRef
 								// complete the edit
 								m_storage.commitCollection(edit);
 								((BaseCollectionEdit) edit).closeEdit();
+								nUrl = edit.getUrl();
 							}
 							catch (IdUsedException e)
 							{
@@ -7620,6 +7622,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, EntityTransferrerRef
 							{
 							}
 							transversalMap.put(oResource.getId(), nId);
+							transversalMap.put(oResource.getUrl(), nUrl);
 							transversalMap.putAll(transferCopyEntitiesRefMigrator(oResource.getId(), nId, resourceIds));
 						}
 						else
@@ -7640,8 +7643,9 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, EntityTransferrerRef
 								// complete the edit
 								m_storage.commitResource(edit);
 								((BaseResourceEdit) edit).closeEdit();
-								
+								nUrl = edit.getUrl();
 								transversalMap.put(oResource.getId(), nId);
+								transversalMap.put(oResource.getUrl(), nUrl);
 							}
 							catch (PermissionException e)
 							{
