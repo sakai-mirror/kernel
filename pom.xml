@@ -516,11 +516,6 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-log4j12</artifactId>
-                <version>1.0</version>
-            </dependency>
             <!-- shared/lib -->
             <!-- 3rd party APIs/Implementations -->
             <dependency>
@@ -647,18 +642,38 @@
                 <version>1.6.1</version>
                 <scope>provided</scope>
             </dependency>
-            <dependency>
+    <dependency>
+        <groupId>net.sf.ehcache</groupId>
+        <artifactId>ehcache-core</artifactId>
+        <version>1.7.2</version>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate</artifactId>
+        <version>3.2.7.ga</version>
+        <scope>provided</scope>
+        <exclusions>
+            <exclusion>
+                <!-- Due to artifact now being ehcache-core eclipse:eclipse was including both copies of the JAR in the project. -->
                 <groupId>net.sf.ehcache</groupId>
                 <artifactId>ehcache</artifactId>
-                <version>1.6.1</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.hibernate</groupId>
-                <artifactId>hibernate</artifactId>
-                <version>3.2.7.ga</version>
-                <scope>provided</scope>
-            </dependency>
+            </exclusion>
+        </exclusions>
+    </dependency>
+    <!-- needed by Ehcache -->
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j12</artifactId>
+        <version>1.4.2</version>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>1.4.2</version>
+        <scope>provided</scope>
+    </dependency>
             <dependency>
                 <groupId>hsqldb</groupId>
                 <artifactId>hsqldb</artifactId>

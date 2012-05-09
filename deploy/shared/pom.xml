@@ -74,14 +74,20 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>net.sf.ehcache</groupId>
-      <artifactId>ehcache</artifactId>
-      <scope>compile</scope>
+        <groupId>net.sf.ehcache</groupId>
+        <artifactId>ehcache-core</artifactId>
+        <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.hibernate</groupId>
-      <artifactId>hibernate</artifactId>
-      <scope>compile</scope>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate</artifactId>
+        <scope>compile</scope>
+        <exclusions>
+            <exclusion>
+                <groupId>net.sf.ehcache</groupId>
+                <artifactId>ehcache</artifactId>
+            </exclusion>
+        </exclusions>
     </dependency>
     <dependency>
       <groupId>jdbc</groupId>
