@@ -49,8 +49,6 @@ public class MessageBundleTest extends AbstractTransactionalSpringContextTests {
 	
     private static MessageBundleServiceImpl messageBundleService;
 
-    private static String CONFIG = "../kernel-component/src/main/webapp/WEB-INF/components.xml";
-
     static ResourceBundle resourceBundleEN;
     static ResourceBundle resourceBundleFr;
 
