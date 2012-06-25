@@ -73,8 +73,8 @@ public class MessageBundleTest extends AbstractTransactionalSpringContextTests {
          baseName = "basename";
          moduleName = "modulename";
 
-		//serverConfigurationService = (ServerConfigurationService)getService(ServerConfigurationService.class.getName());
-        messageBundleService =  new MessageBundleServiceImpl(); //(MessageBundleService)getService(MessageBundleService.class.getName());
+		
+        messageBundleService =  new MessageBundleServiceImpl(); 
         messageBundleService.setSessionFactory((SessionFactory)applicationContext.getBean("sessionFactory"));
         
         Assert.assertNotNull(messageBundleService);
