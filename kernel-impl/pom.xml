@@ -175,12 +175,15 @@
       <artifactId>spring</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-test</artifactId>
+      <version>2.5.6.SEC03</version>
+      <scope>test</scope>
+    </dependency>
+    
+    <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-core</artifactId>
-    </dependency>
-     <dependency>
-      <groupId>org.hibernate</groupId>
-      <artifactId>hibernate-cglib-repack</artifactId>
     </dependency>
     <dependency>
       <groupId>org.hibernate</groupId>
