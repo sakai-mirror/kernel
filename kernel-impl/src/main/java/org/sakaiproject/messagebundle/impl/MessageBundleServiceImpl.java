@@ -20,22 +20,35 @@
  **********************************************************************************/
 package org.sakaiproject.messagebundle.impl;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.Map.Entry;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.sakaiproject.messagebundle.api.MessageBundleService;
-import org.sakaiproject.messagebundle.api.MessageBundleProperty;
-
-import org.hibernate.*;
-import org.hibernate.type.NullableType;
+import org.hibernate.HibernateException;
+import org.hibernate.Query;
+import org.hibernate.type.AbstractStandardBasicType;
+import org.hibernate.type.StandardBasicTypes;
 import org.hibernate.type.Type;
+import org.sakaiproject.messagebundle.api.MessageBundleProperty;
+import org.sakaiproject.messagebundle.api.MessageBundleService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.orm.hibernate3.HibernateCallback;
 import org.springframework.orm.hibernate3.HibernateObjectRetrievalFailureException;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
-
-import java.sql.SQLException;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Responsible for managing the message bundle data in a database.  Provides search capabilities
@@ -78,7 +91,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
 
     public int getSearchCount(String searchQuery, String module, String baseName, String locale) {
         List<String> values = new ArrayList<String>();
-        List<NullableType> types = new ArrayList<NullableType>();
+        List<AbstractStandardBasicType<String>> types = new ArrayList<AbstractStandardBasicType<String>>();
         StringBuffer queryString = new StringBuffer("");
 
         try {
@@ -87,9 +100,9 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
                 values.add("%" + searchQuery + "%");
                 values.add("%" + searchQuery + "%");
                 values.add(searchQuery);
-                types.add(Hibernate.STRING);
-                types.add(Hibernate.STRING);
-                types.add(Hibernate.STRING);
+                types.add(StandardBasicTypes.STRING);
+                types.add(StandardBasicTypes.STRING);
+                types.add(StandardBasicTypes.STRING);
             }
             if (module != null && module.length() > 0) {
                 if (queryString.length() > 0) {
@@ -97,7 +110,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
                 }
                 queryString.append("moduleName = ? ");
                 values.add(module);
-                types.add(Hibernate.STRING);
+                types.add(StandardBasicTypes.STRING);
 
             }
             if (baseName != null && baseName.length() > 0) {
@@ -106,7 +119,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
                 }
                 queryString.append("baseName = ?");
                 values.add(baseName);
-                types.add(Hibernate.STRING);
+                types.add(StandardBasicTypes.STRING);
 
             }
             if (locale != null && locale.length() > 0) {
@@ -115,7 +128,7 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
                 }
                 queryString.append("locale = ?");
                 values.add(locale);
-                types.add(Hibernate.STRING);
+                types.add(StandardBasicTypes.STRING);
 
             }
 

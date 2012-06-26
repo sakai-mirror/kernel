@@ -43,7 +43,7 @@
     <properties>
          <sakai.jdk.version>1.6</sakai.jdk.version>
 	 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	 <kernel.hibernate.version>3.5.6-Final</kernel.hibernate.version>
+	 <kernel.hibernate.version>3.6.10.Final</kernel.hibernate.version>
     </properties>
     <mailingLists>
         <mailingList>
@@ -700,12 +700,6 @@
             <dependency>
                 <groupId>org.hibernate</groupId>
                 <artifactId>hibernate-ehcache</artifactId>
-                <version>${kernel.hibernate.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.hibernate</groupId>
-                <artifactId>hibernate-jmx</artifactId>
                 <version>${kernel.hibernate.version}</version>
                 <scope>provided</scope>
             </dependency>
