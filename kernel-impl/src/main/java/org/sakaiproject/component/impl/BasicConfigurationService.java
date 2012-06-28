@@ -56,6 +56,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import au.com.bytecode.opencsv.CSVParser;
+
 /**
  * <p>
  * BasicConfigurationService is a basic implementation of the ServerConfigurationService.
@@ -613,23 +615,31 @@ public class BasicConfigurationService implements ServerConfigurationService, Ap
     /**
      * {@inheritDoc}
      */
-    public String[] getStrings(String name)
-    {
+    public String[] getStrings(String name) {
+        String[] rv = null;
         // get the count
         int count = getInt(name + ".count", 0);
-        if (count > 0)
-        {
-            String[] rv = new String[count];
+        if (count > 0) {
+            rv = new String[count];
             for (int i = 1; i <= count; i++)
             {
                 rv[i - 1] = getString(name + "." + i, "");
             }
             // store the array in the properties
             this.addConfigItem(new ConfigItemImpl(name, rv, TYPE_ARRAY, SOURCE_GET_STRINGS), SOURCE_GET_STRINGS);
-            return rv;
+        } else {
+            String value = getString(name);
+            if (!StringUtils.isBlank(value)) {
+                CSVParser csvParser = new CSVParser(',','"','\\',false,true); // should configure this for default CSV parsing
+                try {
+                    rv = csvParser.parseLine(value);
+                    this.addConfigItem(new ConfigItemImpl(name, rv, TYPE_ARRAY, SOURCE_GET_STRINGS), SOURCE_GET_STRINGS);
+                } catch (IOException e) {
+                    M_log.warn("Config property ("+name+") read as multi-valued string, but failure occurred while parsing: "+e, e);
+                }
+            }
         }
-
-        return null;
+        return rv;
     }
 
     /**
