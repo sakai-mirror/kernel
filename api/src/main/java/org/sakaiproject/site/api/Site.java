@@ -88,7 +88,7 @@ public interface Site extends Edit, Comparable, Serializable, AuthzGroup
 	String getSkin();
 
 	/** @return the List (SitePage) of Site Pages. */
-	List getPages();
+	List<SitePage> getPages();
 
 	/**
 	 * Make sure pages and tools, groups and properties are loaded, not lazy
@@ -96,7 +96,7 @@ public interface Site extends Edit, Comparable, Serializable, AuthzGroup
 	void loadAll();
 
 	/** @return The pages ordered by the tool order constraint for this site's type (as tool category), or the site's pages in defined order if the site is set to have a custom page order. */
-	List getOrderedPages();
+	List<SitePage> getOrderedPages();
 
 	/** @return true if the site is published, false if not. */
 	boolean isPublished();
@@ -126,7 +126,7 @@ public interface Site extends Edit, Comparable, Serializable, AuthzGroup
 	 *        The tool id array (String, such as sakai.chat, not a tool configuration / placement uuid) to search for.
 	 * @return A Collection (ToolConfiguration) of all the tools placed in the site on any page that are of this tool id (may be empty).
 	 */
-	Collection getTools(String[] toolIds);
+	Collection<ToolConfiguration> getTools(String[] toolIds);
 
 	/**
 	 * Get all the tools placed in the site on any page for a particular common Tool Id.
@@ -135,7 +135,7 @@ public interface Site extends Edit, Comparable, Serializable, AuthzGroup
 	 *        The tool id (String, such as sakai.chat, not a tool configuration / placement uuid) to search for.
 	 * @return A Collection (ToolConfiguration) of all the tools placed in the site on any page that are of this tool id (may be empty).
 	 */
-	Collection getTools(String commonToolId);
+	Collection<ToolConfiguration> getTools(String commonToolId);
 
 	/**
 	 * Get the first tool placed on the site on any page with the specified common Tool id (such as sakai.chat)
@@ -183,7 +183,7 @@ public interface Site extends Edit, Comparable, Serializable, AuthzGroup
 	 * 
 	 * @return A collection (Group) of groups defined in the site, empty if there are none.
 	 */
-	Collection getGroups();
+	Collection<Group> getGroups();
 
 	/**
 	 * Get a collection of the groups in a Site that have this user as a member.
@@ -192,7 +192,7 @@ public interface Site extends Edit, Comparable, Serializable, AuthzGroup
 	 *        The user id.
 	 * @return A collection (Group) of groups defined in the site that have this user as a member, empty if there are none.
 	 */
-	Collection getGroupsWithMember(String userId);
+	Collection<Group> getGroupsWithMember(String userId);
 
 	/**
 	 * Get a collection of the groups in a Site that have this user as a member with this role.
@@ -203,7 +203,7 @@ public interface Site extends Edit, Comparable, Serializable, AuthzGroup
 	 *        The role.
 	 * @return A collection (Group) of groups defined in the site that have this user as a member with this role, empty if there are none.
 	 */
-	Collection getGroupsWithMemberHasRole(String userId, String role);
+	Collection<Group> getGroupsWithMemberHasRole(String userId, String role);
 
 	/**
 	 * Does the site have any groups defined?

@@ -1,13 +1,11 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sakaiproject</groupId>
 	<artifactId>kernel</artifactId>
 	<packaging>pom</packaging>
 	<name>Sakai Kernel</name>
-	<version>1.1-SNAPSHOT</version>
+	<version>1.1.0-beta02-SNAPSHOT</version>
 	<organization>
 		<name>Sakai Project</name>
 		<url>http://sakaiproject.org/</url>
@@ -121,7 +119,7 @@
             </roles>
             <timezone>-7</timezone>
             <properties>
-                <picUrl></picUrl>
+                <picUrl />
             </properties>
         </developer>
         <developer>
@@ -134,7 +132,7 @@
                 <role>developer</role>
             </roles>
             <timezone>-5</timezone>
-            <properties></properties>
+            <properties />
         </developer>
         <developer>
             <id>david.horwitz@uct.ac.za</id>
@@ -161,7 +159,7 @@
             <id>bkirschn@umich.edu</id>
             <name>Beth Kirschner</name>
             <email>bkirschn@umich.edu</email>
-            <url></url>
+            <url />
             <organization>University of Michigan</organization>
             <organizationUrl>http://www.umich.edu</organizationUrl>
             <roles>
@@ -231,14 +229,14 @@
         <contributor>
             <name>Glenn Golden</name>
             <email>ggolden@etudes.org</email>
-            <url></url>
+            <url />
             <organization>Etudes</organization>
             <organizationUrl>http://etudes.org/</organizationUrl>
             <roles>
                 <role>architect (2003-2007)</role>
             </roles>
             <timezone>-7</timezone>
-            <properties></properties>
+            <properties />
         </contributor>
         <contributor>
             <name>Josh Holtzman</name>
@@ -252,7 +250,7 @@
                 <role>developer</role>
             </roles>
             <timezone>-7</timezone>
-            <properties></properties>
+            <properties />
         </contributor>
         <contributor>
             <name>Charles Severance</name>
@@ -264,7 +262,7 @@
                 <role>chief architect (2003-2007)</role>
             </roles>
             <timezone>-5</timezone>
-            <properties></properties>
+            <properties />
         </contributor>
         <contributor>
             <name>Lance Speelmon</name>
@@ -276,7 +274,7 @@
                 <role>developer</role>
             </roles>
             <timezone>-5</timezone>
-            <properties></properties>
+            <properties />
         </contributor>
         <contributor>
             <name>Steve Swinsburg</name>
@@ -288,7 +286,7 @@
                 <role>developer</role>
             </roles>
             <timezone>0</timezone>
-            <properties></properties>
+            <properties />
         </contributor>
         <contributor>
             <name>Carl Hall</name>
@@ -299,7 +297,29 @@
                 <role>developer</role>
             </roles>
             <timezone>-5</timezone>
-            <properties></properties>
+            <properties />
+        </contributor>
+        <contributor>
+            <name>Matthew Buckett</name>
+            <email>matthew.buckett@oucs.ox.ac.uk</email>
+            <organization>Oxford University</organization>
+            <organizationUrl>http://www.oucs.ox.ac.uk/</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>0</timezone>
+            <properties />
+        </contributor>
+        <contributor>
+            <name>Adrian Fish</name>
+            <email>a.fish@lancaster.ac.uk</email>
+            <organization>University of Lacanster</organization>
+            <organizationUrl>http://www.lancs.ac.uk/</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>0</timezone>
+            <properties />
         </contributor>
     </contributors>
 	<scm>
@@ -382,18 +402,6 @@
 				<enabled>false</enabled>
 			</snapshots>
 		</repository>
-		<!--
-			This is not needed now that pluto have been released
-			<repository>
-			<id>Pluto Repor</id>
-			<name>Pluto Dev Repository</name>
-			<layout>default</layout>
-			<url>http://people.apache.org/builds/portals-pluto/m2-staging-repository</url>
-			<snapshots>
-			<enabled>false</enabled>
-			</snapshots>
-			</repository>
-		-->
 		<repository>
 			<id>apache-repo</id>
 			<name>apache-repo</name>
@@ -401,6 +409,16 @@
 			<url>
 				http://myfaces.zones.apache.org/dist/maven-repository
 			</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<!--  contains the javax.mail artefacts -->
+		<repository>
+			<id>maven2-repository.dev.java.net</id>
+			<name>Java.net Repository for Maven</name>
+			<url>http://download.java.net/maven/2/</url>
+			<layout>default</layout>
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
@@ -584,13 +602,13 @@
 			<dependency>
 				<groupId>commons-pool</groupId>
 				<artifactId>commons-pool</artifactId>
-				<version>1.3</version>
+				<version>1.5.2</version>
 				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>commons-codec</groupId>
 				<artifactId>commons-codec</artifactId>
-				<version>1.3</version>
+				<version>1.4</version>
 			</dependency>
 			<dependency>
 				<groupId>zing</groupId>
@@ -947,6 +965,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-release-plugin</artifactId>
+				<version>2.0-beta-9</version>
 				<configuration>
 					<preparationGoals>
 						clean install verify

@@ -22,6 +22,7 @@
 		<property name="locations">
 			<list>
 				<value>classpath:/org/sakaiproject/config/kernel.properties</value>
+				<value>classpath:/org/sakaiproject/config/version.properties</value>
 				<value>classpath:org/sakaiproject/config/bundle/default.sakai.properties</value>
 			</list>
 		</property>
@@ -43,6 +44,8 @@
 				<entry key="content.upload.ceiling" value="sakai.content.upload.ceiling"/>
 				<entry key="content.upload.dir" value="sakai.content.upload.dir"/>
 				<entry key="force.url.secure" value="sakai.force.url.secure"/>
+				<entry key="cookieName" value="sakai.cookieName"/>
+				<entry key="cookieDomain" value="sakai.cookieDomain"/>
 			</map>
 		</property>
 	</bean>
