@@ -41,7 +41,7 @@
     </ciManagement>
     <inceptionYear>2003</inceptionYear>
     <properties>
-         <sakai.kernel.version>1.3-SNAPSHOT</sakai.kernel.version>
+         <sakai.kernel.version>1.3.0-b07</sakai.kernel.version>
          <sakai.jdk.version>1.6</sakai.jdk.version>
 	 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding> 
     </properties>
