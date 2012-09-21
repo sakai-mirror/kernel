@@ -9,7 +9,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.opensource.org/licenses/ECL-2.0
+ *       http://www.osedu.org/licenses/ECL-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,30 +21,18 @@
 
 package org.sakaiproject.site.impl;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
-
 import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.authz.api.FunctionManager;
 import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.db.api.SqlService;
 import org.sakaiproject.entity.api.EntityManager;
-import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.event.api.EventTrackingService;
-import org.sakaiproject.id.api.IdManager;
-import org.sakaiproject.javax.PagingPosition;
 import org.sakaiproject.memory.api.MemoryService;
-import org.sakaiproject.site.api.Site;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
 import org.sakaiproject.time.api.TimeService;
 import org.sakaiproject.user.api.UserDirectoryService;
-import org.sakaiproject.tool.api.ActiveToolManager;
 import org.sakaiproject.tool.api.SessionManager;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * <p>
@@ -147,18 +135,6 @@ public class SiteServiceTest extends DbSiteService
 	 */
 	protected AuthzGroupService authzGroupService()
 	{
-		return null;
-	}
-
-	@Override
-	protected ActiveToolManager activeToolManager() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	protected IdManager idManager() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 }

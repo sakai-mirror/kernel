@@ -29,10 +29,13 @@ import java.util.Stack;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.sakaiproject.event.cover.EventTrackingService;
+import org.sakaiproject.id.cover.IdManager;
 import org.sakaiproject.site.api.SitePage;
-import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.site.api.ToolConfiguration;
+import org.sakaiproject.site.cover.SiteService;
 import org.sakaiproject.tool.api.Tool;
+import org.sakaiproject.tool.cover.ActiveToolManager;
 import org.sakaiproject.util.StringUtil;
 import org.sakaiproject.util.Xml;
 import org.w3c.dom.Document;
@@ -52,7 +55,7 @@ public class BaseToolConfiguration extends org.sakaiproject.util.Placement imple
 	/** Our log (commons). */
 	private static Log M_log = LogFactory.getLog(BaseToolConfiguration.class);
 
-	/** A fixed class serial number. */
+	/** A fixed class serian number. */
 	private static final long serialVersionUID = 1L;
 
 	/** The layout hints. */
@@ -100,7 +103,7 @@ public class BaseToolConfiguration extends org.sakaiproject.util.Placement imple
 	protected BaseToolConfiguration(BaseSiteService siteService, SitePage page, String id, String toolId,
 			String title, String layoutHints, int pageOrder)
 	{
-		super( id, toolId, siteService.activeToolManager().getTool(toolId), null, null, title);
+		super( id, toolId, ActiveToolManager.getTool(toolId), null, null, title);
 		this.siteService = siteService;
 
 		m_page = page;
@@ -156,7 +159,7 @@ public class BaseToolConfiguration extends org.sakaiproject.util.Placement imple
 	protected BaseToolConfiguration(BaseSiteService siteService, String id, String toolId, String title,
 			String layoutHints, String pageId, String siteId, String skin, int pageOrder)
 	{
-		super(id, toolId, siteService.activeToolManager().getTool(toolId), null, null, title);
+		super(id, toolId, ActiveToolManager.getTool(toolId), null, null, title);
 		this.siteService = siteService;
 		
 		m_page = null;
@@ -193,7 +196,7 @@ public class BaseToolConfiguration extends org.sakaiproject.util.Placement imple
 		}
 		else
 		{
-			m_id = siteService.idManager().createUuid();
+			m_id = IdManager.createUuid();
 		}
 		m_toolId = other.getToolId();
 		m_tool = other.getTool();
@@ -238,7 +241,7 @@ public class BaseToolConfiguration extends org.sakaiproject.util.Placement imple
 	 */
 	protected BaseToolConfiguration(BaseSiteService siteService, SitePage page)
 	{
-		super(siteService.idManager().createUuid(), null, null, null, null, null);
+		super(IdManager.createUuid(), null, null, null, null, null);
 		this.siteService = siteService;
 
 		m_page = page;
@@ -255,7 +258,7 @@ public class BaseToolConfiguration extends org.sakaiproject.util.Placement imple
 	 */
 	protected BaseToolConfiguration(BaseSiteService siteService, Tool reg, SitePage page)
 	{
-		super(siteService.idManager().createUuid(), reg.getId(), reg, null, null, null);
+		super(IdManager.createUuid(), reg.getId(), reg, null, null, null);
 		this.siteService = siteService;
 		
 		m_page = page;
@@ -273,7 +276,7 @@ public class BaseToolConfiguration extends org.sakaiproject.util.Placement imple
 	 */
 	protected BaseToolConfiguration(BaseSiteService siteService, String toolId, SitePage page)
 	{
-		super(siteService.idManager().createUuid(), toolId, null, null, null, null);
+		super(IdManager.createUuid(), toolId, null, null, null, null);
 		this.siteService = siteService;
 
 		m_page = page;
@@ -300,7 +303,7 @@ public class BaseToolConfiguration extends org.sakaiproject.util.Placement imple
 		m_toolId = StringUtils.trimToNull(el.getAttribute("toolId"));
 		if (m_toolId != null)
 		{
-			m_tool = siteService.activeToolManager().getTool(m_toolId);
+			m_tool = ActiveToolManager.getTool(m_toolId);
 		}
 		m_title = StringUtils.trimToNull(el.getAttribute("title"));
 		m_layoutHints = StringUtils.trimToNull(el.getAttribute("layoutHints"));
@@ -336,7 +339,7 @@ public class BaseToolConfiguration extends org.sakaiproject.util.Placement imple
 		// if the config has not yet been read, read it
 		if (m_configLazy)
 		{
-			siteService.storage().readToolProperties(
+			siteService.m_storage.readToolProperties(
 					this, m_config);
 			m_configLazy = false;
 		}
@@ -529,11 +532,11 @@ public class BaseToolConfiguration extends org.sakaiproject.util.Placement imple
 	public void save()
 	{
 		// TODO: security? version?
-		siteService.storage().saveToolConfig(this);
+		((BaseSiteService) (SiteService.getInstance())).m_storage.saveToolConfig(this);
 
 		// track the site change
-		siteService.eventTrackingService().post(siteService.eventTrackingService().newEvent(
-				SiteService.SECURE_UPDATE_SITE, siteService.siteReference(getSiteId()),
+		EventTrackingService.post(EventTrackingService.newEvent(
+				SiteService.SECURE_UPDATE_SITE, SiteService.siteReference(getSiteId()),
 				true));
 	}
 
@@ -580,7 +583,7 @@ public class BaseToolConfiguration extends org.sakaiproject.util.Placement imple
 	 */
 	protected String localizeTool()
 	{
-		String localizedTitle = siteService.activeToolManager().getLocalizedToolProperty(getTool().getId(), "title");
+		String localizedTitle = ActiveToolManager.getLocalizedToolProperty(getTool().getId(), "title");
 			
 		// Use localized title if present
 		if(localizedTitle != null && localizedTitle.length()>0)
