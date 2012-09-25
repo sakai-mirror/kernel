@@ -4992,6 +4992,8 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, EntityTransferrerRef
 				boolean referenceCopy = false;
 				if (edit instanceof BaseResourceEdit) {
 			        ((BaseResourceEdit)edit).setReferenceCopy(thisResource.getId());
+			        // need to manually update the content length or it ends up as 0
+			        ((BaseResourceEdit)edit).setContentLength(thisResource.getContentLength());
 			        referenceCopy = true;
 				} else {
 	                edit.setContent(thisResource.streamContent());
@@ -6484,8 +6486,11 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, EntityTransferrerRef
 				if (Validator.letBrowserInline(contentType))
 				{
 					// if this is an html file we have more checks
-					if (("text/html".equalsIgnoreCase(contentType) || "application/xhtml+xml".equals(contentType) ) && 
-							m_serverConfigurationService.getBoolean(SECURE_INLINE_HTML, true)) {
+				    String lcct = contentType.toLowerCase();
+				    if ( ( lcct.startsWith("text/") || lcct.startsWith("image/") 
+				            || lcct.contains("html") || lcct.contains("script") ) && 
+				            m_serverConfigurationService.getBoolean(SECURE_INLINE_HTML, true)) {
+				        // increased checks to handle more mime-types - https://jira.sakaiproject.org/browse/KNL-749
 						ResourceProperties rp = resource.getProperties();
 
 						boolean fileInline = false;
@@ -9435,7 +9440,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, EntityTransferrerRef
 		}
 		catch(TypeException e)
 		{
-			// do nothing
+			M_log.warn("createDropboxCollection(): File exists where dropbox collection is expected: "+ dropbox);
 		}
 
 		// The AUTH_DROPBOX_OWN is granted within the site, so we can ask for all the users who have this ability
@@ -9448,22 +9453,20 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, EntityTransferrerRef
 			// the folder id for this user's dropbox in this group
 			String userFolder = dropbox + user.getId() + "/";
 
-			if(members.contains(userFolder))
-			{
-				members.remove(userFolder);
-				continue;
-			}
 			// see if it exists - add if it doesn't
 			try
 			{
-				if (findCollection(userFolder) == null)
+				
+				if (!members.remove(userFolder))
 				{
-					ContentCollectionEdit edit = addValidPermittedCollection(userFolder);
-					ResourcePropertiesEdit props = edit.getPropertiesEdit();
-					props.addProperty(ResourceProperties.PROP_DISPLAY_NAME, user.getSortName());
-					props.addProperty(ResourceProperties.PROP_DESCRIPTION, rb.getString("use1"));
-					// props.addProperty(ResourceProperties.PROP_DESCRIPTION, PROP_MEMBER_DROPBOX_DESCRIPTION);
-					commitCollection(edit);
+					if (findCollection(userFolder) == null) // This check it probably redundant
+					{
+						ContentCollectionEdit edit = addValidPermittedCollection(userFolder);
+						ResourcePropertiesEdit props = edit.getPropertiesEdit();
+						props.addProperty(ResourceProperties.PROP_DISPLAY_NAME, user.getSortName());
+						props.addProperty(ResourceProperties.PROP_DESCRIPTION, rb.getString("use1"));
+						commitCollection(edit);
+					}
 				}
 			}
 			catch (TypeException e)
@@ -9478,12 +9481,40 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, EntityTransferrerRef
 			{
 				M_log.warn("createDropboxCollection(): InconsistentException: " + userFolder);
 			}
-			//			catch (PermissionException e) 
-			//			{
-			//				M_log.warn("createDropboxCollection(): PermissionException: " + userFolder);
-			//			}
-
-			// the SortedSet "members" now contains id's for all folders that are not associated with a particular member of the site
+		}
+		// Attempt to remove all empty dropboxes that are no longer members of the site.
+		for(String member : members) {
+			try
+			{
+				ContentCollection folder = getCollection(member);
+				if (folder.getMemberCount() == 0)
+				{
+					removeCollection(member);
+					M_log.info("createDropboxCollection(): Removed the empty dropbox collection for member: " + member);
+				} else {
+				    M_log.warn("createDropboxCollection(): Could not remove the dropbox collection for member (" + member +") because the root contains "+folder.getMemberCount()+" members");
+				}
+			}
+			catch(IdUnusedException e)
+			{
+				M_log.warn("createDropboxCollection(): Could not find collection to delete: " + member);
+			}
+			catch(PermissionException e)
+			{
+				M_log.warn("createDropboxCollection(): Unable to delete collection due to lack of permission: " + member);
+			}
+			catch(InUseException e)
+			{
+				M_log.warn("createDropboxCollection(): Unable to delete collection as collection is in use: " + member);
+			}
+			catch(ServerOverloadException e)
+			{
+				M_log.warn("createDropboxCollection(): Unable to delete collection as server is overloaded: " + member);
+			}
+			catch(TypeException e)
+			{
+				M_log.warn("createDropboxCollection(): Unable to delete as it doesn't appear to be a collection: " + member);
+			}
 		}
 	}
 
@@ -13331,19 +13362,43 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, EntityTransferrerRef
     }
     
     /**
-     * Expand the supplied resource under its parent collection.If the zip
-     * is bigger than the max zip size specified in properties extraction will
-     * NOT occur.See KNL-273.
+     * Expand the supplied resource under its parent collection.
+     * If the zip is bigger than the max zip size specified in properties extraction will
+     * NOT occur. See KNL-273 and KNL-900.
      *
      * @param resourceId The zip file resource that we want to expand
      * @exception Exception Anything thrown by ZipContentUtil gets passed upwards.
      */
     public void expandZippedResource(String resourceId) throws Exception {
-    	int maxZipExtractSize = ZipContentUtil.getMaxZipExtractFiles();
-    	ZipContentUtil extractZipArchive = new ZipContentUtil();
-    	if(extractZipArchive.getZipManifest(resourceId) != null && extractZipArchive.getZipManifest(resourceId).size() < maxZipExtractSize){
-    		extractZipArchive.extractArchive(resourceId);
-    	}
+        int maxZipExtractSize = ZipContentUtil.getMaxZipExtractFiles();
+        ZipContentUtil extractZipArchive = new ZipContentUtil();
+
+        // KNL-900 Total size of files should be checked before unzipping (KNL-273)
+        Map <String, Long> zipManifest = extractZipArchive.getZipManifest(resourceId);
+        if (zipManifest == null) {
+            M_log.error("Zip file for resource ("+resourceId+") has no zip manifest, cannot extract");
+        } else if (zipManifest.size() >= maxZipExtractSize) {
+            M_log.warn("Zip file for resource ("+resourceId+") is too large to be expanded, size("+zipManifest.size()+") exceeds the max=("+maxZipExtractSize+") as specified in setting content.zip.expand.maxfiles");
+        } else {
+            // zip is not too large to extract so check if files are too large
+            long totalSize = 0;
+            for (Long entrySize : zipManifest.values()) {
+                totalSize += entrySize;
+            }
+
+            // Get a context
+            ContentResourceEdit resource = editResource(resourceId);
+            // Set the updated length for quota checking
+            resource.setContentLength(totalSize);
+            if (M_log.isDebugEnabled()) M_log.debug(String.format("Resource is: [%s] Size is [%d]",resourceId, totalSize));
+            // check for over quota.
+            if (overQuota(resource)) {
+                M_log.error("Zip file for resource ("+resourceId+") would be too large after unzip so it cannot be expanded, totalSize("+totalSize+") exceeds the resource quota");
+                throw new OverQuotaException(resource.getReference());
+            }
+            // zip files are not too large to extract so do the extract
+            extractZipArchive.extractArchive(resourceId);
+        }
     }
 
 } // BaseContentService

@@ -80,6 +80,9 @@ public interface SiteService extends EntityProducer
 	/** Name for the event of adding a portfolio site */ 
 	static final String SECURE_ADD_PORTFOLIO_SITE = "site.add.portfolio";
 	
+	/** Name for the event of adding a project site */ 
+	static final String SECURE_ADD_PROJECT_SITE = "site.add.project";
+	
 	/** Name for the event of adding a user's My Workspace site. */
 	static final String SECURE_ADD_USER_SITE = "site.add.usersite";
 
@@ -226,10 +229,10 @@ public interface SiteService extends EntityProducer
 		public static final SelectionType PUBVIEW = new SelectionType("pubView", true, true, true, true);
 
 		/** Get any sites. */
-		public static final SelectionType ANY = new SelectionType("any", false, false, true, true);
+		public static final SelectionType ANY = new SelectionType("any", false, false, false, true);
 
 		/** Get any non-user sites. */
-		public static final SelectionType NON_USER = new SelectionType("nonUser", false, true, true, true);
+		public static final SelectionType NON_USER = new SelectionType("nonUser", false, true, false, true);
 	}
 
 	/**
@@ -471,6 +474,12 @@ public interface SiteService extends EntityProducer
 	 * @return
 	 */
 	boolean allowAddPortfolioSite();
+	
+	/**
+	 *  Can the user add sites of type Project as defined by projectSiteType in sakai.properties
+	 * @return
+	 */
+	boolean allowAddProjectSite();
 
 	/**
 	 * Add a new site. The site will exist with just an id once done, so remove() it if you don't want to keep it.

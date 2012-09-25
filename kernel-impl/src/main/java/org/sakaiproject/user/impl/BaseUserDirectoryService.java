@@ -81,10 +81,10 @@ import org.sakaiproject.user.api.UserPermissionException;
 import org.sakaiproject.user.api.UsersShareEmailUDP;
 import org.sakaiproject.util.BaseResourceProperties;
 import org.sakaiproject.util.BaseResourcePropertiesEdit;
-import org.sakaiproject.util.api.FormattedText;
 import org.sakaiproject.util.StorageUser;
 import org.sakaiproject.util.StringUtil;
 import org.sakaiproject.util.Validator;
+import org.sakaiproject.util.api.FormattedText;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -1434,6 +1434,15 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 		// check security (throws if not permitted)
 		unlock(SECURE_ADD_USER, userFromXml.getReference());
 
+		// Check if this user is a provided one:
+		if (getProvidedUserByEid(userFromXml.getId(), userFromXml.getEid()) != null) {
+			// This doesn't mean we have a mapping from ID to EID mapping
+			if (m_storage.checkMapForId(userFromXml.getEid()) == null) {
+				m_storage.putMap(userFromXml.getId(), userFromXml.getEid());
+			}
+			throw new UserAlreadyDefinedException("Provided user: "+ userFromXml.getId() + " - " + userFromXml.getEid());
+		}
+		
 		// reserve a user with this id from the info store - if it's in use, this will return null
 		UserEdit user = m_storage.put(userFromXml.getId(), userFromXml.getEid());
 		if (user == null)
@@ -2328,7 +2337,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 				if (m_firstName != null) buf.append(m_firstName);
 				if (m_lastName != null)
 				{
-					buf.append(" ");
+					if (buf.length() > 0) buf.append(" ");
 					buf.append(m_lastName);
 				}
 

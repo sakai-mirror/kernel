@@ -85,12 +85,13 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>jdbc</groupId>
-            <artifactId>jdbc2_0-stdext</artifactId>
+            <groupId>javax.sql</groupId>
+            <artifactId>jdbc-stdext</artifactId>
             <scope>compile</scope>
         </dependency>
+	<!-- dependency of hibernate -->
         <dependency>
-            <groupId>jta</groupId>
+            <groupId>javax.transaction</groupId>
             <artifactId>jta</artifactId>
             <scope>compile</scope>
         </dependency>
@@ -112,11 +113,6 @@
         <dependency>
             <groupId>geronimo-spec</groupId>
             <artifactId>geronimo-spec-jms</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.jcr</groupId>
-            <artifactId>jcr</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>
