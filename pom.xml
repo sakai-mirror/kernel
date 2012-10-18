@@ -41,7 +41,7 @@
     </ciManagement>
     <inceptionYear>2003</inceptionYear>
     <properties>
-         <sakai.kernel.version>1.3-SNAPSHOT</sakai.kernel.version>
+         <sakai.kernel.version>1.3.0-rc02</sakai.kernel.version>
          <sakai.jdk.version>1.6</sakai.jdk.version>
 	 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding> 
     </properties>
@@ -368,12 +368,12 @@
     </contributors>
     <scm>
         <connection>
-			scm:svn:https://source.sakaiproject.org/svn/kernel/branches/kernel-1.3.x
+			scm:svn:https://source.sakaiproject.org/svn/kernel/branches/kernel-1.3.x-release
 		</connection>
         <developerConnection>
-			scm:svn:https://source.sakaiproject.org/svn/kernel/branches/kernel-1.3.x
+			scm:svn:https://source.sakaiproject.org/svn/kernel/branches/kernel-1.3.x-release
 		</developerConnection>
-        <url>https://source.sakaiproject.org/svn/kernel/branches/kernel-1.3.x</url>
+        <url>https://source.sakaiproject.org/svn/kernel/branches/kernel-1.3.x-release</url>
     </scm>
     <!--
     <distributionManagement>
