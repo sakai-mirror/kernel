@@ -12,7 +12,7 @@
 	<artifactId>kernel</artifactId>
 	<packaging>pom</packaging>
 	<name>Sakai Kernel</name>
-	<version>1.3-SNAPSHOT</version>
+	<version>1.3.1-SNAPSHOT</version>
 	<url>http://source.sakaiproject.org/release/kernel/${project.version}</url>
 	<description>The Sakai kernel provides core functionality for the Sakai framework</description>
 	<organization>
@@ -41,7 +41,7 @@
     </ciManagement>
     <inceptionYear>2003</inceptionYear>
     <properties>
-         <sakai.kernel.version>1.3-SNAPSHOT</sakai.kernel.version>
+         <sakai.kernel.version>1.3.1-SNAPSHOT</sakai.kernel.version>
          <sakai.jdk.version>1.6</sakai.jdk.version>
 	 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding> 
     </properties>
