@@ -1650,9 +1650,13 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 	protected String cleanId(String id)
 	{
 		// if we are not doing separate id and eid, use the eid rules
-		if (!m_separateIdEid) return cleanEid(id);
-
-		return StringUtils.trimToNull(id);
+		if (!m_separateIdEid) {
+		    id = cleanEid(id);
+		}
+		id = StringUtils.trimToNull(id);
+		// max length for an id is 99 chars
+        id = StringUtils.abbreviate(id, 99);
+		return id;
 	}
 
 	/**
@@ -1664,12 +1668,17 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 	 */
 	protected String cleanEid(String eid)
 	{
-		if (!m_caseSensitiveEid)
-		{
-			return StringUtil.trimToNullLower(eid);
-		}
+        if (!m_caseSensitiveEid) {
+            eid = StringUtils.lowerCase(eid);
+        }
+        eid = StringUtils.trimToNull(eid);
 
-		return StringUtils.trimToNull(eid);
+        if (eid != null) {
+            // remove all instances of these chars <>,;:\"
+            eid = StringUtils.replaceChars(eid, "<>,;:\\/", "");
+        }
+        // NOTE: length check is handled later on
+        return eid;
 	}
 
 	protected UserEdit getCachedUser(String ref)
