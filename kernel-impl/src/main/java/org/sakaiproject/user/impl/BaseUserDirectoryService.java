@@ -2322,7 +2322,7 @@ public abstract class BaseUserDirectoryService implements UserDirectoryService, 
 				if (m_firstName != null) buf.append(m_firstName);
 				if (m_lastName != null)
 				{
-					buf.append(" ");
+					if (buf.length() > 0) buf.append(" ");
 					buf.append(m_lastName);
 				}
 
