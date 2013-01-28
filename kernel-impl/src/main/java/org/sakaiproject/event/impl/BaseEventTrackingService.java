@@ -634,6 +634,15 @@ public abstract class BaseEventTrackingService implements EventTrackingService
 				}
 			}
 			
+			// KNL-997
+			String uId = sessionManager().getCurrentSessionUserId();
+			if (uId == null)
+			{
+				uId = "?";
+			}
+			setUserId(uId);
+			
+			
 		}
 
 		/**
@@ -657,6 +666,14 @@ public abstract class BaseEventTrackingService implements EventTrackingService
 			m_modify = modify;
 			m_priority = priority;
 			m_context = context;
+			
+			// KNL-997
+			String uId = sessionManager().getCurrentSessionUserId();
+			if (uId == null)
+			{
+				uId = "?";
+			}
+			setUserId(uId);
 		}
 		
 		/**
