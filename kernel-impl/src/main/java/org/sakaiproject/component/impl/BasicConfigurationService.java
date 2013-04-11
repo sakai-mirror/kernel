@@ -167,6 +167,11 @@ public class BasicConfigurationService implements ServerConfigurationService, Ap
         }
         M_log.info("Configured "+this.secureConfigurationKeys.size()+" secured key names: "+this.secureConfigurationKeys);
 
+        // load up some things that are not part of the config but are used by it
+        this.addConfigItem(new ConfigItemImpl("sakai.home", this.getSakaiHomePath()), "SCS");
+        this.addConfigItem(new ConfigItemImpl("sakai.gatewaySiteId", this.getGatewaySiteId()), "SCS");
+        this.addConfigItem(new ConfigItemImpl("portal.loggedOutURL", this.getLoggedOutUrl()), "SCS");
+
         // put all the properties into the configuration map
         Map<String, Properties> allSakaiProps = sakaiProperties.getSeparateProperties();
         for (Entry<String, Properties> entry : allSakaiProps.entrySet()) {
