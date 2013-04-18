@@ -175,6 +175,11 @@ public class BasicConfigurationService implements ServerConfigurationService, Ap
         }
         M_log.info("Configured "+this.secureConfigurationKeys.size()+" secured key names: "+this.secureConfigurationKeys);
 
+        // load up some things that are not part of the config but are used by it
+        this.addConfigItem(new ConfigItemImpl("sakai.home", this.getSakaiHomePath()), "SCS");
+        this.addConfigItem(new ConfigItemImpl("sakai.gatewaySiteId", this.getGatewaySiteId()), "SCS");
+        this.addConfigItem(new ConfigItemImpl("portal.loggedOutURL", this.getLoggedOutUrl()), "SCS");
+
         // put all the properties into the configuration map
         Map<String, Properties> allSakaiProps = sakaiProperties.getSeparateProperties();
         for (Entry<String, Properties> entry : allSakaiProps.entrySet()) {
@@ -639,14 +644,21 @@ public class BasicConfigurationService implements ServerConfigurationService, Ap
             // store the array in the properties
             this.addConfigItem(new ConfigItemImpl(name, rv, TYPE_ARRAY, SOURCE_GET_STRINGS), SOURCE_GET_STRINGS);
         } else {
-            String value = getString(name);
-            if (!StringUtils.isBlank(value)) {
-                CSVParser csvParser = new CSVParser(',','"','\\',false,true); // should configure this for default CSV parsing
-                try {
-                    rv = csvParser.parseLine(value);
+            if (findConfigItem(name, null) != null) {
+                // the config name exists
+                String value = getString(name);
+                if (StringUtils.isBlank(value)) {
+                    // empty value is an empty array
+                    rv = new String[0];
                     this.addConfigItem(new ConfigItemImpl(name, rv, TYPE_ARRAY, SOURCE_GET_STRINGS), SOURCE_GET_STRINGS);
-                } catch (IOException e) {
-                    M_log.warn("Config property ("+name+") read as multi-valued string, but failure occurred while parsing: "+e, e);
+                } else {
+                    CSVParser csvParser = new CSVParser(',','"','\\',false,true); // should configure this for default CSV parsing
+                    try {
+                        rv = csvParser.parseLine(value);
+                        this.addConfigItem(new ConfigItemImpl(name, rv, TYPE_ARRAY, SOURCE_GET_STRINGS), SOURCE_GET_STRINGS);
+                    } catch (IOException e) {
+                        M_log.warn("Config property ("+name+") read as multi-valued string, but failure occurred while parsing: "+e, e);
+                    }
                 }
             }
         }
@@ -1112,6 +1124,10 @@ public class BasicConfigurationService implements ServerConfigurationService, Ap
                     if (!SOURCE_GET_STRINGS.equals(source)) {
                         // only update if the source is not the getStrings() method
                         currentCI.changed(configItem.getValue(), source);
+                        if (!currentCI.isRegistered() && configItem.isRegistered()) {
+                            // need to force items which are not yet registered to be registered
+                            currentCI.registered = true;
+                        }
                     }
                     ci = currentCI;
                 } else {
