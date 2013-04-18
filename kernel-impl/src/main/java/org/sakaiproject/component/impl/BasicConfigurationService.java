@@ -27,10 +27,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -38,12 +40,15 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Arrays;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.component.api.ServerConfigurationService.ConfigurationListener.BlockingConfigItem;
+import org.sakaiproject.component.locales.SakaiLocales;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.util.SakaiProperties;
@@ -103,6 +108,9 @@ public class BasicConfigurationService implements ServerConfigurationService, Ap
 
     /** default tool id to tool category maps mapped by site type */
     private Map<String, Map<String, String>> m_toolToToolCategoriesMap = new HashMap<String, Map<String, String>>();
+
+    private static final String SAKAI_LOCALES_KEY = "locales";
+    private static final String SAKAI_LOCALES_MORE = "locales.more"; // default is blank/null
 
 
     /**********************************************************************************************************************************************************************************************************************************************************
@@ -900,6 +908,91 @@ public class BasicConfigurationService implements ServerConfigurationService, Ap
         }
         return id;
     }
+
+
+    /**
+     * Get the list of allowed locales as controlled by config params for {@value #SAKAI_LOCALES_KEY} and {@value #SAKAI_LOCALES_MORE}
+     * @return an array of all allowed Locales for this installation
+     */
+    public Locale[] getSakaiLocales() {
+        String localesStr = getString(SAKAI_LOCALES_KEY, SakaiLocales.SAKAI_LOCALES_DEFAULT);
+        if (localesStr == null) { // means locales= is set
+            localesStr = ""; // empty to get default locale only
+        } else if (StringUtils.isBlank(localesStr)) { // missing or not set
+            localesStr = SakaiLocales.SAKAI_LOCALES_DEFAULT;
+        }
+        String[] locales = StringUtils.split(localesStr, ','); // NOTE: these need to be trimmed (which getLocaleFromString will do)
+        String[] localesMore = getStrings(SAKAI_LOCALES_MORE);
+
+        locales = (String[]) ArrayUtils.addAll(locales, localesMore);
+        HashSet<Locale> localesSet = new HashSet<Locale>();
+        // always include the default locale
+        localesSet.add(Locale.getDefault());
+        if (!ArrayUtils.isEmpty(locales)) {
+            // convert from strings to Locales
+            for (int i = 0; i < locales.length; i++) {
+                localesSet.add(getLocaleFromString(locales[i]));
+            }
+        }
+        // Sort Locales and remove duplicates
+        Locale[] localesArray = localesSet.toArray(new Locale[localesSet.size()]);
+        Arrays.sort(localesArray, new LocaleComparator());
+        return localesArray;
+    }
+
+    /**
+     * Comparator for sorting locale by DisplayName
+     */
+    static final class LocaleComparator implements Comparator<Locale> {
+        /**
+         * Compares Locale objects by comparing the DisplayName
+         * 
+         * @param localeOne
+         *        1st Locale Object for comparison
+         * @param localeTwo
+         *        2nd Locale Object for comparison
+         * @return negative, zero, or positive integer
+         *        (obj1 charge is less than, equal to, or greater than the obj2 charge)
+         */
+        public int compare(Locale localeOne, Locale localeTwo) {
+            String displayNameOne = localeOne.getDisplayName();
+            String displayNameTwo = localeTwo.getDisplayName();
+            return displayNameOne.compareTo(displayNameTwo);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof LocaleComparator) {
+                return super.equals(obj);
+            } else {
+                return false;
+            }
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.sakaiproject.component.api.ServerConfigurationService#getLocaleFromString(java.lang.String)
+     */
+    public Locale getLocaleFromString(String localeString) {
+        // should this just use LocalUtils.toLocale()? - can't - it thinks en_GB is invalid for example
+        if (localeString != null) {
+            // force en-US (dash separated) values into underscore style
+            localeString = StringUtils.replaceChars(localeString, '-', '_');
+        } else {
+            return null;
+        }
+        String[] locValues = localeString.trim().split("_");
+        if (locValues.length >= 3 && StringUtils.isNotBlank(locValues[2])) {
+            return new Locale(locValues[0], locValues[1], locValues[2]); // language, country, variant
+        } else if (locValues.length == 2 && StringUtils.isNotBlank(locValues[1])) {
+            return new Locale(locValues[0], locValues[1]); // language, country
+        } else if (locValues.length == 1 && StringUtils.isNotBlank(locValues[0])) {
+            return new Locale(locValues[0]); // language
+        } else {
+            return Locale.getDefault();
+        }
+    }
+
 
     public void setSakaiProperties(SakaiProperties sakaiProperties) {
         this.sakaiProperties = sakaiProperties;

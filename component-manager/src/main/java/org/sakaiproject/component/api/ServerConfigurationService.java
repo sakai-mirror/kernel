@@ -22,7 +22,10 @@
 package org.sakaiproject.component.api;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+
+import org.sakaiproject.component.locales.SakaiLocales;
 
 /**
  * <p>
@@ -142,21 +145,24 @@ public interface ServerConfigurationService
 
 	/**
 	 * Access some named configuration value as a string.
+	 * 1) IF "name=value" THEN this will return "value"
+	 * 2) IF "name=" THEN this will return null
+	 * 3) IF name is not defined in the config THEN this will return "" (empty string)
 	 * 
-	 * @param name
-	 *        The configuration value name.
-	 * @return The configuration value with this name, or "" if not found.
+	 * @param name The configuration value name (or key).
+	 * @return The configuration value for this name OR null if defined as 'blank' OR "" (empty string) if not defined.
 	 */
 	String getString(String name);
 
 	/**
 	 * Access some named configuration value as a string.
+	 * 1) IF "name=value" THEN this will return "value"
+	 * 2) IF "name=" THEN this will return null
+	 * 3) IF name is not defined in the config THEN this will return the provided default value
 	 * 
-	 * @param name
-	 *        The configuration value name.
-	 * @param dflt
-	 *        The value to return if not found.
-	 * @return The configuration value with this name, or the default value if not found.
+	 * @param name The configuration value name (or key).
+	 * @param dflt The value to return if not found in the config.
+	 * @return The configuration value for this name OR null if defined as 'blank' OR default value if not defined.
 	 */
 	String getString(String name, String dflt);
 
@@ -274,6 +280,20 @@ public interface ServerConfigurationService
     * @return map with tool id as key and category id as value
     */
    Map<String, String> getToolToCategoryMap(String category);
+
+   /**
+    * Get the list of allowed locales as controlled by config params for "locales" and "locales.more"
+    * Defaults when nothing is specified in the config files come from {@link SakaiLocales#SAKAI_LOCALES_DEFAULT}
+    * @return an array of all allowed Locales for this installation
+    * @see SakaiLocales
+    */
+   public Locale[] getSakaiLocales();
+
+   /**
+    * Parse a string into a Locale
+    * @return Locale based on its string representation (language_region) OR default Locale if the string cannot be parsed
+    */
+   public Locale getLocaleFromString(String localeString);
 
 
    // improved methods
