@@ -74,7 +74,8 @@ public class RepositoryServiceImpl implements RepositoryService {
                     "Running the Repository Service with an incompatible system will result\n" +
 					"in the loss of your users' data. Please remove the Repository Service\n" +
                     "from your sakai instance and satisfy these requirements before attempting\n" +
-					"to restart it.\n\nContent Bodies Stored In Database: " + contentBodiesStoredInDatabase +
+					"to restart it.\n" + 
+                    "\nContent Bodies Stored In Database: " + contentBodiesStoredInDatabase +
 					"\nNull in Binary Entities CR table: " + countNullResourceBinaryEntities +
 					"\nNull in Binary Entities CC table: " + countNullCollectionBinaryEntities +
 					"\nNon Null XML in CR: " + countNonNullResourceXml +
