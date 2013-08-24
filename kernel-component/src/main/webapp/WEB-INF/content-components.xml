@@ -231,4 +231,10 @@
               <property name="serverConfigurationService" ref="org.sakaiproject.component.api.ServerConfigurationService"/>
             </bean>
 
+    <!-- repo database beans -->
+    <bean id="org.sakaiproject.content.impl.RepoSqlDefault"   class="org.sakaiproject.content.impl.RepoSqlDefault" singleton="true"/>
+    <bean id="org.sakaiproject.content.impl.RepoSqlHSql"      class="org.sakaiproject.content.impl.RepoSqlHSql"    singleton="true"/>
+    <bean id="org.sakaiproject.content.impl.RepoSqlMySql"     class="org.sakaiproject.content.impl.RepoSqlMySql"   singleton="true"/>
+    <bean id="org.sakaiproject.content.impl.RepoSqlOracle"    class="org.sakaiproject.content.impl.RepoSqlOracle"  singleton="true"/>
+            
 </beans>

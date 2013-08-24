@@ -3,18 +3,20 @@
  */
 package org.sakaiproject.content.model;
 
+import java.util.List;
+
 /**
  * 
  *
  */
-public class Folder extends RepositoryItem {
+public interface Folder extends RepositoryItem {
+
+	public abstract void setCollectionId(String collectionId);
+
+	public abstract String getCollectionId();
+
+	public abstract List<RepositoryItem> getMembers();
 	
-	public Folder() {
-		
-	}
-
-	public Folder(Folder folder) {
-		// TODO Auto-generated constructor stub
-	}
-
+	
+	
 }

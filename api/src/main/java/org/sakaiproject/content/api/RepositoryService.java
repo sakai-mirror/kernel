@@ -13,10 +13,12 @@ import org.sakaiproject.content.model.RepositoryItem;
  */
 public interface RepositoryService {
 	
-	public Folder getFolder(Long id);
-	
 	public File getFile(Long id);
 
+	public Folder getFolder(String collectionId);
+
+	public Folder getFolder(Long id);
+	
 	public RepositoryItem repositoryItem(ContentEntity entity);
 
 }

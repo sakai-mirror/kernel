@@ -29,6 +29,15 @@ import org.sakaiproject.exception.KernelConfigurationError;
 public class RepositoryServiceImpl implements RepositoryService {
 	
 	private Log log = LogFactory.getLog(RepositoryServiceImpl.class);
+	
+	/* (non-Javadoc)
+	 * @see org.sakaiproject.content.api.RepositoryService#getFolder(java.lang.Long)
+	 */
+	@Override
+	public Folder getFolder(String collectionId) {
+		
+		return null;
+	}	
 
 	/* (non-Javadoc)
 	 * @see org.sakaiproject.content.api.RepositoryService#getFolder(java.lang.Long)
