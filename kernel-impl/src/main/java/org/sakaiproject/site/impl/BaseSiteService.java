@@ -1040,18 +1040,10 @@ public abstract class BaseSiteService implements SiteService, StorageUser
 	 */
 	public void saveSiteInfo(String id, String description, String infoUrl) throws IdUnusedException, PermissionException
 	{
-		String ref = siteReference(id);
-
-		// check security (throws if not permitted)
-		unlock(SECURE_UPDATE_SITE, ref);
-
-		// check for existance
-		if (!m_storage.check(id))
-		{
-			throw new IdUnusedException(id);
-		}
-
-		m_storage.saveInfo(id, description, infoUrl);
+		Site site = getSite(id);
+		site.setDescription(description);
+		site.setInfoUrl(infoUrl);
+		save(site);
 	}
 
 	/**
