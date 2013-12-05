@@ -47,7 +47,12 @@ public abstract class BaseSessionComponentTest extends MockObjectTestCase {
 				return idManager;
 			}
 
-			@Override
+            @Override
+            protected MySessionMemcachedStore mySessionMemcachedStore() {
+                return null;
+            }
+
+            @Override
 			protected ThreadLocalManager threadLocalManager() {
 				return threadLocalManager;
 			}

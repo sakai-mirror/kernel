@@ -28,7 +28,7 @@ package org.sakaiproject.tool.api;
  * @author holdorph
  */
 public interface SessionStore {
-
+    public void storeSession(Session session);
 	/**
 	 * Remove the Session corresponding to this id from the
 	 * Session storage.

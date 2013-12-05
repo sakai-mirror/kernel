@@ -21,15 +21,24 @@ import org.apache.commons.lang.mutable.MutableLong;
 import org.jmock.Expectations;
 
 import org.sakaiproject.id.api.IdManager;
+import org.sakaiproject.memory.api.Cache;
+import org.sakaiproject.memory.api.MemoryService;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
+import org.sakaiproject.time.api.TimeService;
+import org.sakaiproject.time.impl.BasicTimeService;
+import org.sakaiproject.time.impl.MyTime;
 import org.sakaiproject.tool.api.ContextSession;
 import org.sakaiproject.tool.api.NonPortableSession;
 import org.sakaiproject.tool.api.Session;
 import org.sakaiproject.tool.api.SessionAttributeListener;
 import org.sakaiproject.tool.api.SessionBindingEvent;
 import org.sakaiproject.tool.api.SessionBindingListener;
+import org.sakaiproject.tool.api.SessionManager;
+import org.sakaiproject.tool.api.SessionStore;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.tool.api.ToolSession;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Verifies behavior of {@link MySession}, which
@@ -481,7 +490,65 @@ public class MySessionTest extends BaseSessionComponentTest {
 		});
 		System.setProperty("sakai.cluster.terracotta","false");
 	}
-	
+
+    public void testSerialization() {
+        final BasicTimeService timeService = new BasicTimeService();
+        final MemoryService memoryService = mock(MemoryService.class);
+        checking(new Expectations() {
+            {
+                allowing(componentManager).get(SessionManager.class);
+                will(returnValue(mock(SessionManager.class)));
+                allowing(componentManager).get(SessionStore.class);
+                will(returnValue(mock(SessionStore.class)));
+                allowing(componentManager).get(ThreadLocalManager.class);
+                will(returnValue(threadLocalManager));
+                allowing(componentManager).get(IdManager.class);
+                will(returnValue(idManager));
+                allowing(componentManager).get(SessionBindingListener.class);
+                will(returnValue(sessionListener));
+                allowing(componentManager).get(TimeService.class.getName());
+                will(returnValue(timeService));
+                allowing(memoryService).newCache(with(any(String.class)));
+                will(returnValue(mock(Cache.class)));
+            }
+        });
+        timeService.setMemoryService(memoryService);
+        timeService.init();
+
+        MySessionMemcachedStore store = new MySessionMemcachedStore();
+        store.init();
+        MySession session = createSession();
+        String name1 = "name1";
+        String value1 = "value1";
+        String name2 = "name2";
+        String value2 = "value2";
+        session.setAttribute(name1, value1);
+        session.setAttribute(name2, value2);
+        long currentTime = System.currentTimeMillis();
+        MyTime time = new MyTime(timeService, currentTime);
+
+        session.setAttribute("time", time);
+        session.setUserEid("123456");
+        session.setUserId("4545454");
+        session.setMaxInactiveInterval(999);
+
+
+        byte[] serializedSession = store.serialize(session);
+
+
+        MySession newSession = store.deserialize(serializedSession);
+
+        assertEquals(session.getId(), newSession.getId());
+        assertEquals(session.getUserEid(), newSession.getUserEid());
+        assertEquals(session.getUserId(), newSession.getUserId());
+        assertEquals(session.getMaxInactiveInterval(), newSession.getMaxInactiveInterval());
+        assertEquals(session.getAttribute(name1), newSession.getAttribute(name1));
+        assertEquals(session.getAttribute(name2), newSession.getAttribute(name2));
+        assertEquals(((MyTime)session.getAttribute("time")).getTime(),
+                ((MyTime)newSession.getAttribute("time")).getTime());
+
+    }
+
 	protected void assertEventState(SessionBindingEvent event, String name,
 			MySession session, Object value) {
 		assertEquals(name, event.getName());

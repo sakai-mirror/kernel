@@ -194,4 +194,6 @@ public interface Session
 	 *        The user id associated with this session.
 	 */
 	void setUserId(String uid);
+
+    void resolveTransientFields();
 }

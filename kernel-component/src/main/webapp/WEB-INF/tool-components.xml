@@ -13,6 +13,7 @@
 		<lookup-method name="idManager" bean="org.sakaiproject.id.api.IdManager" />
 		<lookup-method name="threadLocalManager" bean="org.sakaiproject.thread_local.api.ThreadLocalManager" />
 		<lookup-method name="toolManager" bean="org.sakaiproject.tool.api.ActiveToolManager"/>
+                <lookup-method name="mySessionMemcachedStore" bean="org.sakaiproject.tool.impl.MySessionMemcachedStore"/>
 
 		<property name="clusterableTools">
 			<!-- The tool id's should be used for any clusterable tool.  A clusterable tool, is any tool that can 
@@ -30,6 +31,27 @@
 		<property name="sessionListener" ref="org.sakaiproject.tool.api.SessionAttributeListener.journaler" />
 		-->
 	</bean>
+
+    <bean id="org.sakaiproject.tool.impl.MySessionMemcachedStore" class="org.sakaiproject.tool.impl.MySessionMemcachedStore" init-method="init">
+        <property name="serverConfigurationService" ref="org.sakaiproject.component.api.ServerConfigurationService"/>
+        <property name="memcachedClient" ref="session.memcachedClient"/>
+    </bean>
+
+    <bean id="session.memcachedClient" class="net.spy.memcached.spring.MemcachedClientFactoryBean">
+        <property name="servers" value="localhost:11211"/>
+        <property name="protocol" value="BINARY"/>
+        <property name="transcoder">
+          <bean class="net.spy.memcached.transcoders.SerializingTranscoder">
+            <property name="compressionThreshold" value="1024"/>
+          </bean>
+        </property>
+        <property name="opTimeout" value="1000"/>
+        <property name="timeoutExceptionThreshold" value="1998"/>
+        <!--property name="hashAlg" value="KETAMA_HASH"/-->
+        <property name="locatorType" value="CONSISTENT"/>
+        <property name="failureMode" value="Redistribute"/>
+        <property name="useNagleAlgorithm" value="false"/>
+      </bean>
 
     <!-- uncomment this if sessionListener property is enabled above -->
     <!--

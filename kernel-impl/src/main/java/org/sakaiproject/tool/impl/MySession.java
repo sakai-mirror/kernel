@@ -141,7 +141,7 @@ public class MySession implements Session, HttpSession, Serializable
 		resolveTerracottaClusterProperty();
 	}
 
-	protected void resolveTransientFields()
+	public void resolveTransientFields()
 	{
 		// These are spelled out instead of using imports, to be explicit
 		org.sakaiproject.component.api.ComponentManager compMgr = 

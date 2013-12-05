@@ -21,6 +21,7 @@
 
 package org.sakaiproject.event.impl;
 
+import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -35,7 +36,7 @@ import org.sakaiproject.user.api.UserNotDefinedException;
  * UsageSession
  ************************************************************************************************************************************************/
 
-public class BaseUsageSession implements UsageSession, SessionBindingListener
+public class BaseUsageSession implements UsageSession, SessionBindingListener, Serializable
 {
 	/**
 	 * UsageSessionService
@@ -71,6 +72,11 @@ public class BaseUsageSession implements UsageSession, SessionBindingListener
 
 	/** Flag for active session */
 	protected boolean m_active = false;
+
+    public BaseUsageSession() {
+
+    }
+
 
 	/**
 	 * Construct fully from persisted data.

@@ -118,6 +118,8 @@ public abstract class SessionComponent implements SessionManager, SessionStore
 	/** Configuration: default inactive period for sessions (seconds). */
 	protected int m_defaultInactiveInterval = 30 * 60;
 
+    protected abstract MySessionMemcachedStore mySessionMemcachedStore();
+
 	/**
 	 * Configuration - set the default inactive period for sessions.
 	 * 
@@ -223,6 +225,10 @@ public abstract class SessionComponent implements SessionManager, SessionStore
 		M_log.info("destroy()");
 	}
 
+    public void storeSession(Session session) {
+        mySessionMemcachedStore().storeSession((MySession) session);
+    }
+
 	/**********************************************************************************************************************************************************************************************************************************************************
 	 * Work interface methods: SessionManager
 	 *********************************************************************************************************************************************************************************************************************************************************/
@@ -233,6 +239,31 @@ public abstract class SessionComponent implements SessionManager, SessionStore
 	public Session getSession(String sessionId)
 	{
 		MySession s = (MySession) m_sessions.get(sessionId);
+
+        if (s == null) {
+            // try to load from memcached storage
+            s = mySessionMemcachedStore().findSession(sessionId);
+
+            if (s != null) {
+                M_log.info("getSession: loaded session: " + s.getId() + " from memcached");
+
+                // Place session into the main Session Storage, capture any old id
+                Session old = m_sessions.put(s.getId(), s);
+
+                MutableLong currentTime = currentTimeMutableLong();
+
+                // Place an entry in the expirationTimeSuggestionMap that corresponds to the entry in m_sessions
+                expirationTimeSuggestionMap.put(sessionId, currentTime);
+
+                // check for id conflict
+                if (old != null)
+                {
+                    M_log.warn("getSession: duplication id: " + s.getId());
+                }
+            } else {
+                M_log.info("getSession: session: " + sessionId + " not found in memcached");
+            }
+        }
 
 		return s;
 	}

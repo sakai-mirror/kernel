@@ -58,6 +58,7 @@ import org.sakaiproject.event.api.UsageSession;
 import org.sakaiproject.event.api.UsageSessionService;
 import org.sakaiproject.thread_local.cover.ThreadLocalManager;
 import org.sakaiproject.tool.api.Session;
+import org.sakaiproject.tool.api.SessionStore;
 import org.sakaiproject.tool.api.Tool;
 import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.tool.cover.SessionManager;
@@ -1297,7 +1298,7 @@ public class RequestFilter implements Filter
 		// if missing, make one
 		if (s == null)
 		{
-			s = SessionManager.startSession();
+			s = SessionManager.startSession(req.getSession().getId());
 
 			// if we have a cookie, but didn't find the session and are creating a new one, mark this
 			if (c != null)
@@ -1351,7 +1352,11 @@ public class RequestFilter implements Filter
 		if ((s != null) && allowSetCookieEarly)
 		{
 			// the cookie value we need to use
-			sessionId = s.getId() + DOT + suffix;
+			if (!s.getId().endsWith(DOT + suffix)) {
+    			sessionId = s.getId() + DOT + suffix;
+            } else {
+                sessionId = s.getId();
+            }
 
 			if ((c == null) || (!c.getValue().equals(sessionId)))
 			{
@@ -1457,7 +1462,13 @@ public class RequestFilter implements Filter
 	 */
 	protected void postProcessResponse(Session s, HttpServletRequest req, HttpServletResponse res)
 	{
-	}
+        try {
+            Session currentSession = SessionManager.getCurrentSession();
+            ((SessionStore) SessionManager.getInstance()).storeSession(currentSession);
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
 
 	/**
 	 * Find a cookie by this name from the request; one with a value that has the specified suffix.

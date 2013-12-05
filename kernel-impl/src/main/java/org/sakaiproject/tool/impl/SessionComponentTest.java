@@ -50,7 +50,13 @@ public class SessionComponentTest extends SessionComponent
 		return null;
 	}
 
-	/**
+    @Override
+    protected MySessionMemcachedStore mySessionMemcachedStore()
+    {
+        return null;
+    }
+
+    /**
 	 * @return the ToolManager collaborator.
 	 */
 	@Override

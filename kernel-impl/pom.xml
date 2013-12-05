@@ -218,7 +218,18 @@
         <type>jar</type>
         <scope>compile</scope>
     </dependency>
-    <!-- antisamy -->
+    <!-- session replication -->
+      <dependency>
+          <groupId>com.esotericsoftware.kryo</groupId>
+          <artifactId>kryo</artifactId>
+          <version>2.22</version>
+      </dependency>
+      <dependency>
+          <groupId>net.spy</groupId>
+          <artifactId>spymemcached</artifactId>
+          <version>2.10.3</version>
+      </dependency>
+      <!-- antisamy -->
     <dependency>
       <groupId>org.owasp.antisamy</groupId>
       <artifactId>antisamy</artifactId>
