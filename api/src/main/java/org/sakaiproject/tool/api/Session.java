@@ -195,5 +195,4 @@ public interface Session
 	 */
 	void setUserId(String uid);
 
-    void resolveTransientFields();
 }
