@@ -23,9 +23,11 @@ package org.sakaiproject.component.impl;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
@@ -48,7 +50,7 @@ import org.springframework.context.ConfigurableApplicationContext;
  * ApplicationContext.
  * </p>
  * <p>
- * See the {@link org.sakaiproject.api.kernel.component.ComponentManager}interface
+ * See the {@link org.sakaiproject.component.api.ComponentManager}interface
  * for details.
  * </p>
  */
@@ -94,6 +96,8 @@ public class SpringCompMgr implements ComponentManager {
 
 	/** Records that close has been called. */
 	protected boolean m_hasBeenClosed = false;
+
+    protected Map<String, ClassLoader> classLoaderRegistry = new HashMap();
 
 	/**
 	 * Initialize.
@@ -351,7 +355,7 @@ public class SpringCompMgr implements ComponentManager {
 		System.setProperty(SAKAI_COMPONENTS_ROOT_SYS_PROP, componentsRoot);
 
 		// load components
-		loader.load(m_ac, componentsRoot);
+        classLoaderRegistry = loader.load(m_ac, componentsRoot);
 	}
 
 	/**
@@ -415,7 +419,11 @@ public class SpringCompMgr implements ComponentManager {
 		return m_hasBeenClosed;
 	}
 
-	private void ensureSakaiHome() {
+    public ClassLoader getClassLoader(String componentName) {
+        return classLoaderRegistry.get(componentName);
+    }
+
+    private void ensureSakaiHome() {
 		// find a path to sakai files on the app server - if not set, set it
 		String sakaiHomePath = System.getProperty("sakai.home");
 		if (sakaiHomePath == null) {

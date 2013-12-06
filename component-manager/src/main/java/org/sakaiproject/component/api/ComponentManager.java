@@ -123,4 +123,8 @@ public interface ComponentManager
 	 * @return true if closed, false if not.
 	 */
 	boolean hasBeenClosed();
+
+    ClassLoader getClassLoader(String componentName);
+
+
 }

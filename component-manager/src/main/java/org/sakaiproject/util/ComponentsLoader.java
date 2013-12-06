@@ -31,7 +31,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import org.apache.commons.logging.Log;
@@ -59,10 +61,13 @@ public class ComponentsLoader
 	/**
 	 * 
 	 */
-	public void load(ConfigurableApplicationContext ac, String componentsRoot)
+	public Map<String, ClassLoader> load(ConfigurableApplicationContext ac, String componentsRoot)
 	{
+        Map<String, ClassLoader> classLoaderRegistry = new HashMap();
+
 		try
 		{
+
 			// get a list of the folders in the root
 			File root = new File(componentsRoot);
 
@@ -70,7 +75,7 @@ public class ComponentsLoader
 			if (!root.isDirectory())
 			{
 				M_log.warn("load: root not directory: " + componentsRoot);
-				return;
+				return classLoaderRegistry ;
 			}
 
 			// what component packages are there?
@@ -79,7 +84,7 @@ public class ComponentsLoader
 			if (packageArray == null)
 			{
 				M_log.warn("load: empty directory: " + componentsRoot);
-				return;
+				return classLoaderRegistry;
 			}
 			
 			List<File> packages = new ArrayList<File>(Arrays.asList(packageArray));
@@ -106,7 +111,7 @@ public class ComponentsLoader
 				// if a valid components directory
 				if (validComponentsPackage(packageDir))
 				{
-					loadComponentPackage(packageDir, ac);
+					loadComponentPackage(packageDir, ac, classLoaderRegistry);
 				}
 				else
 				{
@@ -117,6 +122,7 @@ public class ComponentsLoader
 		catch (Exception e) {
 			M_log.warn("load: exception: " + e, e);
 		}
+        return classLoaderRegistry;
 	}
 
 	/**
@@ -127,11 +133,13 @@ public class ComponentsLoader
 	 * @param ac
 	 *        The ApplicationContext to load into
 	 */
-	protected void loadComponentPackage(File dir, ConfigurableApplicationContext ac)
+	protected void loadComponentPackage(File dir, ConfigurableApplicationContext ac, Map<String, ClassLoader> registry)
 	{
 		// setup the classloader onto the thread
 		ClassLoader current = Thread.currentThread().getContextClassLoader();
 		ClassLoader loader = newPackageClassLoader(dir);
+
+        registry.put(dir.getName(), loader);
 
 		M_log.info("loadComponentPackage: " + dir);
 
