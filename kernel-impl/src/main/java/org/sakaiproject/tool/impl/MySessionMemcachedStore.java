@@ -11,7 +11,6 @@ import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.event.impl.BaseUsageSession;
 import org.sakaiproject.time.impl.MyTime;
-import org.sakaiproject.user.impl.BasePreferences;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -36,10 +35,12 @@ public class MySessionMemcachedStore {
     private MemcachedClient memcachedClient;
     private ServerConfigurationService serverConfigurationService;
 
+    private boolean MEMCACHED_CLUSTER = false;
+
     /**
      * kryo is not thread safe, a new instance is needed per thread.
      * may want to consider pushing into threadlocal if instantiating this thing
-     * over and over proofs to be slow.
+     * over and over proves to be slow.
      * @return
      */
     protected Kryo getSerializer() {
@@ -64,7 +65,6 @@ public class MySessionMemcachedStore {
         kryo.register(BaseUsageSession.class, new BaseUsageSessionSerializer());
         kryo.addDefaultSerializer(Locale.class, JavaSerializer.class);
         kryo.register(MySession.class, new MySessionSerializer());
-        kryo.addDefaultSerializer(BasePreferences.class, JavaSerializer.class);
         kryo.register(MyLittleSession.class, new MyLittleSessionSerializer());
         return kryo;
     }
@@ -73,9 +73,19 @@ public class MySessionMemcachedStore {
         if (M_log.isDebugEnabled()) {
             Log.DEBUG();
         }
+
+        String clusterMemcached = System.getProperty("sakai.cluster.memcached");
+        MEMCACHED_CLUSTER = "true".equals(clusterMemcached);
+        M_log.info("Memcached support is enabled.  Get your party on!");
+
     }
 
     public MySession findSession(final String sessionId) {
+        if (!MEMCACHED_CLUSTER) {
+            M_log.debug("Memcached support is disabled.  Enable with -Dsakai.cluster.memcached=true");
+            return null;
+        }
+
         long start = System.currentTimeMillis();
 
         Object object = memcachedClient.get(sessionId);
@@ -109,6 +119,11 @@ public class MySessionMemcachedStore {
     }
 
     public void storeSession(final MySession session) {
+        if (!MEMCACHED_CLUSTER) {
+            M_log.debug("Memcached support is disabled.  Enable with -Dsakai.cluster.memcached=true");
+            return;
+        }
+
         M_log.info("storing session:" + session.getId() + " in memcached.");
         long start = System.currentTimeMillis();
 

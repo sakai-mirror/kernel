@@ -1466,7 +1466,7 @@ public class RequestFilter implements Filter
             Session currentSession = SessionManager.getCurrentSession();
             ((SessionStore) SessionManager.getInstance()).storeSession(currentSession);
         } catch (Throwable t) {
-            t.printStackTrace();
+            M_log.error(t.getMessage(), t);
         }
     }
 

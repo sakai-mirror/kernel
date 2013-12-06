@@ -32,6 +32,7 @@ import org.sakaiproject.thread_local.api.ThreadLocalManager;
 import org.sakaiproject.thread_local.impl.ThreadLocalComponent;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.api.ToolManager;
+import org.sakaiproject.tool.impl.MySessionMemcachedStore;
 import org.sakaiproject.tool.impl.SessionComponent;
 import org.sakaiproject.util.api.FormattedText.Level;
 import org.sakaiproject.util.BasicConfigItem;
@@ -63,6 +64,11 @@ public class FormattedTextTest extends TestCase {
             @Override
             protected IdManager idManager() {
                 return idManager;
+            }
+
+            @Override
+            protected MySessionMemcachedStore mySessionMemcachedStore() {
+                return null;
             }
         };
 

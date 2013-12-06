@@ -67,13 +67,16 @@ public class SessionMapSerializer {
                     }
     */
                 Object value = kryo.readClassAndObject(input);
-                M_log.info(type + " attribute type:" + value.getClass().getName());
-                Field attributesField = MySession.class.getDeclaredField(name);
-                attributesField.setAccessible(true);
-                Map<String, Object> attributes = (Map<String, Object>) attributesField.get(session);
+                if (value != null) {
+                    M_log.info(type + " attribute type:" + value.getClass().getName());
+                    Field attributesField = MySession.class.getDeclaredField(name);
+                    attributesField.setAccessible(true);
+                    Map<String, Object> attributes = (Map<String, Object>) attributesField.get(session);
 
-                attributes.put(paramName, value);
-
+                    attributes.put(paramName, value);
+                } else {
+                    M_log.debug(paramName + " attribute value is null");
+                }
             } catch (Exception e) {
                 // rather than just blow up lets continue on our merry way and log the issue
                 // there are bound to be things put into the session that cause issues

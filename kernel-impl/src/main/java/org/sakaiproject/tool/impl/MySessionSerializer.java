@@ -44,8 +44,8 @@ public class MySessionSerializer extends Serializer<MySession> {
         output.writeString(session.getUserId());
         output.writeInt(session.getMaxInactiveInterval());
         serializeSessionMap(kryo, output, session, "m_attributes", "session");
-//        serializeSessionMap(kryo, output, session, "m_toolSessions", "toolSession");
-//        serializeSessionMap(kryo, output, session, "m_contextSessions", "contextSession");
+        serializeSessionMap(kryo, output, session, "m_toolSessions", "toolSession");
+        serializeSessionMap(kryo, output, session, "m_contextSessions", "contextSession");
 
     }
 
@@ -80,8 +80,8 @@ public class MySessionSerializer extends Serializer<MySession> {
         kryo.getContext().put(MySessionSerializer.MY_SESSION_CONTEXT_KEY, session);
 
         deserializeSessionMap(kryo, input, session, "m_attributes", "session");
-//        deserializeSessionMap(kryo, input, session, "m_toolSessions", "toolSession");
-//        deserializeSessionMap(kryo, input, session, "m_contextSessions", "contextSession");
+        deserializeSessionMap(kryo, input, session, "m_toolSessions", "toolSession");
+        deserializeSessionMap(kryo, input, session, "m_contextSessions", "contextSession");
 
 
         return session;

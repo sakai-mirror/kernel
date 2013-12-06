@@ -118,6 +118,9 @@ public abstract class SessionComponent implements SessionManager, SessionStore
 	/** Configuration: default inactive period for sessions (seconds). */
 	protected int m_defaultInactiveInterval = 30 * 60;
 
+    /** Is this a memcached clustered environment? */
+   	protected boolean MEMCACHED_CLUSTER = false;
+
     protected abstract MySessionMemcachedStore mySessionMemcachedStore();
 
 	/**
@@ -207,6 +210,9 @@ public abstract class SessionComponent implements SessionManager, SessionStore
 			M_log.warn("Random number generator not available - using time randomness");
 			salt = String.valueOf(System.currentTimeMillis()).getBytes();
 		}
+
+        String clusterMemcached = System.getProperty("sakai.cluster.memcached");
+        MEMCACHED_CLUSTER = "true".equals(clusterMemcached);
 
 		M_log.info("init(): interval: " + m_defaultInactiveInterval + " refresh: " + m_checkEvery);
 	}
