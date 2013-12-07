@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
@@ -494,6 +495,7 @@ public class MySessionTest extends BaseSessionComponentTest {
     public void testSerialization() {
         final BasicTimeService timeService = new BasicTimeService();
         final MemoryService memoryService = mock(MemoryService.class);
+        final Random rand = new Random();
         checking(new Expectations() {
             {
                 allowing(componentManager).get(SessionManager.class);
@@ -508,6 +510,11 @@ public class MySessionTest extends BaseSessionComponentTest {
                 will(returnValue(sessionListener));
                 allowing(componentManager).get(TimeService.class.getName());
                 will(returnValue(timeService));
+                allowing(componentManager).getClassLoader(with(any(String.class)));
+                will(returnValue(null));
+                allowing(idManager).createUuid();
+                will(returnValue(String.valueOf(rand.nextInt(50000))));
+
                 allowing(memoryService).newCache(with(any(String.class)));
                 will(returnValue(mock(Cache.class)));
             }
@@ -515,8 +522,7 @@ public class MySessionTest extends BaseSessionComponentTest {
         timeService.setMemoryService(memoryService);
         timeService.init();
 
-        MySessionMemcachedStore store = new MySessionMemcachedStore();
-        store.init();
+        SessionSerializer serializer = new SessionSerializer();
         MySession session = createSession();
         String name1 = "name1";
         String value1 = "value1";
@@ -532,11 +538,17 @@ public class MySessionTest extends BaseSessionComponentTest {
         session.setUserId("4545454");
         session.setMaxInactiveInterval(999);
 
+        String placementId = "placementId";
+        ToolSession toolSession = session.getToolSession(placementId);
+        toolSession.setAttribute("name3", "value3");
 
-        byte[] serializedSession = store.serialize(session);
+        String contextId = "contextid";
+        ContextSession contextSession = session.getContextSession(contextId) ;
+        contextSession.setAttribute("name4","value4");
+        byte[] serializedSession = serializer.serialize(session);
 
 
-        MySession newSession = store.deserialize(serializedSession);
+        MySession newSession = serializer.deserialize(serializedSession);
 
         assertEquals(session.getId(), newSession.getId());
         assertEquals(session.getUserEid(), newSession.getUserEid());
@@ -546,6 +558,10 @@ public class MySessionTest extends BaseSessionComponentTest {
         assertEquals(session.getAttribute(name2), newSession.getAttribute(name2));
         assertEquals(((MyTime)session.getAttribute("time")).getTime(),
                 ((MyTime)newSession.getAttribute("time")).getTime());
+        assertEquals(session.getToolSession(placementId).getAttribute("name3"),
+                newSession.getToolSession(placementId).getAttribute("name3"));
+        assertEquals(session.getContextSession(contextId).getAttribute("name4"),
+                newSession.getContextSession(contextId).getAttribute("name4"));
 
     }
 
@@ -614,7 +630,7 @@ public class MySessionTest extends BaseSessionComponentTest {
 		
 		private Map<String,Object> unbindInvokedWith = new HashMap<String,Object>();
 		private Map<String,Object> bindInvokedWith = new HashMap<String,Object>();
-		
+
 		public MyTestableSession(SessionComponent outer, String sessionId, ThreadLocalManager threadLocalManager,
 				IdManager idManager, SessionAttributeListener sessionListener,  NonPortableSession nps) {
 			super(outer, sessionId, threadLocalManager, idManager, outer, sessionListener, outer.getInactiveInterval(),nps,new MutableLong(System.currentTimeMillis()));

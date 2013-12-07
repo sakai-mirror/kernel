@@ -145,6 +145,11 @@ public class ComponentManager {
 		getInstance().close();
 	}
 
+    public static ClassLoader getClassLoader(String componentName) {
+   		return getInstance().getClassLoader(componentName);
+   	}
+
+
 	/**
 	 * @deprecated This method is redundant, not used by any known client, would
 	 *             expose implementation details, and will be removed in a

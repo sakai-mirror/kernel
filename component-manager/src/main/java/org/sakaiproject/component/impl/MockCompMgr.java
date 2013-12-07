@@ -68,6 +68,11 @@ public class MockCompMgr implements ComponentManager {
         return closed;
     }
 
+    @Override
+    public ClassLoader getClassLoader(String componentName) {
+        return null;
+    }
+
     public boolean contains(Class iface) {
         String key = iface != null ? iface.getName() : "";
         return components.contains(key);

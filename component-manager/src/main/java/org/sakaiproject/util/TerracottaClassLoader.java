@@ -7,7 +7,7 @@ import java.net.URLClassLoader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-class TerracottaClassLoader extends URLClassLoader {
+public class TerracottaClassLoader extends URLClassLoader {
 	/** Our logger */
 	private static Log log = LogFactory.getLog(ComponentsLoader.class);
 	
