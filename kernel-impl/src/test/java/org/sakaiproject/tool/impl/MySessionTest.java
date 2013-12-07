@@ -1,5 +1,8 @@
 package org.sakaiproject.tool.impl;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,6 +22,8 @@ import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
 
 import org.apache.commons.lang.mutable.MutableLong;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 import org.jmock.Expectations;
 
 import org.sakaiproject.id.api.IdManager;
@@ -36,10 +41,13 @@ import org.sakaiproject.tool.api.SessionBindingEvent;
 import org.sakaiproject.tool.api.SessionBindingListener;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.api.SessionStore;
+import org.sakaiproject.tool.api.Tool;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.tool.api.ToolSession;
+import org.sakaiproject.util.TerracottaClassLoader;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Verifies behavior of {@link MySession}, which
@@ -492,16 +500,26 @@ public class MySessionTest extends BaseSessionComponentTest {
 		System.setProperty("sakai.cluster.terracotta","false");
 	}
 
+
     public void testSerialization() {
+        System.setProperty("sakai.cluster.terracotta","false");
+        LogManager.getRootLogger().setLevel(Level.DEBUG);
+        final ClassLoader cl=Thread.currentThread().getContextClassLoader();
+
         final BasicTimeService timeService = new BasicTimeService();
         final MemoryService memoryService = mock(MemoryService.class);
         final Random rand = new Random();
+        final SessionManager sessionManager = mock(SessionManager.class);
+        final SessionStore sessionStore = mock(SessionStore.class);
+        allowToolCheck("simple.unit.test");
         checking(new Expectations() {
             {
                 allowing(componentManager).get(SessionManager.class);
-                will(returnValue(mock(SessionManager.class)));
+                will(returnValue(sessionManager));
                 allowing(componentManager).get(SessionStore.class);
-                will(returnValue(mock(SessionStore.class)));
+                will(returnValue(sessionStore));
+                allowing(sessionStore).isCurrentToolClusterable();
+                will(returnValue(true));
                 allowing(componentManager).get(ThreadLocalManager.class);
                 will(returnValue(threadLocalManager));
                 allowing(componentManager).get(IdManager.class);
@@ -510,8 +528,19 @@ public class MySessionTest extends BaseSessionComponentTest {
                 will(returnValue(sessionListener));
                 allowing(componentManager).get(TimeService.class.getName());
                 will(returnValue(timeService));
-                allowing(componentManager).getClassLoader(with(any(String.class)));
+                allowing(componentManager).getClassLoader(with("X"));
+
                 will(returnValue(null));
+
+                try {
+                    allowing(componentManager).getClassLoader(with("loader1"));
+                    // this is probably a little fragile, but to get this to work I need something not in the current classpath
+                    will(returnValue(new TerracottaClassLoader(new URL[]{new URL("http://repo1.maven.org/maven2/org/sakaiproject/polls/polls-api/1.5.3/polls-api-1.5.3.jar")}, cl, "loader1")));
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                    assertTrue(false);
+                }
+
                 allowing(idManager).createUuid();
                 will(returnValue(String.valueOf(rand.nextInt(50000))));
 
@@ -530,6 +559,18 @@ public class MySessionTest extends BaseSessionComponentTest {
         String value2 = "value2";
         session.setAttribute(name1, value1);
         session.setAttribute(name2, value2);
+
+        Thread.currentThread().setContextClassLoader(componentManager.getClassLoader("loader1"));
+        try {
+            Class object1Class = componentManager.getClassLoader("loader1").loadClass("org.sakaiproject.poll.model.Poll");
+            session.setAttribute("test1", object1Class.newInstance());
+             //TODO manipulate the object a bit
+        } catch (Exception e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+
+
+        Thread.currentThread().setContextClassLoader(cl);
         long currentTime = System.currentTimeMillis();
         MyTime time = new MyTime(timeService, currentTime);
 
@@ -562,7 +603,7 @@ public class MySessionTest extends BaseSessionComponentTest {
                 newSession.getToolSession(placementId).getAttribute("name3"));
         assertEquals(session.getContextSession(contextId).getAttribute("name4"),
                 newSession.getContextSession(contextId).getAttribute("name4"));
-
+        System.setProperty("sakai.cluster.terracotta","false");
     }
 
 	protected void assertEventState(SessionBindingEvent event, String name,

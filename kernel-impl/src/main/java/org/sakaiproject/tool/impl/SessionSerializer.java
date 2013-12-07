@@ -1,6 +1,7 @@
 package org.sakaiproject.tool.impl;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Registration;
 import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -35,6 +36,13 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
+ * The class handle serializing Sakai's session objects.
+ *
+ * The session has 3 maps.  Before each object in a particular map is written, we write out the name of classloader
+ * for the object.  Then when reading the object back in we use the name of the classloader, look it up in the
+ * registry and switches kryo to use that classloader before loading the class.  This is to deal
+ * with classloading issues from the component manager from one node to the next.
+ *
  * Created with IntelliJ IDEA.
  * User: jbush
  * Date: 12/6/13
@@ -45,6 +53,7 @@ public class SessionSerializer extends Kryo {
     private static org.apache.commons.logging.Log M_log = LogFactory.getLog(SessionSerializer.class);
     static final public String SESSION_MAP_CONTEXT_KEY = "session.map.context.key";
     static final public String MY_SESSION_CONTEXT_KEY = "mysession.context.key";
+    public static final String NOT_A_COMPONENT_CLASSLOADER = "X";
 
     public SessionSerializer() {
         /**
@@ -75,8 +84,8 @@ public class SessionSerializer extends Kryo {
         register(MyTime.class, new MyTimeSerializer());
         register(BaseUsageSession.class, new BaseUsageSessionSerializer());
         addDefaultSerializer(Locale.class, JavaSerializer.class);
-        register(MySession.class, new ClassLoaderLoggingSerializer(new MySessionSerializer()));
-        register(MyLittleSession.class, new ClassLoaderLoggingSerializer(new MyLittleSessionSerializer()));
+        register(MySession.class, new MySessionSerializer());
+        register(MyLittleSession.class, new MyLittleSessionSerializer());
 
     }
 
@@ -91,12 +100,11 @@ public class SessionSerializer extends Kryo {
     public byte[] serialize(final MySession object) {
         long start = System.currentTimeMillis();
         Output output = new Output(4096);
-        writeObject(output, object, new ClassLoaderLoggingSerializer(new MySessionSerializer()));
+        writeObject(output, object, new MySessionSerializer());
         output.flush();
         M_log.debug("serialized session in " + (System.currentTimeMillis() - start) + " ms");
         return output.getBuffer();
     }
-
 
     public void serializeSessionMap(Kryo kryo, Output output, Object session, String name, String type) {
         Field attributesField = null;
@@ -117,14 +125,27 @@ public class SessionSerializer extends Kryo {
 
             for (Map.Entry<String, Object> entry : attributes.entrySet()) {
                 output.writeString(entry.getKey());
+                Object value = entry.getValue();
                 try {
-                    kryo.writeClassAndObject(output, entry.getValue());
+                    if (value.getClass().getClassLoader() instanceof TerracottaClassLoader) {
+                        TerracottaClassLoader classLoader = (TerracottaClassLoader) value.getClass().getClassLoader();
+                        M_log.debug("TerracottaClassLoader: writing classLoaderName=" + classLoader.__tc_getClassLoaderName());
+
+                        output.writeString(classLoader.__tc_getClassLoaderName());
+                    } else {
+                        M_log.debug("writing classLoaderName=" + NOT_A_COMPONENT_CLASSLOADER);
+
+                        output.writeString(NOT_A_COMPONENT_CLASSLOADER);
+                    }
+
+                    kryo.writeClass(output, value.getClass());
+                    kryo.writeObject(output, value, kryo.getSerializer(value.getClass()));
                     M_log.debug("serialized " + type + " attribute with name:" + entry.getKey() +
-                            " type:" + entry.getValue().getClass().getName());
+                            " type:" + value.getClass().getName());
 
                 } catch (Exception e) {
                     M_log.error("couldn't serialize " + type + " attribute with name:" + entry.getKey() +
-                            " and type:" + entry.getValue().getClass().getName() + " error:" + e.getMessage(), e);
+                            " and type:" + value.getClass().getName() + " error:" + e.getMessage(), e);
                     //kryo.writeObjectOrNull(output, null, entry.getValue().getClass());
                 }
             }
@@ -142,76 +163,41 @@ public class SessionSerializer extends Kryo {
             M_log.debug("deserializing " + type + " attribute with name:" + paramName);
 
             try {
-                Object value = kryo.readClassAndObject(input);
-                if (value != null) {
-                    M_log.debug(type + " attribute type:" + value.getClass().getName());
-                    Field attributesField = session.getClass().getDeclaredField(name);
-                    attributesField.setAccessible(true);
-                    Map<String, Object> attributes = (Map<String, Object>) attributesField.get(session);
+                String classLoaderName = input.readString();
+                M_log.debug("reading classLoaderName=" + classLoaderName);
 
-                    attributes.put(paramName, value);
-                } else {
-                    M_log.debug(paramName + " attribute value is null");
+                ClassLoader classLoader = ComponentManager.getClassLoader(classLoaderName);
+                ClassLoader currentLoader = Thread.currentThread().getContextClassLoader();
+                try {
+                    if (classLoader != null) {
+                        if (currentLoader instanceof TerracottaClassLoader) {
+                            M_log.debug("current classloader: " + ((TerracottaClassLoader) currentLoader).__tc_getClassLoaderName());
+                        }
+                        M_log.debug("switching to classloader:" + classLoaderName);
+                        kryo.setClassLoader(classLoader);
+                    }
+                    Registration reg = kryo.readClass(input);
+                    Object value = kryo.readObject(input, reg.getType(), kryo.getSerializer(reg.getType()));
+                    if (value != null) {
+                        M_log.debug(type + " attribute type:" + value.getClass().getName());
+                        Field attributesField = session.getClass().getDeclaredField(name);
+                        attributesField.setAccessible(true);
+                        Map<String, Object> attributes = (Map<String, Object>) attributesField.get(session);
+
+                        attributes.put(paramName, value);
+                    } else {
+                        M_log.debug(paramName + " attribute value is null");
+                    }
+
+                } finally {
+                    kryo.setClassLoader(currentLoader);
                 }
+
             } catch (Exception e) {
                 // rather than just blow up lets continue on our merry way and log the issue
                 // there are bound to be things put into the session that cause issues
                 // we have both classloading and serialization issues to contend with here
                 M_log.error("Failed to deserialize " + type + " attribute: " + paramName + " error: " + e.getMessage(), e);
-            }
-        }
-    }
-
-
-    /**
-     * This wraps another serializer and writes out the name of the classloader before writing out the
-     * object.  When reading it reads the classloader, looks it up in the
-     * registry and switches to it before invoking the real serializer.  This is to deal
-     * with classloading issues from the component manager from one node to the next.
-     */
-    public class ClassLoaderLoggingSerializer extends Serializer {
-
-        public static final String NOT_A_COMPONENT_CLASSLOADER = "X";
-        private Serializer serializer;
-
-        public ClassLoaderLoggingSerializer(Serializer serializer) {
-            this.serializer = serializer;
-        }
-
-        @Override
-        public void write(Kryo kryo, Output output, Object object) {
-            if (object.getClass().getClassLoader() instanceof TerracottaClassLoader) {
-                TerracottaClassLoader classLoader = (TerracottaClassLoader) object.getClass().getClassLoader();
-                M_log.debug("TerracottaClassLoader: writing classLoaderName=" + classLoader.__tc_getClassLoaderName());
-
-                output.writeString(classLoader.__tc_getClassLoaderName());
-            } else {
-                M_log.debug("writing classLoaderName=" + NOT_A_COMPONENT_CLASSLOADER);
-
-                output.writeString(NOT_A_COMPONENT_CLASSLOADER);
-            }
-
-            serializer.write(kryo, output, object);
-        }
-
-        @Override
-        public Object read(Kryo kryo, Input input, Class aClass) {
-            String classLoaderName = input.readString();
-            M_log.debug("reading classLoaderName=" + classLoaderName + " from " + aClass.getName());
-
-            ClassLoader classLoader = ComponentManager.getClassLoader(classLoaderName);
-            ClassLoader currentLoader = Thread.currentThread().getContextClassLoader();
-            try {
-                if (classLoader != null) {
-                    if (currentLoader instanceof TerracottaClassLoader) {
-                        M_log.debug("current classloader: " + ((TerracottaClassLoader) currentLoader).__tc_getClassLoaderName());
-                    }
-                    M_log.debug("switching to classloader:" + classLoaderName);
-                    Thread.currentThread().setContextClassLoader(classLoader);
-                }
-                return serializer.read(kryo, input, aClass);
-            } finally {
-                Thread.currentThread().setContextClassLoader(currentLoader);
             }
         }
     }
