@@ -138,8 +138,7 @@ public class SessionSerializer extends Kryo {
                         output.writeString(NOT_A_COMPONENT_CLASSLOADER);
                     }
 
-                    kryo.writeClass(output, value.getClass());
-                    kryo.writeObject(output, value, kryo.getSerializer(value.getClass()));
+                    kryo.writeClassAndObject(output, value);
                     M_log.debug("serialized " + type + " attribute with name:" + entry.getKey() +
                             " type:" + value.getClass().getName());
 
@@ -162,42 +161,41 @@ public class SessionSerializer extends Kryo {
             String paramName = input.readString();
             M_log.debug("deserializing " + type + " attribute with name:" + paramName);
 
+            ClassLoader currentLoader = Thread.currentThread().getContextClassLoader();
+
             try {
                 String classLoaderName = input.readString();
                 M_log.debug("reading classLoaderName=" + classLoaderName);
 
                 ClassLoader classLoader = ComponentManager.getClassLoader(classLoaderName);
-                ClassLoader currentLoader = Thread.currentThread().getContextClassLoader();
-                try {
-                    if (classLoader != null) {
-                        if (currentLoader instanceof TerracottaClassLoader) {
-                            M_log.debug("current classloader: " + ((TerracottaClassLoader) currentLoader).__tc_getClassLoaderName());
-                        }
-                        M_log.debug("switching to classloader:" + classLoaderName);
-                        kryo.setClassLoader(classLoader);
-                    }
-                    Registration reg = kryo.readClass(input);
-                    Object value = kryo.readObject(input, reg.getType(), kryo.getSerializer(reg.getType()));
-                    if (value != null) {
-                        M_log.debug(type + " attribute type:" + value.getClass().getName());
-                        Field attributesField = session.getClass().getDeclaredField(name);
-                        attributesField.setAccessible(true);
-                        Map<String, Object> attributes = (Map<String, Object>) attributesField.get(session);
 
-                        attributes.put(paramName, value);
-                    } else {
-                        M_log.debug(paramName + " attribute value is null");
+                if (classLoader != null) {
+                    if (currentLoader instanceof TerracottaClassLoader) {
+                        M_log.debug("current classloader: " + ((TerracottaClassLoader) currentLoader).__tc_getClassLoaderName());
                     }
-
-                } finally {
-                    kryo.setClassLoader(currentLoader);
+                    M_log.debug("switching to classloader:" + classLoaderName);
+                    kryo.setClassLoader(classLoader);
                 }
+                Object value = kryo.readClassAndObject(input);
+                if (value != null) {
+                    M_log.debug(type + " attribute type:" + value.getClass().getName());
+                    Field attributesField = session.getClass().getDeclaredField(name);
+                    attributesField.setAccessible(true);
+                    Map<String, Object> attributes = (Map<String, Object>) attributesField.get(session);
+
+                    attributes.put(paramName, value);
+                } else {
+                    M_log.debug(paramName + " attribute value is null");
+                }
+
 
             } catch (Exception e) {
                 // rather than just blow up lets continue on our merry way and log the issue
                 // there are bound to be things put into the session that cause issues
                 // we have both classloading and serialization issues to contend with here
                 M_log.error("Failed to deserialize " + type + " attribute: " + paramName + " error: " + e.getMessage(), e);
+            } finally {
+                kryo.setClassLoader(currentLoader);
             }
         }
     }

@@ -2,6 +2,7 @@ package org.sakaiproject.util;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import junit.framework.TestCase;
@@ -177,7 +178,7 @@ public class ComponentsLoaderTest extends TestCase {
 				assertEquals(expectedDir, dir);
 				assertNotNull(ac);
 				journal.add("loadComponentPackage");
-				super.loadComponentPackage(dir, ac);
+				super.loadComponentPackage(dir, ac, new HashMap());
 			}
 			
 		};
@@ -214,7 +215,7 @@ public class ComponentsLoaderTest extends TestCase {
 			}
 		};
 		loader.loadComponentPackage(new File(component.getDir()),
-				componentMgr.getApplicationContext());
+				componentMgr.getApplicationContext(), new HashMap());
 		assertEquals("Did not invoke newPackageClassLoader()", 
 				expectedJournal, journal);
 	}
