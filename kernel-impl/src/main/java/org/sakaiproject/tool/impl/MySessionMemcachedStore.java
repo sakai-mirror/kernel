@@ -3,8 +3,7 @@ package org.sakaiproject.tool.impl;
 import net.spy.memcached.MemcachedClient;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.component.api.ServerConfigurationService;
-
-
+import org.springframework.util.StringUtils;
 
 
 /**
@@ -40,14 +39,23 @@ public class MySessionMemcachedStore {
     }
 
     public MySession findSession(final String sessionId) {
+        if (StringUtils.isEmpty(sessionId)) {
+            return null;
+        }
+
         if (!MEMCACHED_CLUSTER) {
             M_log.debug("Memcached support is disabled.  Enable with -Dsakai.cluster.memcached=true");
             return null;
         }
 
         long start = System.currentTimeMillis();
+        Object object  = null;
 
-        Object object = memcachedClient.get(sessionId);
+        try {
+            object = memcachedClient.get(sessionId);
+        } catch (Exception e) {
+            M_log.error("error looking up session in memcached: + " + e.getMessage(), e);
+        }
         if (object != null) {
             M_log.info("retrieved session:" + sessionId + " from memcached in " + (System.currentTimeMillis() -  start) + " ms, attempting to deserialize");
             try {

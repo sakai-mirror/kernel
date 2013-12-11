@@ -92,7 +92,7 @@ public class SessionSerializer extends Kryo {
     public MySession deserialize(final byte[] data) {
         long start = System.currentTimeMillis();
         MySession session = readObject(new Input(data), MySession.class);
-        M_log.debug("serialized session in " + (System.currentTimeMillis() - start) + " ms");
+        M_log.debug("deserialized session in " + (System.currentTimeMillis() - start) + " ms");
         return session;
     }
 
