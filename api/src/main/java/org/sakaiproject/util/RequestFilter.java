@@ -1298,7 +1298,7 @@ public class RequestFilter implements Filter
 		// if missing, make one
 		if (s == null)
 		{
-			s = SessionManager.startSession(req.getSession().getId());
+			s = SessionManager.startSession();
 
 			// if we have a cookie, but didn't find the session and are creating a new one, mark this
 			if (c != null)
