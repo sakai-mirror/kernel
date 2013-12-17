@@ -314,6 +314,7 @@ public abstract class SessionComponent implements SessionManager, SessionStore
 	public void remove(String sessionId) {
 		m_sessions.remove(sessionId);
 		expirationTimeSuggestionMap.remove(sessionId);
+        mySessionMemcachedStore().removeSession(sessionId);
 	}
 
 	/**

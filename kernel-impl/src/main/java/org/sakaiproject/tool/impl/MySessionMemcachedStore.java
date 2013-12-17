@@ -95,4 +95,8 @@ public class MySessionMemcachedStore {
     public void setServerConfigurationService(ServerConfigurationService serverConfigurationService) {
         this.serverConfigurationService = serverConfigurationService;
     }
+
+    public void removeSession(String sessionId) {
+        memcachedClient.delete(sessionId);
+    }
 }
