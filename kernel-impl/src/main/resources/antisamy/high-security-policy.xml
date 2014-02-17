@@ -847,9 +847,16 @@
 
         <tag name="ul" action="validate"/>
         <tag name="ol" action="validate"/>
-        <tag name="li" action="validate"/>
+        <tag name="li" action="validate">
+            <attribute name="value">
+                <regexp-list>
+                    <regexp name="integer"/>
+                </regexp-list>
+            </attribute>
+        </tag>
         
 
+        
         
         
         <!-- Dictionary tags -->
