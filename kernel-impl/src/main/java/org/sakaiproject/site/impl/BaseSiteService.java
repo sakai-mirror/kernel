@@ -460,12 +460,6 @@ public abstract class BaseSiteService implements SiteService, Observer
 	 * @return the IdManager collaborator.
 	 */
 	protected abstract IdManager idManager();
-        
-    /**
-     * sfoster9@uwo.ca
-     * @return the EmailService collaborator.
-     */
-    protected abstract EmailService emailService();
 
 	/**********************************************************************************************************************************************************************************************************************************************************
 	 * Init and Destroy
@@ -540,7 +534,7 @@ public abstract class BaseSiteService implements SiteService, Observer
                         
             // sfoster9@uwo.ca
             // assign a new JoinSiteDelegate to handle the join methods; provide it services from this class
-            joinSiteDelegate = new JoinSiteDelegate( this, securityService(), userDirectoryService(), emailService() );
+            joinSiteDelegate = new JoinSiteDelegate( this, securityService(), userDirectoryService() );
 		}
 		catch (Exception t)
 		{
@@ -1742,20 +1736,6 @@ public abstract class BaseSiteService implements SiteService, Observer
 		{
 			M_log.error(String.format("Unexpected exception joining user %s to group in site %s: ", user, id), e);
 		}
-		
-		try
-		{
-			// if email notifications are set to be sent on join
-            if(isJoinNotificationToggled(id))
-            {
-                // ... send email notification
-                joinSiteDelegate.sendEmailNotification(id);
-            }
-		}
-		catch (Exception e)
-		{
-			M_log.error(String.format("Unexpected exception when sending join notification email for user %s joined site %s", user, id), e);
-		}
 	}
         
     /**
@@ -1841,14 +1821,6 @@ public abstract class BaseSiteService implements SiteService, Observer
     
     /** 
      * @inheritDoc
-     */    
-    public boolean isJoinNotificationToggled(String siteID)
-    {
-        return joinSiteDelegate.isJoinNotificationToggled(siteID);
-    }
-    
-    /** 
-     * @inheritDoc
      */
     public LinkedHashSet<String> getAllowedJoinableAccountTypeCategories()
     {
@@ -1877,14 +1849,6 @@ public abstract class BaseSiteService implements SiteService, Observer
     public boolean isGlobalJoinGroupEnabled()
     {
     	return joinSiteDelegate.getGlobalJoinGroupEnabled();
-    }
-    
-    /** 
-     * @inheritDoc
-     */
-    public boolean isGlobalJoinNotificationEnabled()
-    {
-    	return joinSiteDelegate.getGlobalJoinNotificationEnabled();
     }
     
     /** 
