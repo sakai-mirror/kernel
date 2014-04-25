@@ -25,8 +25,6 @@ import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.event.api.EventTrackingService;
-import org.sakaiproject.event.api.UsageSessionService;
-import org.sakaiproject.memory.api.MemoryPermissionException;
 import org.sakaiproject.memory.impl.BasicMemoryService;
 
 /**
@@ -38,18 +36,16 @@ public class MockBasicMemoryService extends BasicMemoryService
 
 	private EventTrackingService eventTrackingService;
 	private SecurityService securityService;
-	private UsageSessionService usageSessionService;
 	private AuthzGroupService authzGroupService;
 	private ServerConfigurationService serverConfigurationService;
 
 	/**
 	 * 
 	 */
-	public MockBasicMemoryService(EventTrackingService eventTrackingService, SecurityService securityService, UsageSessionService usageSessionService, AuthzGroupService authzGroupService, ServerConfigurationService serverConfigurationService)
+	public MockBasicMemoryService(EventTrackingService eventTrackingService, SecurityService securityService, AuthzGroupService authzGroupService, ServerConfigurationService serverConfigurationService)
 	{
 		this.eventTrackingService = eventTrackingService;
 		this.securityService = securityService;
-		this.usageSessionService = usageSessionService;
 		this.authzGroupService = authzGroupService;
 		this.serverConfigurationService = serverConfigurationService;
 	}
@@ -72,16 +68,6 @@ public class MockBasicMemoryService extends BasicMemoryService
 	return securityService;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.sakaiproject.memory.impl.BasicMemoryService#usageSessionService()
-	 */
-	@Override
-	protected UsageSessionService usageSessionService()
-	{
-		return usageSessionService;
-	}
-	
-	@Override
 	protected AuthzGroupService authzGroupService()
 	{
 		return authzGroupService;
@@ -92,6 +78,4 @@ public class MockBasicMemoryService extends BasicMemoryService
 		return serverConfigurationService;
 	}
 
-
-
-	}
+}

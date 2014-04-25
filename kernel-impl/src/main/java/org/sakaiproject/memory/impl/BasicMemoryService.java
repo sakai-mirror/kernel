@@ -21,57 +21,43 @@
 
 package org.sakaiproject.memory.impl;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
-import java.util.UUID;
-
-import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Status;
+import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.event.CacheManagerEventListener;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.event.api.Event;
 import org.sakaiproject.event.api.EventTrackingService;
-import org.sakaiproject.event.api.UsageSessionService;
 import org.sakaiproject.memory.api.Cache;
 import org.sakaiproject.memory.api.CacheRefresher;
-import org.sakaiproject.memory.api.Cacher;
 import org.sakaiproject.memory.api.GenericMultiRefCache;
-import org.sakaiproject.memory.api.MemoryPermissionException;
 import org.sakaiproject.memory.api.MemoryService;
-import org.sakaiproject.memory.api.MultiRefCache;
 import org.sakaiproject.memory.util.CacheInitializer;
+
+import java.lang.reflect.Field;
+import java.util.*;
 
 /**
  * <p>
- * MemBasicMemoryServiceoryService is an implementation for the MemoryService which reports memory usage and runs a periodic garbage collection to keep memory available.
+ * BasicMemoryService is an implementation for the MemoryService which reports memory usage and runs a periodic garbage collection to keep memory available.
  * </p>
  */
 public abstract class BasicMemoryService implements MemoryService, Observer
 {
 
-	/** Our logger. */
-	private static Log M_log = LogFactory.getLog(BasicMemoryService.class);
-
 	/** Event for the memory reset. */
 	protected static final String EVENT_RESET = "memory.reset";
-	
-	/** 
+	/**
 	 * Event to expire members
 	 */
 	protected static final String EVENT_EXPIRE = "memory.expire";
-
+	/** Our logger. */
+	private static Log M_log = LogFactory.getLog(BasicMemoryService.class);
 	/** The underlying cache manager; injected */
 	protected CacheManager cacheManager;
 
@@ -95,12 +81,12 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 	/**
 	 * @return the UsageSessionService collaborator.
 	 */
-	protected abstract UsageSessionService usageSessionService();
+	//protected abstract UsageSessionService usageSessionService();
 
 	/**
 	 * @return the AuthzGroupService collaborator.
 	 */
-	protected abstract AuthzGroupService authzGroupService();
+	//protected abstract AuthzGroupService authzGroupService();
 	
 	/**
 	 * @return the ServerConfigurationService collaborator
@@ -111,17 +97,17 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 	 * Configuration
 	 *********************************************************************************************************************************************************************************************************************************************************/
 
+	public boolean getCacheLogging()
+	{
+		return m_cacheLogging;
+	}
+
 	/**
 	 * Configuration: cache verbose debug
 	 */
 	public void setCacheLogging(boolean value)
 	{
 		m_cacheLogging = value;
-	}
-
-	public boolean getCacheLogging()
-	{
-		return m_cacheLogging;
 	}
 
 	/**********************************************************************************************************************************************************************************************************************************************************
@@ -204,7 +190,62 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 	 * MemoryService implementation
 	 *********************************************************************************************************************************************************************************************************************************************************/
 
-	/**
+    @Override
+    public ClassLoader getClassLoader() {
+        return BasicMemoryService.class.getClassLoader();
+    }
+
+    @Override
+    public Properties getProperties() {
+        Configuration ec = cacheManager.getConfiguration();
+        Properties p = new Properties();
+        p.put("name", ec.getName());
+        p.put("source", ec.getConfigurationSource().toString());
+        p.put("timeoutSeconds", ec.getDefaultTransactionTimeoutInSeconds());
+        p.put("maxBytesDisk", ec.getMaxBytesLocalDisk());
+        p.put("maxBytesHeap", ec.getMaxBytesLocalHeap());
+        p.put("maxDepth", ec.getSizeOfPolicyConfiguration().getMaxDepth());
+        p.put("defaultCacheMaxEntries", ec.getDefaultCacheConfiguration().getMaxEntriesLocalHeap());
+        p.put("defaultCacheTimeToIdleSecs", ec.getDefaultCacheConfiguration().getTimeToIdleSeconds());
+        p.put("defaultCacheTimeToLiveSecs", ec.getDefaultCacheConfiguration().getTimeToLiveSeconds());
+        p.put("defaultCacheEternal", ec.getDefaultCacheConfiguration().isEternal());
+        return p;
+    }
+
+    @Override
+    public <C extends org.sakaiproject.memory.api.Configuration> Cache createCache(String cacheName, C configuration) {
+        throw new UnsupportedOperationException("BasicMemoryService does not support cache creation configuration");
+    }
+
+    @Override
+    public Cache getCache(String cacheName) {
+        return newCache(cacheName);
+    }
+
+    @Override
+    public Iterable<String> getCacheNames() {
+        if (this.cacheManager != null) {
+            String[] names = cacheManager.getCacheNames();
+            return Arrays.asList(names);
+        } else {
+            return new ArrayList<String>(0);
+        }
+    }
+
+    @Override
+    public void destroyCache(String cacheName) {
+        if (this.cacheManager != null) {
+            this.cacheManager.removeCache(cacheName);
+        }
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> clazz) {
+        //noinspection unchecked
+        return (T) cacheManager;
+    }
+
+    /**
 	 * Return the amount of available memory.
 	 * 
 	 * @return the amount of available memory.
@@ -218,13 +259,13 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 	/**
 	 * Cause less memory to be used by clearing any optional caches.
 	 */
-	public void resetCachers() throws MemoryPermissionException
+	public void resetCachers() //throws MemoryPermissionException
 	{
 		// check that this is a "super" user with the security service
 		if (!securityService().isSuperUser())
 		{
 			// TODO: session id or session user id?
-			throw new MemoryPermissionException(usageSessionService().getSessionId(), EVENT_RESET, "");
+			throw new SecurityException("must be admin");//MemoryPermissionException(usageSessionService().getSessionId(), EVENT_RESET, "");
 		}
 
 		// post the event so this and any other app servers in the cluster will reset
@@ -232,12 +273,12 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 
 	} // resetMemory
 
-	public void evictExpiredMembers() throws MemoryPermissionException {
+	public void evictExpiredMembers() {//throws MemoryPermissionException {
 		// check that this is a "super" user with the security service
 		if (!securityService().isSuperUser())
 		{
 			// TODO: session id or session user id?
-			throw new MemoryPermissionException(usageSessionService().getSessionId(), EVENT_EXPIRE, "");
+			throw new SecurityException("must be admin");//MemoryPermissionException(usageSessionService().getSessionId(), EVENT_EXPIRE, "");
 		}
 
 		// post the event so this and any other app servers in the cluster will reset
@@ -354,22 +395,22 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 	/**
 	 * Register as a cache user
 	 * @deprecated
-	 */
+	 *//*
 	synchronized public void registerCacher(Cacher cacher)
 	{
 		// not needed with ehcache
 
-	} // registerCacher
+	} // registerCacher */
 
 	/**
 	 * Unregister as a cache user
 	 * @deprecated
-	 */
+	 *//*
 	synchronized public void unregisterCacher(Cacher cacher)
 	{
 		// not needed with ehcache
 
-	} // unregisterCacher
+	} // unregisterCacher */
 
 	/**
 	 * {@inheritDoc}
@@ -384,22 +425,22 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 	/**
 	 * {@inheritDoc}
 	 * @deprecated
-	 */
+	 *//*
 	public Cache newHardCache(CacheRefresher refresher, String pattern)
 	{
 		return new HardCache(this, eventTrackingService(), refresher, pattern,
 				instantiateCache("HardCache"));
-	}
+	} */
 
 	/**
 	 * {@inheritDoc}
 	 * @deprecated
-	 */
+	 *//*
 	public Cache newHardCache(long sleep, String pattern)
 	{
 		return new HardCache(this, eventTrackingService(), sleep, pattern,
 				instantiateCache("HardCache"));
-	}
+	} */
 
 	/**
 	 * {@inheritDoc}
@@ -434,17 +475,17 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 	/**
 	 * {@inheritDoc}
 	 * @deprecated
-	 */
+	 *//*
 	public Cache newHardCache()
 	{
 		return new HardCache(this, eventTrackingService(),
 				instantiateCache("HardCache"));
-	}
+	} */
 
 	/**
 	 * {@inheritDoc}
 	 * @deprecated
-	 */
+	 *//*
 	public MultiRefCache newMultiRefCache(long sleep)
 	{
 		return new MultiRefCacheImpl(
@@ -452,7 +493,7 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 				eventTrackingService(),
 				authzGroupService(),
 				instantiateCache("MultiRefCache"));
-	}
+	} */
 
 	/**********************************************************************************************************************************************************************************************************************************************************
 	 * Observer implementation
@@ -639,7 +680,7 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 		return new MemCache(this, eventTrackingService(),
 				instantiateCache(cacheName));
 	}
-
+/*
 	public MultiRefCache newMultiRefCache(String cacheName) {
 		return new MultiRefCacheImpl(
 				this,
@@ -647,12 +688,11 @@ public abstract class BasicMemoryService implements MemoryService, Observer
 				authzGroupService(),
 				instantiateCache(cacheName));
 	}
-	
+*/
 	public GenericMultiRefCache newGenericMultiRefCache(String cacheName) {
-		return new MultiRefCacheImpl(
+		return new GenericMultiRefCacheImpl(
 				this,
 				eventTrackingService(),
-				authzGroupService(),
 				instantiateCache(cacheName));
 	}
 
