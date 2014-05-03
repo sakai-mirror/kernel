@@ -57,7 +57,7 @@ public class BaseMemoryService implements MemoryService {
     public void init() {
         log.info("INIT");
         if (memoryService == null) {
-            boolean useLegacy = false;
+            boolean useLegacy = true; // for 10.x release
             if (serverConfigurationService != null) {
                 useLegacy = serverConfigurationService.getBoolean("memory.use.legacy", false);
             }
