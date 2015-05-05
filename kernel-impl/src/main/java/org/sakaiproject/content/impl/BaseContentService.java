@@ -13580,9 +13580,7 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, EntityTransferrerRef
 						{
 							try
 							{
-								ContentCollectionEdit edit = editCollection(oId);
-
-								this.removeCollection(edit.getId());
+								this.removeCollection(oId);
 							}
 							catch (Exception ee)
 							{
