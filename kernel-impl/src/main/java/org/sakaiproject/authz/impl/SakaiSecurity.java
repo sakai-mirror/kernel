@@ -966,8 +966,10 @@ public abstract class SakaiSecurity implements SecurityService
 		String realmRef = org.sakaiproject.authz.api.AuthzGroupService.REFERENCE_ROOT + Entity.SEPARATOR + azGroupId;
 		eventTrackingService().post(eventTrackingService().newEvent(EVENT_ROLESWAP_CLEAR, realmRef, true));
 
-		if (!legacyCaching) { // TODO remove the if block so this runs all the time after 10
-			cacheRealmPermsChanged(realmRef, null, null);
+		if (legacyCaching) { // TODO remove the if block so this runs all the time after 10 
+			m_callCache.clear(); // for 10
+		} else {
+			cacheRealmPermsChanged(realmRef, null, null); // for 11
 		}
 
 		return;
