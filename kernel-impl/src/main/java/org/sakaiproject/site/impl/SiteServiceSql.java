@@ -362,9 +362,5 @@ public interface SiteServiceSql
 	 * @return
 	 */
 	String getSitesWhereNotSoftlyDeletedSql();
-
-	/**
-	 * returns part of the where clause to retrieve sites that are unpublished
-	 */
-	String getUnpublishedSitesOnlySql();
+	
 }
