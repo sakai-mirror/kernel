@@ -106,6 +106,16 @@ public class EmailServiceTest extends TestCase
 					String timeoutKey = emailService.propName(BasicEmailService.MAIL_TIMEOUT_T);
 					allowing(config).getString(timeoutKey, null);
 					will(returnValue(null));
+
+					allowing(config).getString(BasicEmailService.MAIL_SENDFROMSAKAI, "true");
+					will(returnValue("true"));
+
+					allowing(config).getString(BasicEmailService.MAIL_SENDFROMSAKAI_EXCEPTIONS, null);
+					will(returnValue(null));
+
+					allowing(config).getString(BasicEmailService.MAIL_SENDFROMSAKAI_FROMTEXT, "{}");
+					will(returnValue("{}"));
+
 				}});
 
 				System.err.println("Initing EmailService...");
