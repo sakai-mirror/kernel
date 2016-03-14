@@ -211,11 +211,6 @@ public interface SiteService extends EntityProducer
 	static final String EVENT_SITE_DUPLICATE_END = "site.duplicate.end";
 
 	/**
-	 * An event tracking roster add
-	 */
-	static final String EVENT_SITE_ROSTER_ADD = "site.roster.add";
-	
-	/**
 	 * <p>
 	 * SelectionType enumerates different supported types of selection criteria for getting / counting sites.
 	 * </p>
