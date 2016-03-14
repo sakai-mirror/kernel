@@ -210,6 +210,12 @@ public interface SiteService extends EntityProducer
 	 */
 	static final String EVENT_SITE_DUPLICATE_END = "site.duplicate.end";
 
+	/** An event for publishing a site. */
+	static final String EVENT_SITE_PUBLISH = "site.publish";
+	
+	/** An event for unpublishing a site. */
+	static final String EVENT_SITE_UNPUBLISH = "site.unpublish";
+
 	/**
 	 * <p>
 	 * SelectionType enumerates different supported types of selection criteria for getting / counting sites.
